@@ -8,10 +8,4 @@
 #include "screen.hpp"
 #include "serparser.hpp"
 
-using namespace TWE;
-using namespace TWEUTILS;
-using namespace TWESERCMD;
-using namespace TWEARD;
-using namespace TWEFMT;
-using namespace TWETERM;
 using namespace TWEM5;
