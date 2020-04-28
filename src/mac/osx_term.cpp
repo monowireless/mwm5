@@ -77,7 +77,7 @@ void TWETerm_MacConsole::setup() {
 #endif
 }
 
-void TWETerm_MacConsole::_unuse_curses() {
+void TWETerm_MacConsole::close_term() {
 #ifdef USE_CURSES
 	if (_b_active_curses) {
 		endwin();

@@ -85,6 +85,10 @@ void TWETerm_WinConsole::refresh() {
 	u32Dirty = 0UL;
 }
 
+void TWETerm_WinConsole::close_term() {
+	return;
+}
+
 /// <summary>
 /// reinit_state win console
 /// </summary>

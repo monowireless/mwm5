@@ -188,6 +188,7 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 			else {
 				::the_app.exit(APP_ID, int(E_APP_ID::CONSOLE));
 			}
+			::the_sys_console.clear_screen();
 			::twe_prog.reset_module();
 			break;
 
@@ -1042,7 +1043,11 @@ void App_FirmProg::Screen_FileProg::hndlr_success(event_type ev, arg_type arg) {
 		the_screen << printfmt("(%dms)", millis() - _u32_tickstart);
 		the_screen << crlf << crlf;
 		the_screen << L"\033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で" << crlf;
-		the_screen << L"ﾀｰﾐﾅﾙ(ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ用)を開きます。";
+		if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 0) {
+			the_screen << L"ﾀｰﾐﾅﾙ(ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ用)を開きます。";
+		} else {
+			the_screen << L"ﾀｰﾐﾅﾙを開きます。";
+		}
 
 		// button navigation
 		the_screen_c.clear_screen();
@@ -1107,7 +1112,7 @@ void App_FirmProg::Screen_FileProg::hndlr_error(event_type ev, arg_type arg) {
 			if (!_b_protocol) {	start_protocol(); } // try again
 			break;
 
-		case KeyInput::KEY_BUTTON_A:
+		case KeyInput::KEY_ESC:
 		case KeyInput::KEY_BUTTON_A_LONG:
 			exit(EXIT_BACK_TO_MENU);
 			break;
@@ -1473,7 +1478,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 			SmplBuf_ByteSL<1024> cleancmd;
 			cleancmd = as_copying(cmdstr);
 			cleancmd << " USE_APPDEPS=0 clean" MAKE_CMD_TERM;
-			system((const char*)cleancmd.c_str()); // echo cmd string
+			int i = system((const char*)cleancmd.c_str()); (void)i;// echo cmd string
 		}
 
 		// add redirect

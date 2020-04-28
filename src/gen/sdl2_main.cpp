@@ -57,10 +57,10 @@
 #include "sdl2_common.h"
 #include "sdl2_button.hpp"
 #include "sdl2_keyb.hpp"
+#include "sdl2_icon.h"
 
 // include getopt.c
 #include "../oss/oss_getopt.h"
-
 
 /***********************************************************
  * PROTOTYPES
@@ -80,6 +80,7 @@ static void signalHandler( int signum );
 #else
 #define DBGOUT(msg,...)
 #endif
+
 /***********************************************************
  * VARIABLES
  ***********************************************************/
@@ -89,10 +90,14 @@ bool g_quit_sdl_loop = false;
 uint32_t g_sdl2_user_event_type = 0;
 
 //The window we'll be rendering to
-SDL_Window* gWindow = NULL;
+SDL_Window* gWindow = nullptr;
 
 //The window renderer
-SDL_Renderer* gRenderer = NULL;
+SDL_Renderer* gRenderer = nullptr;
+
+// Window icon
+SDL_Surface *gSurface_icon_win = nullptr;
+std::unique_ptr<uint32_t[]> g_pixdata_icon_win;
 
 //Screen dimension constants
 int SCREEN_WIDTH = 640;
@@ -137,6 +142,14 @@ M5Stack M5(M5_LCD_WIDTH, M5_LCD_HEIGHT);
 struct _gen_preference {
 	int render_engine; // choose rendering option (osx Metal)
 } the_pref;
+
+/***********************************************************
+ * ICON
+ ***********************************************************/
+
+/***********************************************************
+ * IMPLEMENTATION
+ ***********************************************************/
 
 // procedure for generic operation
 struct app_core_generic_procs {
@@ -271,6 +284,7 @@ struct app_core_sdl {
 		sp_btn_quit.release();
 
 		//Destroy window	
+		SDL_FreeSurface(gSurface_icon_win);
 		SDL_DestroyRenderer(gRenderer);
 		SDL_DestroyWindow(gWindow);
 
@@ -360,7 +374,7 @@ struct app_core_sdl {
 			sub_screen << crlf << "Enter/↑↓→← : 選択";
 
 			sub_screen << crlf << crlf << "[TWELITE 操作]";
-			sub_screen << crlf << STR_ALT"+P : + + + (ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ)";
+			sub_screen << crlf << STR_ALT"+I : + + + (ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ)";
 			sub_screen << crlf << STR_ALT"+R : モジュールのリセット";
 
 			sub_screen << crlf << crlf << "[ボタン操作]";
@@ -870,6 +884,7 @@ struct app_core_sdl {
 				}
 				break;
 
+			case SDL_SCANCODE_I:
 			case SDL_SCANCODE_P:
 				if (e.key.keysym.mod & (KMOD_STG)) {
 					if (e.type == SDL_KEYDOWN) {
@@ -1307,9 +1322,16 @@ static void s_init_sdl() {
 
 	// Create Main window.
 	gWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-										SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN); // | SDL_WINDOW_ALLOW_HIGHDPI);
+										SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN); // | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (gWindow == NULL)
 		exit_err("SDL_CreateWindow()");
+
+	// system icon
+	g_pixdata_icon_win.reset(new uint32_t[128*128]);
+	prepare_icon_data(g_pixdata_icon_win.get(), 128, 128, pix_icon_win_128);
+	gSurface_icon_win = SDL_CreateRGBSurfaceFrom(g_pixdata_icon_win.get(),128,128,32,128*4,0xFF000000,0xFF0000,0xFF00,0xFF);
+	if (gSurface_icon_win == NULL) exit_err("SDL_CreateRGBSurfaceFrom()");
+	SDL_SetWindowIcon(gWindow, gSurface_icon_win);
 
 	// Renderer
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -1491,7 +1513,10 @@ int main(int argc, char* args[]) {
 	// check command line agrs
 	s_getopt(argc, args);
 
+	printf("\033[2J\033[H*** TWELITE STAGE (v%d-%d-%d) ***", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR);
+
 	// initialize
+	
 	s_init();
 	s_init_sdl();
 	
@@ -1508,12 +1533,18 @@ int main(int argc, char* args[]) {
 	the_app_core.loop();
 
 	// on exit 
-#if defined(__APPLE__) // || defined(__linux)
-	con_screen._unuse_curses(); // shall take the screen back before calling _exit().
-	_exit(0); // terminate here to pass rest of clean up process. (may not open crash report dialogue.)
+	con_screen.close_term(); // shall take the screen back before calling _exit().
+
+#if defined(__APPLE__) || defined(__linux)
+	int apiret = system("clear"); (void)apiret;
 #endif
 
+#if defined(__APPLE__) // || defined(__linux)
+	// force terminate...
+	_exit(0); // terminate here to pass rest of clean up process. (may not open crash report dialogue.)
+#else
 	return 0;
+#endif
 }
 
 #endif // WIN/MAC

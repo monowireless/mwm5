@@ -247,7 +247,7 @@ namespace TWETERM {
 		virtual ~ITerm() {
 			// memory release
 			if (_b_dynamic_alloc) {
-				if (_raw_buffer) delete _raw_buffer;
+				if (_raw_buffer) delete[] _raw_buffer;
 				if (buf_astr_screen) delete[] buf_astr_screen;
 			}
 		}

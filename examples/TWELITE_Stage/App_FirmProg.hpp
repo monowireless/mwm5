@@ -99,8 +99,10 @@ public:
 		, default_bg_color(0)
 		, default_fg_color(0)
 		, _b_running_tweprog(false)
-		, _listFiles(16, 64)
-#ifndef ESP32
+#ifdef ESP32
+		, _listFiles(16, 64) // max files & max text len
+#else
+		, _listFiles(64, 64) // max file & max text len
 		, _dirname_drop(TWE::TWE_FILE_NAME_MAX)
 		, _b_drop_available(false)
 #endif

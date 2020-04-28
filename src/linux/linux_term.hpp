@@ -41,12 +41,15 @@ public:
 /// windows console based terminal.
 /// </summary>
 class TWETerm_LinuxConsole : public TWETERM::ITerm {
-	bool _prog_mode;
+	static bool _b_term_controlled;
 public:
 	TWETerm_LinuxConsole(uint8_t u8c, uint8_t u8l);
 	~TWETerm_LinuxConsole();
 	void setup();
 	void refresh();
+	void close_term();
+
+	static bool is_term_controlled() { return _b_term_controlled; }
 };
 
 /// <summary>

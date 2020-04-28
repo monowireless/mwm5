@@ -503,7 +503,8 @@ void TweCwd::begin() {
 	// settings file location (at the exe location)
 	if (_dir_exe.size() > 0 && _filename_exe.size() > 0) {
 		_save_profile_name.reserve_and_set_empty(_dir_exe.size() + 1 + _filename_exe.size() + 4 + 64); // just in case if UTF-8 encoded.
-		_save_profile_name << make_full_path(_dir_exe, _filename_exe) << L".sav";
+		_save_profile_name << make_full_path(_dir_exe, make_file_ext(_filename_exe, L"sav"));
+		
 		twesettings_save_filepath = (const char*)_save_profile_name.c_str();
 	}
 
@@ -700,7 +701,9 @@ void TweCwd::_get_exe_dir() {
 			buf[0] = 0; // error
 		}
 # elif defined(__linux)
-		ssize_t r1 = readlink("/proc/self/exe", buf, bufsize); (void)r1;
+		ssize_t r1 = readlink("/proc/self/exe", buf, bufsize);
+		if (r1 > 0) buf[r1] = 0;
+		else buf[0] = 0;
 # else
 #  error "to be implemented."
 # endif
@@ -711,10 +714,10 @@ void TweCwd::_get_exe_dir() {
 	// find the last path separator and trim it.
 	auto it = find_last_pathsep(str);
 	if (it != str.cend()) {
-		_dir_exe.reserve_and_set_empty(it - str.cbegin());
+		_dir_exe.reserve_and_set_empty(128);
 		_dir_exe << std::pair(str.cbegin(), it);
 
-		_filename_exe.reserve_and_set_empty(str.cend() - it);
+		_filename_exe.reserve_and_set_empty(128);
 		_filename_exe << std::pair(it + 1, str.cend());
 
 #if defined(_MSC_VER) || defined(__MINGW32__)

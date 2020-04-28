@@ -117,6 +117,7 @@ APPSRC_CXX+=gen/sdl2_main.cpp
 APPSRC_CXX+=gen/sdl2_keyb.cpp
 APPSRC_CXX+=gen/sdl2_clipboard.cpp
 APPSRC_CXX+=gen/sdl2_button.cpp
+APPSRC_CXX+=gen/sdl2_icon.cpp
 APPSRC_CXX+=gen/serial_ftdi.cpp
 APPSRC_CXX+=gen/modctrl_ftdi.cpp
 

@@ -46,7 +46,7 @@ public:
 	~TWETerm_MacConsole();
 	void setup();
 	void refresh();
-	void _unuse_curses();
+	void close_term();
 };
 
 /// <summary>

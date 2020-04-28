@@ -30,7 +30,7 @@ namespace TWE {
 	public:
 		virtual ~IStreamOut() {}
 		virtual IStreamOut& operator ()(const char_t c) = 0; //! () operator as a function object
-		virtual inline IStreamOut& write_w(wchar_t c) { return *this; }
+		virtual IStreamOut& write_w(wchar_t c) { return *this; }
 		inline IStreamOut& operator << (const char_t c) { return (*this)(c); } // should be on root class
 		inline IStreamOut& operator << (const uint8_t c) { return (*this)(c); } // should be on root class
 		inline IStreamOut& operator << (const wchar_t c) { return write_w(c); } // should be on root class

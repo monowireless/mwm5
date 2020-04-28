@@ -2,10 +2,11 @@
 #/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
 # * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 #####################################################################
-# FOR macOS build, use GCC from homebrew package (fomula=gcc@9)
 CC = gcc-9
 CXX = g++-9
 AR = gcc-ar-9
+
+DO_DYNAMIC_LINK=0
 
 #####################################################################
 # ADDITIONAL OS SPECIFIC SOURCE
@@ -27,15 +28,13 @@ CFLAGS += -D_REENTRANT
 # FTDI D2XX
 LDFLAGS += -L$(root_dir)/linux/lib/FTDI/
 
-ifeq ($(DEBUG_BUILD),1)
+ifeq ($(DO_DYNAMIC_LINK),1)
 # build normally
 ADDITIONAL_LIBS += -lSDL2
 ADDITIONAL_LIBS += -lftd2xx
 else
 # static build
-CFLAGS += -DUSE_CURSES
 ADDITIONAL_LIBS += -static-libstdc++ -static-libgcc
-ADDITIONAL_LIBS += -lcurses
 ADDITIONAL_LIBS += $(root_dir)/linux/lib/FTDI/libftd2xx.a
 
 #ADDITIONAL_LIBS += $(root_dir)/linux/lib/SDL2/lib/libSDL2.a -Wl,--no-undefined -lm -ldl -lasound -lm -ldl -lpthread -lpulse-simple -lpulse -lsndio -lX11 -lXext -lXcursor -lXinerama -lXi -lXrandr -lXss -lXxf86vm -lwayland-egl -lwayland-client -lwayland-cursor -lxkbcommon
