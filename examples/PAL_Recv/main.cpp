@@ -1,12 +1,13 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include <mwm5.h>
-#include "common.hpp"
-
-#include <Arduino.h>
 #include <M5Stack.h>
+
+#include "screen.hpp"
+
+/** @brief	The parse ASCII format */
+AsciiParser parse_ascii(256);
 
 /**
  * @struct	pkt_data
@@ -28,7 +29,16 @@ struct pkt_data_and_view {
 	ITerm& _trm_status;    // status screen
 	const char* _fmt_status; // status message template
 
-	pkt_data_and_view(ITerm& trm, ITerm& trm_status) : _trm(trm), _trm_status(trm_status) {}
+	pkt_data_and_view(ITerm& trm, ITerm& trm_status)
+		: _page(0)
+		, _lines(0)
+		, _max_entry(0)
+		, _bwide(0)
+		, _bdirty(0)
+		, _trm(trm)
+		, _trm_status(trm_status)
+		, _fmt_status(nullptr)
+	{}
 
 	void init_screen(const char *fmt_status) {
 		_fmt_status = fmt_status;
@@ -42,8 +52,8 @@ struct pkt_data_and_view {
 	 *
 	 */
 	void reinit_screen() {
-		int scrw = _trm.get_width();
-		int scrh = _trm.get_height();
+		int scrw = _trm.get_cols();
+		int scrh = _trm.get_rows();
 
 		_page = 0;
 		_lines = scrh;
@@ -96,14 +106,14 @@ struct pkt_data_and_view {
 		_page--;
 
 		if (_page < 0) {
-			_page = _max_entry / _lines;
+			_page = (_max_entry - 1) / _lines;
 		}
 	}
 
 	// set page
 	void set_page(int entry) {
-		if (entry > 0 && entry < _max_entry) {
-			_page = entry / _lines;
+		if (entry > 0 && entry <= _max_entry) {
+			_page = (entry - 1) / _lines;
 		}
 	}
 
@@ -250,12 +260,12 @@ struct pkt_data_and_view {
 						_trm << printfmt(_bwide ? "X=%5d Y=%5d Z=%5d" : "%5d,%5d,%5d", mot.i16X[0], mot.i16Y[0], mot.i16Z[0]);
 					}
 					else {
-						_trm << "n/a.";
+						_trm << "n.a.";
 					}
 				} break;
 
 				default:
-					_trm << "n.a";
+					_trm << "n.a.";
 				}
 			}
 
@@ -314,7 +324,7 @@ void process_input() {
 	int c;
 	
 	// from TWE
-	while(-1 != (c = TWEM5::the_input_uart.get_a_byte())) {
+	while(-1 != (c = the_uart_queue.read())) {
 		// pass them to M5 (normal packet analysis)
 		parse_a_byte(char_t(c));
 	}
@@ -322,23 +332,37 @@ void process_input() {
 
 // check serial input.
 void check_for_serial() {
-	// UART0 : default UART port (M5stack console)
-	while (Serial.available()) {
-		int c = Serial.read();
-
-		// put input byte into queue.
-		the_input_uart.push_a_byte(c);
+#ifndef ESP32
+	while (the_sys_keyboard.available()) {
+		int c = the_sys_keyboard.get_a_byte();
+		if (c >= 0) {
+			// sys console key input -> TWELITE via Serial2
+			WrtTWE << char_t(c);
+		}
 	}
+#endif
+
+#if 0 // for DEBUG/etc...
+	// UART0 : default UART port (console, etc)
+	do {
+		if (the_uart_queue.is_full())
+			break;
+		else {
+			int c = Serial.read();
+			if (c >= 0) the_uart_queue.push_a_byte(c);
+		}
+	} while (Serial.available());
+#endif
 
 	// UART2 : connected to TWE
-	while (Serial2.available()) {
-		int c = Serial2.read();
-
-		// put input byte into queue.
-		the_input_uart.push_a_byte(c);
-
-		// Serial.write(c); // redirect to Serial (for debug)
-	}
+	do {
+		if (the_uart_queue.is_full())
+			break;
+		else {
+			int c = Serial2.read();
+			if (c >= 0) the_uart_queue.push(c);
+		}
+	} while (Serial2.available());
 }
 
 // the setup()
@@ -351,6 +375,9 @@ void setup() {
 	Serial2.setRxBufferSize(512);
 	Serial2.begin(115200, SERIAL_8N1, 16, 17);
 
+	// allocate buffer in the_uart_queue
+	the_uart_queue.setup(512);
+
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 
@@ -360,8 +387,8 @@ void setup() {
 	pkt_data.init_screen(fmt_title);
 
 	// button navigation
-	//              "0....+....1....+....2....+....3....+....4....+....5....+...."
-	the_screen_c << "  前ﾍﾟｰｼﾞ/長押:電源切     ﾌｫﾝﾄ/色変更       次ﾍﾟｰｼﾞ/ﾃｽﾄdat";
+	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+	the_screen_c << "   前ﾍﾟｰｼﾞ/長押:電源切     ﾌｫﾝﾄ/色変更       次ﾍﾟｰｼﾞ/ﾃｽﾄdat";
 }
 
 // the main loop.
