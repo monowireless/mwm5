@@ -1,0 +1,129 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TWELITE_Stage", "TWELITE_Stage\TWELITE_Stage.vcxproj", "{71DE528D-2A88-439D-95DF-887D2DB075DA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PAL_Recv", "APP_PAL_Recv\Pal_Recv.vcxproj", "{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppTwelite_Recv", "APP_Twelite_Recv\AppTwelite_Recv.vcxproj", "{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSC_SDL2_Screen", "MSC_SDL2_Screen\MSC_SDL2_Screen.vcxproj", "{22054EA5-AD66-4E51-BF7B-658D499EEE2D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MWM5", "MWM5.vcxproj", "{339856F1-E23F-4547-8671-1EF4FC37F4AA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSC_Scratch", "MSC_Scratch\MSC_Scratch.vcxproj", "{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Memos", "Memos", "{685CE5BC-7EA3-4476-AE43-5B9F06D66CD9}"
+	ProjectSection(SolutionItems) = preProject
+		..\_dev\stage_relnote.txt = ..\_dev\stage_relnote.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MkFiles(VSCode)", "MkFiles(VSCode)", "{D75FC633-59F7-4B19-AFF9-FB740D94E042}"
+	ProjectSection(SolutionItems) = preProject
+		..\mkfiles\arch.mk = ..\mkfiles\arch.mk
+		..\mkfiles\arch_linux.mk = ..\mkfiles\arch_linux.mk
+		..\mkfiles\arch_mac.mk = ..\mkfiles\arch_mac.mk
+		..\mkfiles\arch_win.mk = ..\mkfiles\arch_win.mk
+		..\mkfiles\mwm5.mk = ..\mkfiles\mwm5.mk
+		..\mkfiles\rules.mk = ..\mkfiles\rules.mk
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sketch", "Sketch", "{E3ADDF19-4F98-4D1A-AA7D-A9293786DAC0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		ESP32(coding only)|x64 = ESP32(coding only)|x64
+		ESP32(coding only)|x86 = ESP32(coding only)|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Debug|x64.ActiveCfg = Debug|x64
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Debug|x64.Build.0 = Debug|x64
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Debug|x86.ActiveCfg = Debug|Win32
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Debug|x86.Build.0 = Debug|Win32
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.ESP32(coding only)|x64.ActiveCfg = ESP32(coding only)|x64
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.ESP32(coding only)|x64.Build.0 = ESP32(coding only)|x64
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.ESP32(coding only)|x86.ActiveCfg = ESP32(coding only)|Win32
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.ESP32(coding only)|x86.Build.0 = ESP32(coding only)|Win32
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Release|x64.ActiveCfg = Release|x64
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Release|x64.Build.0 = Release|x64
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Release|x86.ActiveCfg = Release|Win32
+		{71DE528D-2A88-439D-95DF-887D2DB075DA}.Release|x86.Build.0 = Release|Win32
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Debug|x64.ActiveCfg = Debug|x64
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Debug|x64.Build.0 = Debug|x64
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Debug|x86.ActiveCfg = Debug|Win32
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Debug|x86.Build.0 = Debug|Win32
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.ESP32(coding only)|x64.ActiveCfg = ESP32(coding only)|x64
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.ESP32(coding only)|x64.Build.0 = ESP32(coding only)|x64
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.ESP32(coding only)|x86.ActiveCfg = ESP32(coding only)|Win32
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.ESP32(coding only)|x86.Build.0 = ESP32(coding only)|Win32
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Release|x64.ActiveCfg = Release|x64
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Release|x64.Build.0 = Release|x64
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Release|x86.ActiveCfg = Release|Win32
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9}.Release|x86.Build.0 = Release|Win32
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Debug|x64.ActiveCfg = Debug|x64
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Debug|x64.Build.0 = Debug|x64
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Debug|x86.ActiveCfg = Debug|Win32
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Debug|x86.Build.0 = Debug|Win32
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.ESP32(coding only)|x64.ActiveCfg = ESP32(coding only)|x64
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.ESP32(coding only)|x64.Build.0 = ESP32(coding only)|x64
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.ESP32(coding only)|x86.ActiveCfg = ESP32(coding only)|Win32
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.ESP32(coding only)|x86.Build.0 = ESP32(coding only)|Win32
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Release|x64.ActiveCfg = Release|x64
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Release|x64.Build.0 = Release|x64
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Release|x86.ActiveCfg = Release|Win32
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6}.Release|x86.Build.0 = Release|Win32
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Debug|x64.ActiveCfg = Debug|x64
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Debug|x64.Build.0 = Debug|x64
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Debug|x86.ActiveCfg = Debug|Win32
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Debug|x86.Build.0 = Debug|Win32
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.ESP32(coding only)|x64.ActiveCfg = ESP32(coding only)|x64
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.ESP32(coding only)|x64.Build.0 = ESP32(coding only)|x64
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.ESP32(coding only)|x86.ActiveCfg = ESP32(coding only)|Win32
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.ESP32(coding only)|x86.Build.0 = ESP32(coding only)|Win32
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Release|x64.ActiveCfg = Release|x64
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Release|x64.Build.0 = Release|x64
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Release|x86.ActiveCfg = Release|Win32
+		{22054EA5-AD66-4E51-BF7B-658D499EEE2D}.Release|x86.Build.0 = Release|Win32
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Debug|x64.ActiveCfg = Debug|x64
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Debug|x64.Build.0 = Debug|x64
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Debug|x86.ActiveCfg = Debug|Win32
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Debug|x86.Build.0 = Debug|Win32
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.ESP32(coding only)|x64.ActiveCfg = ESP32(coding only)|x64
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.ESP32(coding only)|x64.Build.0 = ESP32(coding only)|x64
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.ESP32(coding only)|x86.ActiveCfg = ESP32(coding only)|Win32
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.ESP32(coding only)|x86.Build.0 = ESP32(coding only)|Win32
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Release|x64.ActiveCfg = Release|x64
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Release|x64.Build.0 = Release|x64
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Release|x86.ActiveCfg = Release|Win32
+		{339856F1-E23F-4547-8671-1EF4FC37F4AA}.Release|x86.Build.0 = Release|Win32
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Debug|x64.ActiveCfg = Debug|x64
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Debug|x64.Build.0 = Debug|x64
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Debug|x86.ActiveCfg = Debug|Win32
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Debug|x86.Build.0 = Debug|Win32
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.ESP32(coding only)|x64.ActiveCfg = ESP32(coding only)|x64
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.ESP32(coding only)|x64.Build.0 = ESP32(coding only)|x64
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.ESP32(coding only)|x86.ActiveCfg = ESP32(coding only)|Win32
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.ESP32(coding only)|x86.Build.0 = ESP32(coding only)|Win32
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Release|x64.ActiveCfg = Release|x64
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Release|x64.Build.0 = Release|x64
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Release|x86.ActiveCfg = Release|Win32
+		{5B06C6DE-AC03-4B81-9C38-95FFBF62A105}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{71DE528D-2A88-439D-95DF-887D2DB075DA} = {E3ADDF19-4F98-4D1A-AA7D-A9293786DAC0}
+		{3CCFF8CF-35ED-4526-BDAE-298E58F7E5A9} = {E3ADDF19-4F98-4D1A-AA7D-A9293786DAC0}
+		{E35B2001-FA8E-4848-B8FB-47071E4F6DF6} = {E3ADDF19-4F98-4D1A-AA7D-A9293786DAC0}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9D59F6A7-E7BB-496A-B321-4C1731BE7D67}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,436 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ESP32(coding only)|Win32">
+      <Configuration>ESP32(coding only)</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ESP32(coding only)|x64">
+      <Configuration>ESP32(coding only)</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\printf\LICENSE" />
+    <None Include="..\src\printf\Makefile" />
+    <None Include="..\src\printf\README.md" />
+    <None Include="..\src\twesettings\Makefile" />
+    <None Include="..\src\twesettings\eeprom.sav" />
+    <None Include="..\src\twesettings\Version.mk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\esp32\esp32_common.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_keyb.cpp" />
+    <ClCompile Include="..\src\esp32\esp32_lcdconsole.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_lcd_font.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_modctrl.cpp" />
+    <ClCompile Include="..\src\esp32\esp32_uart.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_8x6.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_MP10.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_MP12.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_shinonome12.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_shinonome14.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_shinonome16.cpp" />
+    <ClCompile Include="..\src\oss\oss_getopt.c" />
+    <ClCompile Include="..\src\oss\oss_regex.cpp" />
+    <ClCompile Include="..\src\printf\printf.c" />
+    <ClCompile Include="..\src\twesettings\esp32_eep.cpp" />
+    <ClCompile Include="..\src\twesettings\msc_eep.c" />
+    <ClCompile Include="..\src\twesettings\msc_main.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\msc_sys.c" />
+    <ClCompile Include="..\src\twesettings\twecrc8.c" />
+    <ClCompile Include="..\src\twesettings\tweinputstring.c" />
+    <ClCompile Include="..\src\twesettings\tweinteractive.c" />
+    <ClCompile Include="..\src\twesettings\tweinteractive_defmenus.c" />
+    <ClCompile Include="..\src\twesettings\tweinteractive_nvmutils.c" />
+    <ClCompile Include="..\src\twesettings\tweinteractive_settings.c" />
+    <ClCompile Include="..\src\twesettings\twenvm.c" />
+    <ClCompile Include="..\src\twesettings\tweprintf.c" />
+    <ClCompile Include="..\src\twesettings\twesercmd_ascii.c" />
+    <ClCompile Include="..\src\twesettings\twesercmd_binary.c" />
+    <ClCompile Include="..\src\twesettings\twesercmd_chat.c" />
+    <ClCompile Include="..\src\twesettings\twesercmd_plus3.c" />
+    <ClCompile Include="..\src\twesettings\twesercmd_timeout.c" />
+    <ClCompile Include="..\src\twesettings\tweserial.c" />
+    <ClCompile Include="..\src\twesettings\tweserial_jen.c" />
+    <ClCompile Include="..\src\twesettings\twesettings.c" />
+    <ClCompile Include="..\src\twesettings\twesettings_cmd.c" />
+    <ClCompile Include="..\src\twesettings\twesettings_std.c" />
+    <ClCompile Include="..\src\twesettings\twesettings_std_defsets.c" />
+    <ClCompile Include="..\src\twesettings\twesettings_validator.c" />
+    <ClCompile Include="..\src\twesettings\twesettings_weak.c" />
+    <ClCompile Include="..\src\twesettings\twestring.c" />
+    <ClCompile Include="..\src\twesettings\twesysutils.c" />
+    <ClCompile Include="..\src\twe_appdefs.cpp" />
+    <ClCompile Include="..\src\twe_console.cpp" />
+    <ClCompile Include="..\src\twe_csettings.cpp" />
+    <ClCompile Include="..\src\twe_cui_listview.cpp" />
+    <ClCompile Include="..\src\twe_file.cpp" />
+    <ClCompile Include="..\src\twe_firmprog.cpp" />
+    <ClCompile Include="..\src\twe_fmt.cpp" />
+    <ClCompile Include="..\src\twe_font.cpp" />
+    <ClCompile Include="..\src\twe_printf.cpp" />
+    <ClCompile Include="..\src\twe_sercmd.cpp" />
+    <ClCompile Include="..\src\twe_sercmd_ascii.cpp" />
+    <ClCompile Include="..\src\twe_sercmd_binary.cpp" />
+    <ClCompile Include="..\src\twe_stgsmenu.cpp" />
+    <ClCompile Include="..\src\twe_stream.cpp" />
+    <ClCompile Include="..\src\twe_sys.cpp" />
+    <ClCompile Include="..\src\twe_utils_crc8.cpp" />
+    <ClCompile Include="..\src\twe_utils_unicode.cpp" />
+    <ClCompile Include="..\src\version_weak.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\esp32\esp32_common.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_lcdconsole.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_lcd_color.h" />
+    <ClInclude Include="..\src\esp32\esp32_uart.hpp" />
+    <ClInclude Include="..\src\esp32\generic_lcd_common.h" />
+    <ClInclude Include="..\src\esp32\generic_lcd_screen.hpp" />
+    <ClInclude Include="..\src\esp32\esp32_modctrl.hpp" />
+    <ClInclude Include="..\src\font\lcd_font_8x6.h" />
+    <ClInclude Include="..\src\font\lcd_font_MP10.h" />
+    <ClInclude Include="..\src\font\lcd_font_MP12.h" />
+    <ClInclude Include="..\src\font\lcd_font_shinonome12.h" />
+    <ClInclude Include="..\src\font\lcd_font_shinonome14.h" />
+    <ClInclude Include="..\src\font\lcd_font_shinonome16.h" />
+    <ClInclude Include="..\src\mwm5.h" />
+    <ClInclude Include="..\src\mwm50.h" />
+    <ClInclude Include="..\src\oss\oss_getopt.h" />
+    <ClInclude Include="..\src\oss\oss_regex.h" />
+    <ClInclude Include="..\src\printf\printf.h" />
+    <ClInclude Include="..\src\twelite.hpp" />
+    <ClInclude Include="..\src\twelite0.hpp" />
+    <ClInclude Include="..\src\twesettings\esp32_eep.h" />
+    <ClInclude Include="..\src\twesettings\msc_eep.h" />
+    <ClInclude Include="..\src\twesettings\msc_sys.h" />
+    <ClInclude Include="..\src\twesettings\twecommon.h" />
+    <ClInclude Include="..\src\twesettings\twecrc8.h" />
+    <ClInclude Include="..\src\twesettings\tweinputstring.h" />
+    <ClInclude Include="..\src\twesettings\tweinteractive.h" />
+    <ClInclude Include="..\src\twesettings\tweinteractive_defmenus.h" />
+    <ClInclude Include="..\src\twesettings\tweinteractive_nvmutils.h" />
+    <ClInclude Include="..\src\twesettings\tweinteractive_settings.h" />
+    <ClInclude Include="..\src\twesettings\twenvm.h" />
+    <ClInclude Include="..\src\twesettings\tweprintf.h" />
+    <ClInclude Include="..\src\twesettings\twesercmd_gen.h" />
+    <ClInclude Include="..\src\twesettings\twesercmd_plus3.h" />
+    <ClInclude Include="..\src\twesettings\tweserial.h" />
+    <ClInclude Include="..\src\twesettings\tweserial_jen.h" />
+    <ClInclude Include="..\src\twesettings\tweset.h" />
+    <ClInclude Include="..\src\twesettings\twesettings.h" />
+    <ClInclude Include="..\src\twesettings\twesettings_callbacks.h" />
+    <ClInclude Include="..\src\twesettings\twesettings_cmd.h" />
+    <ClInclude Include="..\src\twesettings\twesettings_std.h" />
+    <ClInclude Include="..\src\twesettings\twesettings_std_defsets.h" />
+    <ClInclude Include="..\src\twesettings\twesettings_validator.h" />
+    <ClInclude Include="..\src\twesettings\twesettings_weak.h" />
+    <ClInclude Include="..\src\twesettings\twestring.h" />
+    <ClInclude Include="..\src\twesettings\twesysutils.h" />
+    <ClInclude Include="..\src\twesettings\tweutils.h" />
+    <ClInclude Include="..\src\twe_appdefs.hpp" />
+    <ClInclude Include="..\src\twe_common.hpp" />
+    <ClInclude Include="..\src\twe_console.hpp" />
+    <ClInclude Include="..\src\twe_csettings.hpp" />
+    <ClInclude Include="..\src\twe_cui_listview.hpp" />
+    <ClInclude Include="..\src\twe_file.hpp" />
+    <ClInclude Include="..\src\twe_firmprog.hpp" />
+    <ClInclude Include="..\src\twe_fmt.hpp" />
+    <ClInclude Include="..\src\twe_font.hpp" />
+    <ClInclude Include="..\src\twe_printf.hpp" />
+    <ClInclude Include="..\src\twe_sercmd.hpp" />
+    <ClInclude Include="..\src\twe_sercmd_ascii.hpp" />
+    <ClInclude Include="..\src\twe_sercmd_binary.hpp" />
+    <ClInclude Include="..\src\twe_serial.hpp" />
+    <ClInclude Include="..\src\twe_stgsmenu.hpp" />
+    <ClInclude Include="..\src\twe_stream.hpp" />
+    <ClInclude Include="..\src\twe_sys.hpp" />
+    <ClInclude Include="..\src\twe_cui_keyboard.hpp" />
+    <ClInclude Include="..\src\twe_utils.hpp" />
+    <ClInclude Include="..\src\twe_utils_crc8.hpp" />
+    <ClInclude Include="..\src\twe_utils_fixedque.hpp" />
+    <ClInclude Include="..\src\twe_utils_simplebuffer.hpp" />
+    <ClInclude Include="..\src\twe_utils_unicode.hpp" />
+    <ClInclude Include="..\src\version.h" />
+    <ClInclude Include="..\src\version_weak.h" />
+    <ClInclude Include="esp32_coding\Arduino.h" />
+    <ClInclude Include="esp32_coding\EEPROM.h" />
+    <ClInclude Include="esp32_coding\esp32_vs_compat.h" />
+    <ClInclude Include="esp32_coding\M5Stack.h" />
+    <ClInclude Include="esp32_coding\PS2Keyboard.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="esp32_coding\readme.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{339856F1-E23F-4547-8671-1EF4FC37F4AA}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>MWFormatParser</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>MWM5</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)\esp32_coding;$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\src;$(ProjectDir)\..\src\twesettings;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ESP32;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\src;$(ProjectDir)\..\src\twesettings;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>USE_CSETTINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\src;$(ProjectDir)\..\src\twesettings;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>USE_CSETTINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\src;$(ProjectDir)\..\src\twesettings;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\src;$(ProjectDir)\..\src\twesettings;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
+      <AdditionalIncludeDirectories>src;twesettings;msc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

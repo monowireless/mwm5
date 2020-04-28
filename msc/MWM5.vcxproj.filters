@@ -1,0 +1,466 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="TWELibSrc">
+      <UniqueIdentifier>{8951a328-b285-4bc8-9cb9-33cbfa0ae177}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TweSettings">
+      <UniqueIdentifier>{407a5765-e73c-47ae-b7e8-296b7f0624c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TWELibSrc\font">
+      <UniqueIdentifier>{f8932147-c9b7-4a7b-90a5-bf214834b381}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="printf">
+      <UniqueIdentifier>{275ce337-35a6-447b-ba25-f09a7902f3b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ESP32_dummy_header">
+      <UniqueIdentifier>{9a7e40a1-8ef4-40a7-b266-be46b923e60c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TWELibSrc\oss">
+      <UniqueIdentifier>{aada43ce-a4d0-482f-8e21-f0d039f543d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TWELibSrc\esp32">
+      <UniqueIdentifier>{f8b8b757-1615-4eca-a230-c20f27a3a6e2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\printf\LICENSE">
+      <Filter>printf</Filter>
+    </None>
+    <None Include="..\src\printf\Makefile">
+      <Filter>printf</Filter>
+    </None>
+    <None Include="..\src\printf\README.md">
+      <Filter>printf</Filter>
+    </None>
+    <None Include="..\src\twesettings\Makefile">
+      <Filter>TweSettings</Filter>
+    </None>
+    <None Include="..\src\twesettings\Version.mk">
+      <Filter>TweSettings</Filter>
+    </None>
+    <None Include="..\src\twesettings\eeprom.sav">
+      <Filter>TweSettings</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\printf\printf.c">
+      <Filter>printf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_console.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_csettings.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_font.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_printf.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_sercmd.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_sercmd_ascii.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_sercmd_binary.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_stream.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_sys.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_utils_crc8.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\esp32_eep.cpp">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\msc_eep.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\msc_main.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\msc_sys.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twecrc8.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweinputstring.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweinteractive.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweinteractive_defmenus.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweinteractive_nvmutils.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweinteractive_settings.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twenvm.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweprintf.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesercmd_ascii.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesercmd_binary.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesercmd_chat.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesercmd_plus3.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesercmd_timeout.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweserial.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\tweserial_jen.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesettings.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesettings_cmd.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesettings_std.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesettings_std_defsets.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesettings_validator.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twestring.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesysutils.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_firmprog.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_appdefs.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font\lcd_font_8x6.cpp">
+      <Filter>TWELibSrc\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font\lcd_font_MP10.cpp">
+      <Filter>TWELibSrc\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font\lcd_font_MP12.cpp">
+      <Filter>TWELibSrc\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font\lcd_font_shinonome12.cpp">
+      <Filter>TWELibSrc\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font\lcd_font_shinonome14.cpp">
+      <Filter>TWELibSrc\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\font\lcd_font_shinonome16.cpp">
+      <Filter>TWELibSrc\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_lcdconsole.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_lcd_font.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_common.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_cui_listview.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_modctrl.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_keyb.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twesettings\twesettings_weak.c">
+      <Filter>TweSettings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_file.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_utils_unicode.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_stgsmenu.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\oss\oss_getopt.c">
+      <Filter>TWELibSrc\oss</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\oss\oss_regex.cpp">
+      <Filter>TWELibSrc\oss</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\esp32\esp32_uart.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\version_weak.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\printf\printf.h">
+      <Filter>printf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mwm5.h">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_common.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_console.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_csettings.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_font.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_printf.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_sercmd.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_sercmd_ascii.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_sercmd_binary.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_stream.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_sys.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_utils.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_utils_crc8.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_utils_fixedque.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_utils_simplebuffer.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twelite.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\esp32_eep.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\msc_eep.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\msc_sys.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twecommon.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twecrc8.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweinputstring.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweinteractive.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweinteractive_defmenus.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweinteractive_nvmutils.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweinteractive_settings.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twenvm.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweprintf.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesercmd_gen.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesercmd_plus3.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweserial.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweserial_jen.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweset.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings_cmd.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings_std.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings_std_defsets.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings_validator.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twestring.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesysutils.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\tweutils.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\generic_lcd_screen.hpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\generic_lcd_common.h">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_serial.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_firmprog.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_appdefs.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\font\lcd_font_8x6.h">
+      <Filter>TWELibSrc\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\font\lcd_font_MP10.h">
+      <Filter>TWELibSrc\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\font\lcd_font_MP12.h">
+      <Filter>TWELibSrc\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\font\lcd_font_shinonome12.h">
+      <Filter>TWELibSrc\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\font\lcd_font_shinonome14.h">
+      <Filter>TWELibSrc\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\font\lcd_font_shinonome16.h">
+      <Filter>TWELibSrc\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_common.h">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_lcd_color.h">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_lcdconsole.hpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_cui_keyboard.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_cui_listview.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_modctrl.hpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="esp32_coding\Arduino.h">
+      <Filter>ESP32_dummy_header</Filter>
+    </ClInclude>
+    <ClInclude Include="esp32_coding\EEPROM.h">
+      <Filter>ESP32_dummy_header</Filter>
+    </ClInclude>
+    <ClInclude Include="esp32_coding\esp32_vs_compat.h">
+      <Filter>ESP32_dummy_header</Filter>
+    </ClInclude>
+    <ClInclude Include="esp32_coding\M5Stack.h">
+      <Filter>ESP32_dummy_header</Filter>
+    </ClInclude>
+    <ClInclude Include="esp32_coding\PS2Keyboard.h">
+      <Filter>ESP32_dummy_header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings_weak.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twesettings\twesettings_callbacks.h">
+      <Filter>TweSettings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_file.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_utils_unicode.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_stgsmenu.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\oss\oss_getopt.h">
+      <Filter>TWELibSrc\oss</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\oss\oss_regex.h">
+      <Filter>TWELibSrc\oss</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\esp32\esp32_uart.hpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\version_weak.h">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\version.h">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twelite0.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mwm50.h">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="esp32_coding\readme.txt">
+      <Filter>ESP32_dummy_header</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
