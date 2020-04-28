@@ -58,9 +58,19 @@ https://github.com/m5stack/M5Stack を参考にしてください。
 ### Windows10
 
 * Visual Studio 2019 (VC++) を用いています。msc ディレクトリ以下にプロジェクトファイルを用意しています。
+* Sketchフィルター以下にあるプロジェクト (TWELITE_Stageなど) をスタートアッププロジェクトにして、Release/Debug、64bit/32bit を選択してビルドします。
+
+
 
 * MingW64 gcc環境 (gcc-9 g++-9) によるビルド定義も含めています。
   * examples/???/build ディレクトリ上で make を実行します。
+
+```
+make オプション (Mingw64)
+  DEBUG_BUILD=1           -> デバッグビルド
+```
+
+
 
 VC++ でビルドした場合と MingW64 でビルドした場合で、DLL ファイル (SDL2.dll) の格納場所に注意が必要です。VC++ では .exe (実行形式) のあるディレクトリ直下の dll ディレクトリに格納することが可能ですが、MingW では 実行形式のあるディレクトリに置く必要があります。
 
@@ -73,9 +83,17 @@ VC++のみ32bitのビルド定義を用意しています。
 macOS 10.14, 10.15 でビルドできます。
 
 * brew にて gcc (gcc-9, g++-9) をインストールしておいてください。
-  ※ clang によるビルド定義も用意していますが、一部 C++17 機能を利用しているため macOS 15 (Catalina) 以降が要件になります。
+  ※ clang によるビルド定義も用意していますが、一部 C++ ライブラリが macOS 15 (Catalina) 以降からの対応となるため、それ以前の macOS ではビルドまたは動作が行えません。
 * XCode に付属する make を利用できるようにしておいてください。
 * examples/???/build ディレクトリ上で make を実行します。
+
+```
+make オプション
+  OSX_COMPILERTYPE=clang  -> clang でビルド
+  DEBUG_BUILD=1           -> デバッグビルド
+```
+
+
 
 [osx/readme.txt](osx/readme.txt) も参照ください。
 
@@ -88,6 +106,13 @@ Ubuntu16.04 18.04 20.04 でビルドできます。
 * gcc (gcc-9 g++-9) をインストールしておいてください。
 * SDL2 (libsdl2-dev パッケージ) をインストールしておいてください。
 * examples/???/build ディレクトリ上で make を実行します。
+
+```
+make オプション
+  DEBUG_BUILD=1           -> デバッグビルド
+```
+
+
 
 [linux/readme.txt](linux/readme.txt) も参照ください。
 
@@ -114,4 +139,3 @@ https://mwm5.twelite.info を参照ください。
 * ライセンス
 * 使用方法
 * APIリファレンス
-

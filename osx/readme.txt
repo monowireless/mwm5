@@ -23,4 +23,10 @@
     Install D2xxHelper (find from FTDI website or lib/FTDI/D2xxHelper_v???.pkg)
     to supress default driver loading. Once installed, usb driver won't be loaded
     if the device has default vendor/product-id.
+
+[Compile Options for make]
+  OSX_COMPILERTYPE=clang
+    -> build with clang (required macOS 10.15)
+  DEBUG_BUILD=1
+    -> build debug binary
       
