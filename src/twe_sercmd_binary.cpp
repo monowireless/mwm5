@@ -1,6 +1,5 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_stream.hpp"
@@ -33,7 +32,7 @@ namespace TWESERCMD {
 /// </summary>
 /// <param name="u8byte"></param>
 /// <returns></returns>
-uint8_t BinaryParser::_u8Parse(char_t u8byte) {
+uint8_t BinaryParser::_u8Parse(uint8_t u8byte) {
 	// check for timeout
 	if (TimeOut::is_enabled() && TimeOut::is_timeout()) {
 		u8state = E_SERCMD_BINARY_EMPTY;
@@ -49,10 +48,7 @@ uint8_t BinaryParser::_u8Parse(char_t u8byte) {
 	case E_SERCMD_BINARY_EMPTY:
 		if (u8byte == SERCMD_SYNC_1) {
 			u8state = E_SERCMD_BINARY_READSYNC;
-
-			if (TimeOut::is_enabled()) {
-				TimeOut::start();
-			}
+			TimeOut::start(); // start timer again
 		}
 		break;
 
@@ -129,7 +125,6 @@ uint8_t BinaryParser::_u8Parse(char_t u8byte) {
  * @param ps
  */
 void BinaryParser::s_vOutput(SmplBuf_Byte& payload, IStreamOut& vPutChar) {
-	int i;
 	unsigned char u8xor = 0;
 
 	vPutChar(SERCMD_SYNC_1);
@@ -137,7 +132,7 @@ void BinaryParser::s_vOutput(SmplBuf_Byte& payload, IStreamOut& vPutChar) {
 	vPutChar((unsigned char)(0x80 | (payload.length() >> 8)));
 	vPutChar(payload.length() & 0xff);
 
-	for (i = 0; i < payload.length(); i++) {
+	for (unsigned i = 0; i < payload.length(); i++) {
 		u8xor ^= payload[i];
 		vPutChar(payload[i]);
 	}

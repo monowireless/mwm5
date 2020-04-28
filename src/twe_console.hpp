@@ -1,11 +1,11 @@
 #pragma once
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
+#include "twe_utils_unicode.hpp"
 #include "twe_stream.hpp"
 #include "twe_printf.hpp"
 #include "twe_utils_simplebuffer.hpp"
@@ -38,6 +38,7 @@ namespace TWETERM {
 		inline tAttr& attr() { return _attr; }
 		inline tChar& chr() { return _c; }
 		GChar& operator = (tChar c) { _c = c; _attr = 0; return (*this);  }
+		bool operator == (const GChar& c) { return (_c == c._c && _attr == c._attr); }
 	};
 
 	// define matrix
@@ -69,6 +70,7 @@ namespace TWETERM {
 
 		E_ESCSEQ_BOLD_MASK = 0x100,
 		E_ESCSEQ_REVERSE_MASK = 0x200,
+		E_ESCSEQ_UNDERLINE_MASK = 0x400,
 	};
 
 	/// <summary>
@@ -152,12 +154,14 @@ namespace TWETERM {
 	class ITerm : public TWE::IStreamOut {
 		int32_t wrapchar;		// if cursor reaches right end, save the end char, otherwise set -1.
 		EscSeq escseq;
+		uint8_t wrap_mode;
 		
 	protected:
 		int16_t cursor_l;		// cursor line position
 		int16_t cursor_c;		// cursor column position
 		int16_t end_l;			// virtual end line number (for efficient scrolling)
 
+		SimpBuf_GChar* buf_astr_screen;
 		SmplMtrx_GChar astr_screen;	// screen buffer array
 		GChar* _raw_buffer;			// raw GChar buffer of screen text
 		uint16_t _raw_buffer_max;  // max size of raw buffer, given by initial idx/lines.
@@ -178,9 +182,16 @@ namespace TWETERM {
 		uint8_t screen_mode;	// screen mode (0: not specified)
 		uint8_t cursor_mode;	// 0: off, 1: on and blink, 2: on and static
 
+		uint8_t _bvisible;		// visible screen
+
 		// UTF8
 		uint8_t _utf8_stat;
 		uint32_t _utf8_result;
+
+	private:
+		ITerm(const ITerm& obj) = delete;
+		void operator =(const ITerm& obj) = delete;
+		ITerm(const ITerm&& obj) = delete;
 
 	public:
 		ITerm(uint8_t u8c, uint8_t u8l, SimpBuf_GChar* pAryLines, GChar* pBuff) :
@@ -188,17 +199,22 @@ namespace TWETERM {
 			max_term_line(u8l),					// the max term size
 			max_col(u8c - 1),					// the end iex of the columns
 			max_term_col(u8c),					// the max term size
+			buf_astr_screen(nullptr),			
 			astr_screen(pAryLines, u8l, u8l),	// ary of lines buffer.
 			_raw_buffer(pBuff), 				// the raw uint8 buffer of screen mesg
 			_b_dynamic_alloc(false),
-			
+
+			u8OptRefresh(0),
+			escseq_attr(0), escseq_attr_default(0),
+
 			u32Dirty(false), cursor_l(0), cursor_c(0), end_l(u8l - 1),
-			escseq(), wrapchar(-1), screen_mode(0),
-			_utf8_stat(0), _utf8_result(0)
+			escseq(), wrapchar(-1), screen_mode(0), cursor_mode(0),
+			_utf8_stat(0), _utf8_result(0), wrap_mode(1), _bvisible(1)
 		{
 			// init screen buff
-			_init_buff();
+			// 
 			_raw_buffer_max = u8c * u8l;
+			_init_buff();
 		}
 
 		ITerm(uint8_t u8c, uint8_t u8l) :
@@ -206,31 +222,33 @@ namespace TWETERM {
 			max_term_line(u8l),					// the max term size
 			max_col(u8c - 1),					// the end iex of the columns
 			max_term_col(u8c),					// the max term size
-			
+
+			u8OptRefresh(0),
+			escseq_attr(0), escseq_attr_default(0),
+
 			u32Dirty(false), cursor_l(0), cursor_c(0), end_l(u8l - 1),
-			escseq(), wrapchar(-1), screen_mode(0),
-			_utf8_stat(0), _utf8_result(0)
+			escseq(), wrapchar(-1), screen_mode(0), cursor_mode(0),
+			_utf8_stat(0), _utf8_result(0), wrap_mode(1), _bvisible(1)
 		{
 			// alloc buffer dynamically
-			SimpBuf_GChar* pAryLines = new SimpBuf_GChar[u8l];
+			buf_astr_screen = new SimpBuf_GChar[u8l];
 			GChar* pBuff = new GChar[u8c * u8l];
 
 			_b_dynamic_alloc = true;
 
-			astr_screen.attach(pAryLines, u8l, u8c);
+			astr_screen.attach(buf_astr_screen, u8l, u8c);
 			_raw_buffer = pBuff;
 
 			// init screen buff
-			_init_buff();
 			_raw_buffer_max = u8c * u8l;
+			_init_buff();
 		}
 
 		virtual ~ITerm() {
 			// memory release
 			if (_b_dynamic_alloc) {
 				if (_raw_buffer) delete _raw_buffer;
-				SimpBuf_GChar* pAryLines = astr_screen.begin();
-				if (pAryLines) delete pAryLines;
+				if (buf_astr_screen) delete[] buf_astr_screen;
 			}
 		}
 
@@ -260,7 +278,7 @@ namespace TWETERM {
 				end_l = 0;
 			}
 
-			astr_screen[end_l] = 0;
+			astr_screen[end_l].resize(0);
 
 			cursor_c = 0;
 			cursor_l = max_line;
@@ -293,14 +311,14 @@ namespace TWETERM {
 
 		// for wide char, get visual column position.
 		uint16_t column_idx_to_vis(int16_t idx , int16_t lin) {
-			int cvis = 0;
-			for (int i = 0; i < idx && i <= max_col; i++) {
+			unsigned cvis = 0;
+			for (unsigned i = 0; i < unsigned(idx) && i <= max_col; i++) {
 				if (i >= astr_screen[lin].length()) // blank area
 					cvis++;
 				else
 					cvis += (TWEUTILS::Unicode_isSingleWidth(astr_screen[lin][i].chr()) ? 1 : 2);
 			}
-			return cvis;
+			return uint16_t(cvis);
 		}
 
 		// for wide char, get char pos from visual column
@@ -308,7 +326,7 @@ namespace TWETERM {
 			int vis, idx;
 			for (vis = 0, idx = 0; idx <= max_col; idx++) {
 				int cwid = 1;
-				if (   idx < astr_screen[lin].length()
+				if (   idx < int(astr_screen[lin].length())
 					&& !TWEUTILS::Unicode_isSingleWidth(astr_screen[lin][idx].chr()))
 				{
 					cwid = 2;
@@ -331,7 +349,7 @@ namespace TWETERM {
 		// clear screen buffer
 		inline void clear() {
 			for (int i = 0; i <= max_line; i++) {
-				astr_screen[i] = 0; // clear buffer string
+				astr_screen[i].resize(0); // clear buffer string
 			}
 			end_l = max_line;
 			escseq_attr_default = escseq_attr; // set default when it's cleared.
@@ -355,10 +373,14 @@ namespace TWETERM {
 		}
 				
 		// set dirty flag to redraw screen
-		inline void force_refresh() {
+		inline void force_refresh(uint8_t opt = 0) {
 			u32Dirty = U32DIRTY_FULL; 
-			u8OptRefresh |= U8OPT_REFRESH_HARDWARE_CLEAR_MASK;
+			u8OptRefresh = U8OPT_REFRESH_HARDWARE_CLEAR_MASK | U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK | opt;
 			refresh(); // do refresh now!
+		}
+
+		inline void refresh_text() {
+			u32Dirty = U32DIRTY_FULL;
 		}
 
 		// add a unicode to the terminal
@@ -367,7 +389,7 @@ namespace TWETERM {
 
 		// add a byte (utf-8)
 		ITerm& write(char_t c) {
-			int wc = -1;
+			int32_t wc = -1;
 			// ASCII
 			if ((c & 0x80) == 0x00) {
 				_utf8_stat = 0;
@@ -411,11 +433,24 @@ namespace TWETERM {
 		virtual void refresh() = 0;
 
 		// information
-		inline uint8_t get_height() { return max_line+1; }
-		inline uint8_t get_width() { return max_col+1; }
+		inline uint8_t get_height() { return max_line + 1; }
+		inline uint8_t get_rows() { return max_line + 1; }
+		inline uint8_t get_width() { return max_col + 1; }
+		inline uint8_t get_cols() { return max_col + 1; }
+
+		// copy screen buffer
+		void get_screen_buf(GChar* ptr);
+		// set screen buffer
+		void set_screen_buf(GChar* ptr, uint8_t oldlines, uint8_t oldcols);
 
 		// cursor
 		inline void set_cursor(uint8_t m) { cursor_mode = m; }
+
+		// wrap text
+		inline void set_wraptext(bool b) { wrap_mode = b;  }
+
+		bool visible() const { return _bvisible; }
+		bool visible(bool bvis) { return _bvisible = bvis; }
 
 	public:
 		TWE::IStreamOut& operator << (TWE::IStreamSpecial& sc) { return sc(*this); }
@@ -442,6 +477,7 @@ namespace TWETERM {
 	 const GChar::tAttr TERM_COLOR_BG_WHITE = 0xF0;
 	 const GChar::tAttr TERM_BOLD = E_ESCSEQ_BOLD_MASK;
 	 const GChar::tAttr TERM_REVERSE = E_ESCSEQ_REVERSE_MASK;
+	 const GChar::tAttr TERM_UNDERLINE = E_ESCSEQ_UNDERLINE_MASK;
 
 	/// <summary>
 	/// TWESERCMD::color attributes
@@ -470,6 +506,10 @@ namespace TWETERM {
 					if (ct++) of(';');
 					of('7');
 				}
+				if (_attr & TERM_UNDERLINE) { // FG
+					if (ct++) of(';');
+					of('4');
+				}
 				if (_attr & 0x000F) { // FG
 					int c = _attr & 0x7;
 					if (ct++) of(';');
@@ -496,5 +536,29 @@ namespace TWETERM {
 	// resolve ambiguous overload
 	inline ITerm& operator << (ITerm& t, char_t c) { *static_cast<TWE::IStreamOut*>(&t) << c; return t; } // call via super class's operator.
 	inline ITerm& operator << (ITerm& t, wchar_t c) { *static_cast<TWE::IStreamOut*>(&t) << c; return t; }
-	inline TWE::IStreamOut& operator << (ITerm& t, int i) { *static_cast<TWE::IStreamOut*>(&t) << i; return t; }
+	inline ITerm& operator << (ITerm& t, const char *p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
+	inline ITerm& operator << (ITerm& t, const wchar_t* p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
+	inline ITerm& operator << (ITerm& t, TWEUTILS::SmplBuf_Byte& p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
+	inline ITerm& operator << (ITerm& t, TWEUTILS::SmplBuf_WChar& p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
+	inline ITerm& operator << (ITerm& t, const TWEUTILS::SmplBuf_Byte& p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
+	inline ITerm& operator << (ITerm& t, const TWEUTILS::SmplBuf_WChar& p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
+
+	// OTHERS
+	inline ITerm& operator << (ITerm& t, int i) { *static_cast<TWE::IStreamOut*>(&t) << i; return t; }
+
+	template <typename TP>
+	inline ITerm& operator << (ITerm& t, std::pair<TP, TP> pair_pt) {
+		TP p = pair_pt.first;
+		TP e = pair_pt.second;
+
+		while (p != e) {
+			*static_cast<TWE::IStreamOut*>(&t) << *p;
+			++p;
+		}
+		return t;
+	}
+
+	// system console instance
+	extern ITerm& the_sys_console;
+
 } // end of namespace TWEARD

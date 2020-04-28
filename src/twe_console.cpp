@@ -1,6 +1,5 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include <cstring>
 #include "twe_common.hpp"
@@ -29,6 +28,12 @@ const uint8_t TWETERM::U8CMDTBL[] = {
 /// initialize the buffers
 /// </summary>
 void ITerm::_init_buff() {
+	// clear raw buff
+	for (int i = 0; i < _raw_buffer_max; i++) {
+		_raw_buffer[i].attr() = 0;
+		_raw_buffer[i].chr() = 0;
+	}
+
 	// init screen buff
 	astr_screen.redim(max_line + 1);
 	int off = 0;
@@ -36,6 +41,9 @@ void ITerm::_init_buff() {
 		astr_screen[i].attach(_raw_buffer + off, 0, max_col + 1);
 		off += (max_col + 1);
 	}
+
+	escseq_attr = 0;
+	escseq_attr_default = 0;
 }
 
 // add a byte to the terminal
@@ -46,14 +54,14 @@ ITerm& ITerm::write (wchar_t c) {
 	uint8_t u8cur_init = (uint8_t)cursor_l;
 
 	// WRAP
-	{ // no WRAP for single line
+	if (wrap_mode) { // no WRAP for single line
 		i = calc_line_index(cursor_l);
 		int c_vis = column_idx_to_vis(cursor_c, i);
 
 		if (wrapchar >= 0 && is_printable(c)) { // && c_vis >= max_col) {
 			// wrap at the right edge
 			if (cursor_c >= max_col) cursor_c = max_col;
-			astr_screen[i][cursor_c] = GChar(0xA6, 0x09); // RED COLOR
+			astr_screen[i][cursor_c] = GChar(L'_', 0x09); // 0xab(<<) GChar(' ', 0x00); // GChar('|', 0x09); // RED COLOR
 
 			if (max_line > 1) {
 				// new line
@@ -80,10 +88,18 @@ ITerm& ITerm::write (wchar_t c) {
 			wrapchar = -1;
 			return (*this);
 		}
-	}
 
-	// clear wrapchar.
-	wrapchar = -1;
+		// clear wrapchar.
+		wrapchar = -1;
+	}
+	else {
+		if (wrapchar >= 0 && is_printable(c)) {
+			return (*this);
+		}
+		else {
+			wrapchar = -1;
+		}
+	}
 
 	// ESC SEQUENCE
 	if (escseq.is_sequence()) {
@@ -166,7 +182,7 @@ ITerm& ITerm::write (wchar_t c) {
 					// ONLY IMPLEMENT 2
 					home(); // DOS spec
 					clear();
-					force_refresh();
+					//force_refresh();
 				}
 				break;
 
@@ -179,19 +195,25 @@ ITerm& ITerm::write (wchar_t c) {
 				// fill with spaces
 				switch (val1) {
 				case 0: // clear from cursor to line end
+					astr_screen[i].redim(max_col + 1);
+					for(int j = cursor_c; j <= max_col; j++) {
+						astr_screen[i][j] = GChar(' ', escseq_attr);
+					}
+					#if 0
 					astr_screen[i][cursor_c] = GChar(' ', escseq_attr);
 					astr_screen[i].redim(cursor_c + 1);
+					#endif
 					break;
 				case 1: // clear head to cursor
-					for (int j = 0; j <= cursor_c; j++) astr_screen[i][j] = ' ';
+					for (int j = 0; j <= cursor_c; j++) astr_screen[i][j] = GChar(' ', escseq_attr);
 					break;
 				case 2:
-					for (int j = 0; j <= cursor_c; j++) astr_screen[i][j] = ' ';
+					for (int j = 0; j <= cursor_c; j++) astr_screen[i][j] = GChar(' ', escseq_attr);
 					astr_screen[i].redim(cursor_c + 1);
 					break;
 				}
-			}
-
+			} break;
+			
 			case E_ESCSEQ_CURSOR_ATTR:
 				// not supported, just set internally
 				if (val1 == 0) { // NOTE: ESC[m may clear all attribulte as ESC[0m.
@@ -202,7 +224,10 @@ ITerm& ITerm::write (wchar_t c) {
 						if (pVal[i] == 1) {
 							escseq_attr |= E_ESCSEQ_BOLD_MASK;
 						}
-						else  if (pVal[i] == 7) {
+						else if (pVal[i] == 4) {
+							escseq_attr |= E_ESCSEQ_UNDERLINE_MASK;
+						}
+						else if (pVal[i] == 7) {
 							escseq_attr |= E_ESCSEQ_REVERSE_MASK;
 						}
 						else if (pVal[i] >= 30 && pVal[i] <= 37) {
@@ -216,9 +241,8 @@ ITerm& ITerm::write (wchar_t c) {
 				break;
 
 			case E_ESCSEQ_SCREEN_MODE:
-				u8OptRefresh |= U8OPT_REFRESH_WITH_SCREEN_MODE;
 				screen_mode = val1;
-				force_refresh();
+				force_refresh(U8OPT_REFRESH_WITH_SCREEN_MODE);
 				break;
 
 			case E_ESCSEQ_UNKNOWN_COMMAND:
@@ -282,8 +306,10 @@ ITerm& ITerm::write (wchar_t c) {
 	// append a char
 	if (!bHandled && is_printable(c)) { // printable
 		// fill with space to the cursor position, when the cursor exceeds line buffer end.
-		while (astr_screen[L].length() <= cursor_c) {
-			astr_screen[L].append(GChar(' ', 0));
+		while (astr_screen[L].length() <= unsigned(cursor_c)) {
+			if (!astr_screen[L].append(GChar(' ', 0))) {
+				break;
+			}
 		}
 		
 		int c_vis = column_idx_to_vis(cursor_c, L);
@@ -320,11 +346,12 @@ ITerm& ITerm::write (wchar_t c) {
 // output to stream
 void ITerm::operator >> (IStreamOut& fo) {
 
-	for (int l = 0; l <= max_line; l++) {
-		int i = calc_line_index(l);
+	for (unsigned l = 0; l <= max_line; l++) {
+		unsigned i = calc_line_index(l);
 
-		for (int j = 0; j < astr_screen[i].length(); j++) {
-			fo << (char_t)astr_screen[i][j];
+		for (unsigned j = 0; j < astr_screen[i].length(); j++) {
+			// fo << (char_t)astr_screen[i][j];
+			fo.write_w(astr_screen[i][j]);
 		}
 
 		if (l != max_line)
@@ -446,4 +473,41 @@ bool TWETERM::EscSeq::operator<<(uint8_t c) {
 	} while (bAgain);
 
 	return is_complete();
+}
+
+
+// need to be reserve enough buffer size
+void ITerm::get_screen_buf(GChar* ptr) {
+	GChar nul; // null char
+
+	for (uint8_t l = 0; l <= max_line; l++) {
+		uint8_t L = calc_line_index(l); // get the index of buffer at line 'l'
+
+		uint8_t cols = astr_screen[L].length();
+		for (uint8_t c = 0; c <= max_col; c++) {
+			*ptr = (c < cols) ? astr_screen[L][c] : nul;
+			++ptr;
+		}
+	}
+}
+
+void ITerm::set_screen_buf(GChar* ptr, uint8_t oldcols, uint8_t oldlines) {
+	clear(); // clear the buffer to the initial
+
+	GChar nul; // null char
+
+	for (uint8_t l = 0; l <= max_line; l++) {
+		if (l < oldlines) {
+			GChar* p = ptr + l * oldcols;
+
+			for (uint8_t c = 0; c <= max_col; c++) {
+				if (c < oldcols) {
+					if (*p != nul) {
+						astr_screen[l].push_back(*p);
+					}
+					++p;
+				}
+			}
+		}
+	}
 }

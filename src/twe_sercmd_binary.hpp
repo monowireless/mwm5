@@ -1,8 +1,7 @@
-#pragma once
+﻿#pragma once
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_stream.hpp"
@@ -25,10 +24,10 @@ namespace TWESERCMD {
 		static const uint8_t SERCMD_SYNC_2 = 0x5A;
 
 		inline void _vOutput(TWEUTILS::SmplBuf_Byte& bobj, TWE::IStreamOut& p) { BinaryParser::s_vOutput(bobj, p); }
-		uint8_t _u8Parse(char_t u8byte);
+		uint8_t _u8Parse(uint8_t u8byte);
 
 	public:
-		BinaryParser(TWEUTILS::SimpleBuffer<uint8_t>& bobj) : IParser(bobj), u16pos(0), u16cksum(0) {  }
+		BinaryParser(TWEUTILS::SmplBuf_Byte& bobj) : IParser(bobj), u16pos(0), u16cksum(0) {  }
 		~BinaryParser() {}
 		
 		/// <summary>

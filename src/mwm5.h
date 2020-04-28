@@ -1,8 +1,7 @@
 #pragma once
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twelite.hpp"
 
@@ -13,7 +12,5 @@ using namespace TWEUTILS;
 using namespace TWESERCMD;
 using namespace TWEFMT;
 using namespace TWETERM;
-
-#ifdef ARDUINO
 using namespace TWEARD;
-#endif
+using namespace TWECUI;

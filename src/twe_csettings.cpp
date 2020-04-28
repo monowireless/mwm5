@@ -1,15 +1,9 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
-
-#ifdef USE_CSETTINGS
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_csettings.hpp"
 
-#undef DEBUG_ARD
-#ifdef DEBUG_ARD
-#include <Arduino.h>
-#endif
+#ifdef USE_CSETTINGS
 
 /// <summary>
 /// init the TWE_tsFILE structure.
@@ -35,9 +29,7 @@ int C_TWE_printf_support::s_getc(struct _tsTWETERM_FILE* fp) {
 	TWE::IStreamIn* pIn = (TWE::IStreamIn *)fp->vpContext_input;
 	if (pIn != nullptr) {
 		int c = pIn->get_a_byte();
-#ifdef DEBUG_ARD
-		if (c>=0) Serial.printf("<%02x>", c);
-#endif
+
 		return c;
 	}
 	else {

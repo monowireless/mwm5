@@ -1,14 +1,11 @@
 #pragma once 
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
-
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
-#include "twe_stream.hpp"
-#include "twe_utils.hpp"
 #include <cstdarg>
+#include <memory>
 
 namespace TWE {
 	class IStreamOut;
@@ -20,7 +17,7 @@ namespace TWE {
 	/// </summary>
 	class IStreamSpecial {
 	public:
-		virtual inline IStreamOut& operator ()(IStreamOut& of) = 0;
+		virtual IStreamOut& operator ()(IStreamOut& of) = 0;
 	};
 
 
@@ -31,15 +28,42 @@ namespace TWE {
 	protected:
 		IStreamOut() {}
 	public:
-		virtual inline IStreamOut& operator ()(char_t c) = 0; //! () operator as a function object
+		virtual ~IStreamOut() {}
+		virtual IStreamOut& operator ()(const char_t c) = 0; //! () operator as a function object
 		virtual inline IStreamOut& write_w(wchar_t c) { return *this; }
-		inline IStreamOut& operator << (char_t c) { return (*this)(c); } // should be on root class
-		inline IStreamOut& operator << (wchar_t c) { return write_w(c); } // should be on root class
+		inline IStreamOut& operator << (const char_t c) { return (*this)(c); } // should be on root class
+		inline IStreamOut& operator << (const uint8_t c) { return (*this)(c); } // should be on root class
+		inline IStreamOut& operator << (const wchar_t c) { return write_w(c); } // should be on root class
 		inline IStreamOut& operator << (IStreamSpecial& sc) { return sc(*this); } // implement std::endl like object
 		inline IStreamOut& operator << (const char* s) { // const char*
 			while (*s != 0) operator ()((char_t)*s++);
 			return *this;
 		}
+		inline IStreamOut& operator << (const wchar_t* s) { // const char*
+			while (*s != 0) write_w(*s++);
+			return *this;
+		}
+#if 0 // move to twe_utils_simplebuffer.hpp
+		inline IStreamOut& operator << (TWEUTILS::SmplBuf_Byte& s) {
+			for (auto x : s) { operator ()((char_t)x); }
+			return *this;
+		}
+		inline IStreamOut& operator << (TWEUTILS::SmplBuf_WChar& s) {
+			for (auto x : s) { write_w((wchar_t)x); }
+			return *this;
+		}
+#endif
+	};
+
+	// wrapper object
+	class IStreamOutWrapper : public IStreamOut {
+		std::unique_ptr<IStreamOut> _sp;
+	public:
+		IStreamOutWrapper(IStreamOut* obj) : _sp(obj) {}
+		~IStreamOutWrapper() {}
+		void reset(IStreamOut* ptr) { _sp.reset(ptr); }
+		IStreamOut& operator ()(char_t c) { return _sp->operator()(c); }
+		IStreamOut& write_w(wchar_t c) { return _sp->write_w(c); }
 	};
 
 	/// <summary>
@@ -83,7 +107,7 @@ namespace TWE {
 	class IStreamIn {
 	public:
 		IStreamIn() {}
-		virtual inline int get_a_byte() = 0;
+		virtual int get_a_byte() = 0;
 	};
 
 	/// <summary>

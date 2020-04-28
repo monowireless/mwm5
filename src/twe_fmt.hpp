@@ -1,13 +1,13 @@
 #pragma once 
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_stream.hpp"
 #include "twe_utils.hpp"
 #include "twe_sercmd.hpp"
+#include "twe_utils_simplebuffer.hpp"
 
 #include <memory>
 
@@ -19,18 +19,36 @@ namespace TWEFMT {
 	enum class E_PKT : uint8_t {
 		PKT_ERROR,
 		PKT_TWELITE, // for APP TWELITE
-		PKT_PAL      // for APP PAL
+		PKT_PAL,     // for APP PAL
+		PKT_APPIO,   // for APP IO
+		PKT_APPUART, // for APP UART
+		PKT_APPTAG,  // for APP UART
 	};
 
 	class TwePacket {
 	protected:
 		const E_PKT _type;
 
+
 	public:
-		TwePacket(E_PKT ptyp = E_PKT::PKT_ERROR) : _type(ptyp) {}
-		virtual E_PKT parse(uint8_t* p, uint8_t u8len) { return E_PKT::PKT_ERROR; }
+		TwePacket(E_PKT ptyp = E_PKT::PKT_ERROR) : _type(ptyp), common{} {}
+		virtual E_PKT parse(uint8_t* p, uint16_t len) { return E_PKT::PKT_ERROR; }
 		inline E_PKT get_type() { return _type; }
 		virtual ~TwePacket() {}
+
+		// common information set by parse()
+		struct {
+			uint32_t tick;
+			uint32_t src_addr;
+			uint8_t src_lid;
+			uint8_t lqi;
+			void clear() {
+				tick = 0;
+				src_addr = 0;
+				src_lid = 0;
+				lqi = 0;
+			}
+		} common;
 	};
 
 	/*****************************************************
@@ -121,7 +139,7 @@ namespace TWEFMT {
 
 		TwePacketPal() : TwePacket(_pkt_id), DataPal({ 0 }) { }
 		~TwePacketPal() { }
-		E_PKT parse(uint8_t* p, uint8_t u8len);
+		E_PKT parse(uint8_t* p, uint16_t len);
 
 		PalMag& operator >> (PalMag& out);
 		PalMag get_PalMag() {
@@ -172,62 +190,62 @@ namespace TWEFMT {
 		/**
 		 * true when trying to low latency transmit (same packets will come)
 		 */
-		bool b_lowlatency_tx;
+		uint8_t b_lowlatency_tx;
 
 		/**
 		 * packet repeat count
 		 *   e.g.) if set 1, the packet passed to one repeater (router) to the destination.
 		 */
-		uint16_t u8rpt_cnt;
+		uint8_t u8rpt_cnt;
 
 		/**
 		 * LQI value
 		 */
-		uint16_t u8lqi;
+		uint8_t u8lqi;
 
 		/**
 		 * true: DI1 is activated (set as Lo),
 		 */
-		bool DI1;
+		uint8_t DI1;
 
 		/**
 		 * true: DI1 is activated before.
 		 * false: the port had not been activated ever.
 		 */
-		bool DI1_active;
+		uint8_t DI1_active;
 
 		/**
 		 * true: DI2 is activated (set as Lo)
 		 */
-		bool DI2;
+		uint8_t DI2;
 
 		/**
 		 * true: DI2 is activated before.
 		 * false: the port had not been activated ever.
 		 */
-		bool DI2_active;
+		uint8_t DI2_active;
 
 		/**
 		 * true: DI3 is activated (set as Lo)
 		 */
-		bool DI3;
+		uint8_t DI3;
 
 		/**
 		 * true: DI3 is activated before.
 		 * false: the port had not been activated ever.
 		 */
-		bool DI3_active;
+		uint8_t DI3_active;
 
 		/**
 		 * true: DI4 is activated (set as Lo)
 		 */
-		bool DI4;
+		uint8_t DI4;
 
 		/**
 		 * true: DI4 is activated before.
 		 * false: the port had not been activated ever.
 		 */
-		bool DI4_active;
+		uint8_t DI4_active;
 
 		/**
 		 * DI state mask, active if bit set. (LSB:DI1, bit2:DI2, ...)
@@ -281,7 +299,161 @@ namespace TWEFMT {
 
 		TwePacketTwelite() : TwePacket(_pkt_id), DataTwelite({ 0 }) { }
 		~TwePacketTwelite() { }
-		E_PKT parse(uint8_t* p, uint8_t u8len);
+		E_PKT parse(uint8_t* p, uint16_t len);
+	};
+
+	/*****************************************************
+	 * APP IO 0x81 command
+	 *****************************************************/
+	struct DataAppIO {
+		/**
+		 * source address (Serial ID)
+		 */
+		uint32_t u32addr_src;
+
+		/**
+		 * source address (logical ID)
+		 */
+		uint8_t u8addr_src;
+
+		/**
+		 * destination address (logical ID)
+		 */
+		uint8_t u8addr_dst;
+
+		/**
+		 * sequence counter
+		 */
+		uint16_t u16timestamp;
+
+		/**
+		 * true when trying to low latency transmit (same packets will come)
+		 */
+		uint8_t b_lowlatency_tx;
+
+		/**
+		 * packet repeat count
+		 *   e.g.) if set 1, the packet passed to one repeater (router) to the destination.
+		 */
+		uint8_t u8rpt_cnt;
+
+		/**
+		 * LQI value
+		 */
+		uint8_t u8lqi;
+
+		/**
+		 * DI state mask, active if bit set. (LSB:DI1, bit2:DI2, ...)
+		 */
+		uint16_t DI_mask;
+
+		/**
+		 * DI active mask, active if bit set. (LSB:DI1, bit2:DI2, ...)
+		 * note: if not changed from power/reset, 
+		 */
+		uint16_t DI_active_mask;
+
+		/**
+		 * DI interrupt mask, active if bit set. (LSB:DI1, bit2:DI2, ...)
+		 * note: if the change is caused by an I/O interrupt, set the corresponding bit.
+		 */
+		uint16_t DI_int_mask;
+	};
+
+	class TwePacketAppIO : public TwePacket, public DataAppIO {
+	public:
+		static const E_PKT _pkt_id = E_PKT::PKT_APPIO;
+
+		TwePacketAppIO() : TwePacket(_pkt_id), DataAppIO({ 0 }) { }
+		~TwePacketAppIO() { }
+		E_PKT parse(uint8_t* p, uint16_t len);
+	};
+
+
+	/*****************************************************
+	 * APP UART PAYLOAD
+	 *****************************************************/
+	struct DataAppUART {
+		/**
+		 * source address (Serial ID)
+		 */
+		uint32_t u32addr_src;
+
+		/**
+		 * source address (Serial ID)
+		 */
+		uint32_t u32addr_dst;
+
+		/**
+		 * source address (logical ID)
+		 */
+		uint8_t u8addr_src;
+
+		/**
+		 * destination address (logical ID)
+		 */
+		uint8_t u8addr_dst;
+
+		/**
+		 * LQI value
+		 */
+		uint8_t u8lqi;
+
+		/**
+		 * Response ID
+		 */
+		uint8_t u8response_id;
+
+		/**
+		 * Payload length
+		 */
+		uint16_t u16paylen;
+
+		/**
+		 * payload
+		 */
+		TWEUTILS::SmplBuf_Byte payload;
+	};
+
+	class TwePacketAppUART : public TwePacket, public DataAppUART {
+	public:
+		static const E_PKT _pkt_id = E_PKT::PKT_APPUART;
+
+		TwePacketAppUART() : TwePacket(_pkt_id), DataAppUART({ 0 }) { }
+		~TwePacketAppUART() { }
+		E_PKT parse(uint8_t* p, uint16_t len);
+	};
+
+	/*****************************************************
+	 * APP TAG PAYLOAD (very limited support)
+	 *   - sensor data is not parsed, but store raw data
+	 *     into 'payload'
+	 *****************************************************/
+	struct DataAppTAG {
+		//   0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 -
+		// :80000000B10001810043C10032C9047C02AF0A41D2
+ 		//  ^^^^^^^1^2^^^3^^^^^^^4^5^6^7^^^8^^^9^^^a^b
+
+		uint32_t u32addr_rpt;
+		uint32_t u32addr_src;
+
+		uint16_t u16seq;
+		uint16_t u16Volt;
+
+		uint8_t u8lqi;
+		uint8_t u8addr_src;
+		
+		uint8_t u8sns;
+		TWEUTILS::SmplBuf_Byte payload;
+	};
+
+	class TwePacketAppTAG : public TwePacket, public DataAppTAG {
+	public:
+		static const E_PKT _pkt_id = E_PKT::PKT_APPTAG;
+
+		TwePacketAppTAG() : TwePacket(_pkt_id), DataAppTAG({ 0 }) { }
+		~TwePacketAppTAG() { }
+		E_PKT parse(uint8_t* p, uint16_t len);
 	};
 
 	/*****************************************************
@@ -291,9 +463,9 @@ namespace TWEFMT {
 	typedef std::shared_ptr<TwePacket> spTwePacket;
 
 	// check byte sequence and tell packet type.
-	E_PKT identify_packet_type(uint8_t* p, uint8_t u8len);
+	E_PKT identify_packet_type(uint8_t* p, uint16_t len);
 	static inline E_PKT identify_packet_type(TWEUTILS::SmplBuf_Byte& sbuff) {
-		return identify_packet_type(sbuff.begin(), (uint8_t)sbuff.length());
+		return identify_packet_type(sbuff.data(), (uint16_t)sbuff.length());
 	}
 	static inline E_PKT identify_packet_type(spTwePacket& sp) {
 		return sp ? sp->get_type() : E_PKT::PKT_ERROR;
@@ -308,9 +480,9 @@ namespace TWEFMT {
 	}
 	
 	// Generic TWE Packet object generation
-	spTwePacket newTwePacket(uint8_t* p, uint8_t u8len, E_PKT eType = E_PKT::PKT_ERROR);
+	spTwePacket newTwePacket(uint8_t* p, uint16_t len, E_PKT eType = E_PKT::PKT_ERROR);
 	static inline spTwePacket newTwePacket(TWEUTILS::SmplBuf_Byte& sbuff, E_PKT eType = E_PKT::PKT_ERROR) {
-		return newTwePacket(sbuff.begin(), (uint8_t)sbuff.length(), eType);
+		return newTwePacket(sbuff.data(), (uint8_t)sbuff.length(), eType);
 	}
 
 	// reference to TwePacket for spTwePacket
@@ -347,9 +519,9 @@ namespace TWEFMT {
 	typedef std::shared_ptr<TwePacketPal> spTwePacketPal;
 	
 	// generate new PAL packet
-	spTwePacketPal newTwePacketPal(uint8_t* p, uint8_t u8len);
+	spTwePacketPal newTwePacketPal(uint8_t* p, uint16_t len);
 	static inline spTwePacketPal newTwePacketPal(TWEUTILS::SmplBuf_Byte& sbuff) {
-		return newTwePacketPal(sbuff.begin(), (uint8_t)sbuff.length());
+		return newTwePacketPal(sbuff.data(), (uint16_t)sbuff.length());
 	}
 
 	// reference to TwePacketPal for spTwePacket
@@ -358,12 +530,19 @@ namespace TWEFMT {
 	}
 
 	/*****************************************************
-	 * PACKET OPERATION (dedicated for TWELITE)
+	 * PACKET OPERATION (other Apps)
 	 *****************************************************/
 	 // reference to TwePacketPal for spTwePacket
 	static inline TwePacketTwelite& refTwePacketTwelite(spTwePacket& p) {
 		return refTwePacketGen<TwePacketTwelite>(p);
 	}
-
-
+	static inline TwePacketAppIO& refTwePacketAppIO(spTwePacket& p) {
+		return refTwePacketGen<TwePacketAppIO>(p);
+	}
+	static inline TwePacketAppUART& refTwePacketAppUART(spTwePacket& p) {
+		return refTwePacketGen<TwePacketAppUART>(p);
+	}
+	static inline TwePacketAppTAG& refTwePacketAppTAG(spTwePacket& p) {
+		return refTwePacketGen<TwePacketAppTAG>(p);
+	}
 }

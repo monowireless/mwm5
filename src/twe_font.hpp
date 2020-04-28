@@ -1,11 +1,11 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #pragma once 
 
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
+#include "twe_utils_unicode.hpp"
 
 namespace TWEFONT {
 	const uint32_t U32_OPT_FONT_TATEBAI = 0x0100;
@@ -134,12 +134,11 @@ namespace TWEFONT {
 					e = m;
 				}
 			}
+
+			return -1;
 		}
 	};
 
 	const struct FontDef& queryFont(uint8_t id);
 	struct FontDef* _queryFont(uint8_t id);
-	int16_t drawChar(const FontDef& font, int32_t x, int32_t y, uint16_t c, uint32_t color, uint32_t bg, uint8_t opt);
-	int16_t drawChar(const FontDef& font, int32_t x, int32_t y, const char *s, uint32_t color, uint32_t bg, uint8_t opt);
-	int16_t drawChar(const FontDef& font, int32_t x, int32_t y, const uint16_t* s, uint32_t color, uint32_t bg, uint8_t opt);
 }

@@ -1,6 +1,5 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
@@ -10,7 +9,11 @@ namespace TWEFONT {
 	/// <summary>
 	/// max font register entries.
 	/// </summary>
+#if defined(ESP32)
 	#define FONTDEF_MAXSIZE 8
+#elif defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
+	#define FONTDEF_MAXSIZE 32
+#endif
 
 	/// <summary>
 	/// font table users can register, up to FONTDEF_MAXSIZE.
@@ -28,12 +31,13 @@ namespace TWEFONT {
 	/// <param name="font"></param>
 	static void s_setDefaultFont(FontDef& font) {
 		font.font_code = 0;
+		font._default_font = 1;
 
-#if defined(ARDUINO) && defined(ESP32)
+#if defined(ESP32)
 		font.font_name = "Built-in 8x6 Lcd font(default)";
 		font.width = 6;
 		font.height = 8;
-#else
+#elif defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
 		font.font_name = "(default)";
 		font.width = 6;
 		font.height = 8;
@@ -67,6 +71,12 @@ namespace TWEFONT {
 			if (f.font_code == id) {
 				return f;
 			}
+		}
+
+		if (!defaultFont._default_font ||
+			defaultFont.width == 0 ||
+			defaultFont.height == 0) {
+			s_setDefaultFont(defaultFont);
 		}
 
 		return defaultFont; // not found

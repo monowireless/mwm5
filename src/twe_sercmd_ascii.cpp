@@ -1,6 +1,5 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_stream.hpp"
@@ -30,7 +29,7 @@ namespace TWESERCMD {
 /// </summary>
 /// <param name="u8byte"></param>
 /// <returns></returns>
-uint8_t AsciiParser::_u8Parse(char_t u8byte) {
+uint8_t AsciiParser::_u8Parse(uint8_t u8byte) {
 	// check for timeout
 	if (TimeOut::is_enabled() && TimeOut::is_timeout()) {
 		u8state = E_SERCMD_ASCII_CMD_EMPTY;
@@ -51,9 +50,8 @@ uint8_t AsciiParser::_u8Parse(char_t u8byte) {
 			u16cksum = 0;
 			payload.redim(0);
 
-			if (TimeOut::is_enabled()) {
-				TimeOut::start();
-			}
+			// start new timer (if set timeout)
+			TimeOut::start();
 		}
 		break;
 
@@ -163,8 +161,8 @@ void AsciiParser::s_vOutput(SmplBuf_Byte& payload, IStreamOut& vPutChar) {
 	// 先頭の :
 	vPutChar(':');
 
-	uint8_t* p = payload.begin();
-	while (p != payload.end()) {
+	uint8_t* p = payload.begin().raw_ptr();
+	while (p != payload.end().raw_ptr()) {
 		vPutByte(*p, &u8lrc, vPutChar);
 		p++;
 	}

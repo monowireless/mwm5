@@ -1,7 +1,6 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
- 
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
+
  /****************************************************************************/
  /***        printfmt Implemenation                                          ***/
  /****************************************************************************/
@@ -16,7 +15,7 @@
 using namespace TWE;
 
 // output to stream. (for printf.h)
-static void vOutputStream(char out, void* vp) {
+static void twe_vOutputStream(char out, void* vp) {
 	IStreamOut* os = reinterpret_cast<IStreamOut*>(vp);
 	*os << (char_t)out;
 }
@@ -33,7 +32,7 @@ int TWE::fPrintf(IStreamOut& os, const char *format, ...)
 {
 	va_list va;
 	va_start(va, format);
-	int ret = fctvprintf(vOutputStream, reinterpret_cast<void*>(&os), format, va);
+	int ret = fctvprintf(twe_vOutputStream, (void*)&os, format, va);
 	va_end(va);
 	return ret;
 }

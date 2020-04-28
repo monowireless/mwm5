@@ -1,6 +1,5 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 /** @file
  *
@@ -17,153 +16,139 @@
 
 #include "printf/printf.h"
 #include <utility>
+#include <new>
 
 namespace TWE {
 	int fPrintf(TWE::IStreamOut& fp, const char* format, ...);
 	int snPrintf(char* buffer, size_t count, const char* format, ...);
 
-	/// <summary>
-	/// printfmt stream output class
-	///  - will work on 8/16/32/64bit arguments including double.
-	///  - save the arguments upto 4 items at constructor.
-	/// </summary>
-	class printfmt {
-		static const int MAXARGS = 4;
-		const char* _fmt;
-		uint64_t _argv[MAXARGS];
-		int _type;
-		int _argc;
+	class _printobj {
+	protected:
+		const char *_fmt;
 
-		// on finish.
-		void save_args() {}
-
-		// float should be passed by double.
-		template <typename... Tail>
-		void save_args(float head, Tail... tail) {
-			double d = head;
-			_argv[_argc] = *(uint64_t*)&d;
-			_type |= 1 << _argc;
-			_argc++;
-
-			// get more parameters recursively, split head and tail.
-			save_args(std::forward<Tail>(tail)...);
-		}
-
-		// for double
-		template <typename... Tail>
-		void save_args(double head, Tail... tail) {
-			_argv[_argc] = *(uint64_t*)&head;
-			_type |= 1 << _argc;
-			_argc++;
-
-			// get more parameters recursively, split head and tail.
-			save_args(std::forward<Tail>(tail)...);
-		}
-		
-		template <typename... Tail>
-		void save_args(int64_t head, Tail... tail)
-		{
-			_argv[_argc] = (uint64_t)head;
-			_type |= 1 << _argc;
-			save_args(std::forward<Tail>(tail)...);
-		}
-
-		template <typename... Tail>
-		void save_args(uint64_t head, Tail... tail)
-		{
-			_argv[_argc] = head;
-			_type |= 1 << _argc;
-			save_args(std::forward<Tail>(tail)...);
-		}
-
-		// for pointer type
-		template <typename Head, typename... Tail>
-		void save_args(Head* head, Tail... tail) {
-			_argv[_argc] = (uint32_t)(void*)head;
-			_argc++;
-			save_args(std::forward<Tail>(tail)...);
-		}
-
-		// get one parameter as head, then process the rest by recursive call.
-		template <typename Head, typename... Tail>
-		void save_args(Head head, Tail... tail)
-		{
-			static_assert(
-				sizeof(Head) == 4
-				|| sizeof(Head) == 2
-				|| sizeof(Head) == 1
-				, "Unsupported type for printfmt().");
-
-			if (0 < head) {
-				// negative value of short/char needs to upscale to int32_t.
-				_argv[_argc] = (uint32_t)((int32_t)head);
-			}
-			else {
-				_argv[_argc] = head;
-			}
-
-			_argc++;
-
-			// get more parameters recursively, split head and tail.
-			save_args(std::forward<Tail>(tail)...);
-		}
-
-	public:
 		// custom out function
 		static inline void _out_fct(char character, void* arg) {
 			IStreamOut* pof = (IStreamOut*)arg;
 			*pof << (char_t)character;
 		}
 
-		// constructor with variable numbers of arguments, using parameter list.
-		template <typename... Tail>
-		printfmt(const char* fmt, Tail&&... tail) : _argv{ 0 }, _argc(0), _type(0), _fmt(fmt) {
-			if (sizeof...(tail)) {
-				if (sizeof...(tail) > MAXARGS) {
-					_argc = -1;
-				}
-				else {
-					save_args(tail...);
-				}
-			}
-		}
+	public:
+		_printobj(const char* fmt) : _fmt(fmt) {}
+		virtual void do_print(IStreamOut& of) {
+			char_t *p = (char_t *)_fmt;
+			while(*p != 0) of << *p;
+		};
+	};
 
-		// the output call (hmmm, there would be better ways ;-()
+	template <typename T1>
+	class _printobj_1 : public _printobj {
+		T1 _a1;
+	public:
+		_printobj_1(const char *fmt, T1 a1) : _printobj(fmt), _a1(a1) {}
+		void do_print(IStreamOut& of) {	fctprintf(&_out_fct, (void*)&of, _fmt, _a1); }
+	};
+
+	template <typename T1, typename T2>
+	class _printobj_2 : public _printobj {
+		T1 _a1;
+		T2 _a2;
+	public:
+		_printobj_2(const char *fmt, T1 a1, T2 a2) : _printobj(fmt), _a1(a1), _a2(a2) {}
+		void do_print(IStreamOut& of) { fctprintf(&_out_fct, (void*)&of, _fmt, _a1, _a2); }
+	};
+
+	template <typename T1, typename T2, typename T3>
+	class _printobj_3 : public _printobj {
+		T1 _a1;
+		T2 _a2;
+		T3 _a3;
+	public:
+		_printobj_3(const char *fmt, T1 a1, T2 a2, T3 a3) : _printobj(fmt), _a1(a1), _a2(a2), _a3(a3) {}
+		void do_print(IStreamOut& of) { fctprintf(&_out_fct, (void*)&of, _fmt, _a1, _a2, _a3); }
+	};
+
+	template <typename T1, typename T2, typename T3, typename T4>
+	class _printobj_4 : public _printobj {
+		T1 _a1;
+		T2 _a2;
+		T3 _a3;
+		T4 _a4;
+	public:
+		_printobj_4(const char *fmt, T1 a1, T2 a2, T3 a3, T4 a4) : _printobj(fmt), _a1(a1), _a2(a2), _a3(a3), _a4(a4) {}
+		void do_print(IStreamOut& of) { fctprintf(&_out_fct, (void*)&of, _fmt, _a1, _a2, _a3, _a4); }
+	};
+
+#if 0
+	class printfmt {
+		std::unique_ptr<_printobj> _pobj;
+
+	public:
+		printfmt(const char *fmt) 
+			: _pobj(new _printobj(fmt)) {}
+		
+		template <typename T1>
+		printfmt(const char *fmt, T1 a1)
+			: _pobj(new _printobj_1<T1>(fmt,a1)) {}
+
+		template <typename T1, typename T2>
+		printfmt(const char *fmt, T1 a1, T2 a2)
+			: _pobj(new _printobj_2<T1, T2>(fmt,a1,a2)) {}
+
+		template <typename T1, typename T2, typename T3>
+		printfmt(const char *fmt, T1 a1, T2 a2, T3 a3)
+			: _pobj(new _printobj_3<T1, T2, T3>(fmt,a1,a2,a3)) {}
+
+		template <typename T1, typename T2, typename T3, typename T4>
+		printfmt(const char *fmt, T1 a1, T2 a2, T3 a3, T4 a4)
+			: _pobj(new _printobj_4<T1, T2, T3, T4>(fmt,a1,a2,a3,a4)) {}
+
 		IStreamOut& operator ()(IStreamOut& of) {
-			if (_argc == -1) {
-				fctprintf(&_out_fct, (void*)&of, "(arg err)");
-			}
-			else {
-#ifdef IS32BIT
-				// should not pass 32bit or less arguments as 64bit.
-				switch (_type) {
-				case   0:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],  (int32_t)_argv[1],  (int32_t)_argv[2],  (int32_t)_argv[3]); break;
-				case   1:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],  (int32_t)_argv[1],  (int32_t)_argv[2],  (int32_t)_argv[3]); break;
-				case   2:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],           _argv[1],  (int32_t)_argv[2],  (int32_t)_argv[3]); break;
-				case   3:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],           _argv[1],  (int32_t)_argv[2],  (int32_t)_argv[3]); break;
-				case   4:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],  (int32_t)_argv[1],           _argv[2],  (int32_t)_argv[3]); break;
-				case   5:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],  (int32_t)_argv[1],           _argv[2],  (int32_t)_argv[3]); break;
-				case   6:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],           _argv[1],           _argv[2],  (int32_t)_argv[3]); break;
-				case   7:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],           _argv[1],           _argv[2],  (int32_t)_argv[3]); break;
-				case   8:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],  (int32_t)_argv[1],  (int32_t)_argv[2],           _argv[3]); break;
-				case   9:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],  (int32_t)_argv[1],  (int32_t)_argv[2],           _argv[3]); break;
-				case  10:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],           _argv[1],  (int32_t)_argv[2],           _argv[3]); break;
-				case  11:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],           _argv[1],  (int32_t)_argv[2],           _argv[3]); break;
-				case  12:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],  (int32_t)_argv[1],           _argv[2],           _argv[3]); break;
-				case  13:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],  (int32_t)_argv[1],           _argv[2],           _argv[3]); break;
-				case  14:	fctprintf(&_out_fct, (void*)&of, _fmt,  (int32_t)_argv[0],           _argv[1],           _argv[2],           _argv[3]); break;
-				case  15:	fctprintf(&_out_fct, (void*)&of, _fmt,           _argv[0],           _argv[1],           _argv[2],           _argv[3]); break;
-				}
-#elif defined(IS64BIT)
-				// simply pass all arguments as 64bit.
-				fctprintf(&_out_fct, (void*)&of, _fmt, _argv[0], _argv[1], _argv[2], _argv[3]);
-#endif
-			}
-
+			_pobj->do_print(of);
 			return of;
 		}
 	};
+#else
 
+	const size_t MAX_SIZE_PRINTOBJ = sizeof(_printobj_4<double, double, double, double>);
+
+	class printfmt {
+		uint8_t _pobj[MAX_SIZE_PRINTOBJ];
+
+	public:
+		printfmt(const char* fmt) {
+			(void)new ((void*)_pobj) _printobj(fmt);
+		}
+
+		template <typename T1>
+		printfmt(const char* fmt, T1 a1) {
+			static_assert(sizeof(_printobj_1<T1>(fmt, a1)) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
+			(void)new ((void*)_pobj) _printobj_1<T1>(fmt, a1);
+		}
+
+		template <typename T1, typename T2>
+		printfmt(const char* fmt, T1 a1, T2 a2) {
+			static_assert(sizeof(_printobj_2<T1, T2>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
+			(void)new ((void*)_pobj) _printobj_2<T1, T2>(fmt, a1, a2);
+		}
+
+		template <typename T1, typename T2, typename T3>
+		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3) {
+			static_assert(sizeof(_printobj_3<T1, T2, T3>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
+			(void)new ((void*)_pobj) _printobj_3<T1, T2, T3>(fmt, a1, a2, a3);
+		}
+
+		template <typename T1, typename T2, typename T3, typename T4>
+		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4) {
+			static_assert(sizeof(_printobj_4<T1, T2, T3, T4>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
+			(void)new ((void*)_pobj) _printobj_4<T1, T2, T3, T4>(fmt, a1, a2, a3, a4);
+		}
+
+		IStreamOut& operator ()(IStreamOut& of) {
+			reinterpret_cast<_printobj*>(_pobj)->do_print(of);
+			return of;
+		}
+	};
+#endif
 
 	/// <summary>
 	/// printfmt and IStreamOut operator.

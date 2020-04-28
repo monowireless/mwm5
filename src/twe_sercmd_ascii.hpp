@@ -1,8 +1,7 @@
-#pragma once
+﻿#pragma once
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_stream.hpp"
@@ -26,7 +25,7 @@ namespace TWESERCMD {
 		AsciiParser(TWEUTILS::SmplBuf_Byte& bobj) : IParser(bobj), u16pos(0), u16cksum(0) { }
 		AsciiParser(size_t maxbuffsiz) : IParser(maxbuffsiz), u16pos(0), u16cksum(0) { }
 		~AsciiParser() {}
-		uint8_t _u8Parse(char_t c);
+		uint8_t _u8Parse(uint8_t c);
 
 		/// <summary>
 		/// 再初期化

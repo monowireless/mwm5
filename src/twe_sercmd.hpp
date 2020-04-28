@@ -1,8 +1,7 @@
-#pragma once 
+﻿#pragma once 
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.  *
- * Released under MW-OSSLA-*J,*E (MONO WIRELESS OPEN SOURCE    *
- * SOFTWARE LICENSE AGREEMENT).                                */
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+ * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 /** @file
  *
@@ -52,6 +51,8 @@
 #include "twe_stream.hpp"
 #include "twe_console.hpp"
 
+#include "twe_utils_fixedque.hpp"
+
 namespace TWESERCMD {
 	/// <summary>
 	/// シリアルコマンド解釈の内部状態
@@ -85,19 +86,19 @@ namespace TWESERCMD {
 		/// </summary>
 		/// <param name="u8b"></param>
 		/// <returns></returns>
-		virtual uint8_t _u8Parse(char_t u8b) = 0;
+		virtual uint8_t _u8Parse(uint8_t u8b) = 0;
 
 		/// <summary>
 		/// 出力用の仮想関数 (operator >> 参照)
 		/// </summary>
 		/// <param name="bobj"></param>
 		/// <param name="p"></param>
-		virtual inline void _vOutput(TWEUTILS::SmplBuf_Byte& bobj, TWE::IStreamOut& p) = 0;
+		virtual void _vOutput(TWEUTILS::SmplBuf_Byte& bobj, TWE::IStreamOut& p) = 0;
 
 	public:
 
 		IParser(size_t siz) :
-			payload(*new TWEUTILS::SmplBuf_Byte(siz)),
+			payload(*new TWEUTILS::SmplBuf_Byte(uint16_t(siz))),
 			bDynamic(true),
 			u8state(E_TWESERCMD_EMPTY) { }
 
@@ -126,7 +127,11 @@ namespace TWESERCMD {
 		// putting a byte and do parse
 		inline IParser& operator << (char_t c) { return Parse(c); }
 		// duplicate payload buffer.
-		inline TWEUTILS::SmplBuf_Byte& operator >> (TWEUTILS::SmplBuf_Byte &b) { b = payload; return b; }
+		inline TWEUTILS::SmplBuf_Byte& operator >> (TWEUTILS::SmplBuf_Byte &b) {
+			b.reserve(b.length() + payload.length());
+			std::copy(payload.begin(), payload.end(), std::back_inserter(b));
+			return b;
+		}
 		// output formatted buffer.
 		inline void operator >> (TWE::IStreamOut& fo_putchar) { _vOutput(payload, fo_putchar);  }
 
@@ -135,7 +140,10 @@ namespace TWESERCMD {
 		// return true, if parsing has been completed.
 		inline bool is_complete() { return u8state == E_TWESERCMD_COMPLETE; }
 		// set payload object explicitly.
-		inline void set_payload(TWEUTILS::SmplBuf_Byte& bobj) { payload = bobj; }
+		inline void set_payload(TWEUTILS::SmplBuf_Byte& bobj) {
+			payload.reserve_and_set_empty(bobj.size());
+			std::copy(bobj.begin(), bobj.end(), std::back_inserter(payload));
+		}
 		// get payload object.
 		inline TWEUTILS::SmplBuf_Byte& get_payload() { return payload; }
 
@@ -156,3 +164,5 @@ namespace TWESERCMD {
 		return lhs;
 	}
 }
+
+extern TWEUTILS::InputQueue<uint8_t> the_uart_queue;
