@@ -25,11 +25,18 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
+[Oo]bjs/
+[Oo]bjs-*/
 [Ll]og/
 
 CODE_*/
 .DS_Store
 wifipass.h
+
+# Executable
+build/
+!build/Makefile
+!build/makefile
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -64,9 +71,9 @@ artifacts/
 StyleCopReport.xml
 
 # Files built by Visual Studio
-*_i.c
-*_p.c
-*_h.h
+#*_i.c
+#*_p.c
+#*_h.h
 *.ilk
 *.meta
 *.obj
