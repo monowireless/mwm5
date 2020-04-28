@@ -1,0 +1,128 @@
+{
+    "configurations": [
+        {
+            "name": "ESP32",
+            "intelliSenseMode": "clang-x64",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/esp32/**",
+                "${default}"
+            ],
+            "defines": [
+                "ESP32=1",
+                "${default}"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${default}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++14"
+        },
+        {
+            "name": "Mac(CLANG)",
+            "intelliSenseMode": "clang-x64",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/osx/**",
+                "${default}"
+            ],
+            "defines": [
+                "__APPLE__=1",
+                "USE_CURSES",
+                "${default}"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${default}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Mac(GCC-9)",
+            "intelliSenseMode": "clang-x64",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/osx/**",
+                "${default}"
+            ],
+            "defines": [
+                "__APPLE__=1",
+                "USE_CURSES",
+                "${default}"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${default}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/local/bin/g++-9",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Linux",
+            "intelliSenseMode": "clang-x64",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/linux/**",
+                "${default}"
+            ],
+            "defines": [
+                "__linux=1",
+                "USE_CURSES",
+                "${default}"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${default}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/bin/g++-9",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Win",
+            "intelliSenseMode": "clang-x64",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/msc/lib/**",
+                "${default}"
+            ],
+            "defines": [
+                "__MINGW32__=1",
+                "${default}"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${workspaceFolder}/msc/lib/**",
+                    "${default}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "C:/msys64/mingw64/bin/g++",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

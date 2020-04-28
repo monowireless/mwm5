@@ -1,0 +1,68 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [ 
+        {
+            "name": "(gdb/mingw) TWELITE_Stage",
+            //"type": "cppdbg",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/TWELITE_Stage/build/TWELITE_Stage-debug.exe",
+            "args": [],
+            // "cwd": "${workspaceFolder}/examples/TWELITE_Stage/build/",
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                { "name" : "PATH", "value" : "${workspaceFolder}\\msc\\lib\\SDL2\\lib\\x64" }
+            ],
+            "stopAtEntry": true,
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe", // set mingw dir to system path.
+            // "miDebuggerPath": "c:/msys64/mingw64/bin/gdb.exe", // path to mingw64 gdb.
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(gdb/linux) TWELITE_Stage",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/TWELITE_Stage/build/TWELITE_Stage-debug.run",
+            "args": [],
+            "stopAtEntry": true,
+            //"cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/../MWSDK",
+            "environment": [
+                { "name" : "LD_LIBRARY_PATH", "value" : "${workspaceFolder}/linux/lib/SDL2/lib" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(lldb/mac) TWELITE_Stage",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/TWELITE_Stage/build/TWELITE_Stage-debug.command",
+            "args": [],
+            "stopAtEntry": true,
+            // "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/../MWSDK",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        }
+    ]
+}

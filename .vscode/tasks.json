@@ -1,0 +1,124 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean TWELITE Stage",
+            "type": "shell",
+            "windows": {
+                "command": "sh",
+                "args": [
+                    "-c", "rm -rfv objs*"
+                ],
+            },
+            "linux": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "rm -rfv objs*",
+                    ""
+                ]
+            },
+            "osx": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "rm -rfv objs*",
+                    ""
+                ]
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/examples/TWELITE_Stage/build"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Release TWELITE Stage",
+            "type": "shell",
+            "windows": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "mingw32-make -j6"
+                ],
+                "options": {
+                }
+            },
+            "linux": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "make -j$(expr $(cat /proc/cpuinfo | grep ^cpu.cores | uniq | cut -s -d: -f2))",
+                    ""
+                ]
+            },
+            "osx": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "make -j$(sysctl -n hw.physicalcpu) OSX_COMPILERTYPE=gcc-9",
+                    //"make -j$(sysctl -n hw.physicalcpu) OSX_COMPILERTYPE=clang",
+                    ""
+                ]
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/examples/TWELITE_Stage/build"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Debug TWELITE Stage",
+            "type": "shell",
+            "windows": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "mingw32-make -j6 DEBUG_BUILD=1"
+                ]
+            },
+            "linux": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "make -j$(expr $(cat /proc/cpuinfo | grep ^cpu.cores | uniq | cut -s -d: -f2)) DEBUG_BUILD=1",
+                    ""
+                ]
+            },
+            "osx": {
+                "command": "sh",
+                "args": [
+                    "-c",
+                    "make -j$(sysctl -n hw.physicalcpu) OSX_COMPILERTYPE=gcc DEBUG_BUILD=1",
+                    ""
+                ]
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/examples/TWELITE_Stage/build"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
