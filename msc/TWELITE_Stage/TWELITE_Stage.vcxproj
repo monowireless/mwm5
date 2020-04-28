@@ -98,7 +98,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\src\gen;$(ProjectDir)</IncludePath>
+    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\src\gen</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
@@ -106,10 +106,10 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
+    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\src\gen;$(ProjectDir)</IncludePath>
+    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\src\gen</IncludePath>
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
@@ -117,7 +117,7 @@
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
+    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -325,10 +325,18 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu_defs.h" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu_info.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="version_msc.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\examples\TWELITE_Stage\build\Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TWELITE_Stage.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="MWSTAGE_256.ico" />
+    <Image Include="MWSTAGE_256.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

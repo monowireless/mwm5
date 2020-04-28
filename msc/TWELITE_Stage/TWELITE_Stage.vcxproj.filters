@@ -8,6 +8,9 @@
     <Filter Include="Version">
       <UniqueIdentifier>{025c3db4-808f-4f90-9603-5226a55cc73b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{f3dba474-1316-4d7a-bf92-cd5c44afc6b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_FirmProg.cpp">
@@ -102,10 +105,22 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Glancer.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\examples\TWELITE_Stage\build\Makefile">
       <Filter>Version</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="MWSTAGE_256.png" />
+    <Image Include="MWSTAGE_256.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TWELITE_Stage.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

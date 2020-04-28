@@ -81,7 +81,7 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
 		the_screen_c << "     前/長押:--            選択/--                次/--";
 
-		if (sAppData.au8_TWESTG_STAGE_FTDI_ADDR[1] == 0) {
+		if (sAppData.au8_TWESTG_STAGE_FTDI_ADDR[1] <= 0x20) {
 			int c = sAppData.au8_TWESTG_STAGE_FTDI_ADDR[0];
 			int n = c - '0';
 
@@ -111,7 +111,7 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 				b_selected = true;
 
 				if (_n_arg == APP_ID) { // only if _n_arg is provided as APP_ID
-					the_keyboard.push(i + '0' + 1);
+					the_keyboard.push('0' + i + 1);
 				}
 			}
 		}
@@ -128,9 +128,11 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 
 			if (_listPorts.size() > 0 && _listPorts.key_event(c)) {
 				if (_listPorts.is_selection_completed()) {
+					int i_sel = _listPorts.get_selected_index();
+
 					// find ser# string from head to space. "XXXXX (DESC)"
 					SmplBuf_ByteL<32> devname;
-					auto& wstr = _listPorts[_listPorts.get_selected_index()].first;
+					auto& wstr = _listPorts[i_sel].first;
 					auto pos_space = std::find(wstr.begin(), wstr.end(), L' '); // find the first blank space.
 					if (pos_space != wstr.end()) {
 						// convert wchar_t to char
@@ -140,8 +142,6 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 						
 						if (Serial2.is_opened()) Serial2.close();
 						Serial2.open((const char*)devname.c_str()); // open the device
-
-						//screen_refresh(true); // force redraw immediately.
 
 						// start exit timer
 						the_app.exit(APP_ID);

@@ -36,12 +36,12 @@ private:
 	// timeout object
 	TWESYS::TimeOut _timeout;
 
-	// argument
+	// argument (check if it's called from menu selection or booting)
 	int _n_arg;
 
 public:
 	App_SelectPort(int n_arg) :
-		  the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
+		the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)

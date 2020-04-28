@@ -116,11 +116,12 @@ void App_Glancer::loop() {
 			{
 				int sort_key = pkt_data._sort_key;
 
-				const char str_srt_key[][32] = {
-					"ID:論理ID",
-					"ID:シリアル番号",
-					"LQ:リンク品質",
-					"T:時間"
+				const char str_srt_key[_SORT_KEYS_COUNT][32] = {
+					"論理ID",
+					"シリアル番号",
+					"リンク品質 Lq",
+					"電圧 mV",
+					"時間 s"
 				};
 				// sort entries
 				pkt_data.sort_entries();
@@ -339,41 +340,48 @@ void App_Glancer::pkt_data_and_view::update_term_full(spTwePacket pal_upd, bool 
 
 		// display sensor data
 		if (identify_packet_type(spobj) != E_PKT::PKT_ERROR) {
-			auto&& pal = refTwePacketPal(spobj);
-
-			if(_nsel == i) _trm << "\033[7m";
-
-			const wchar_t *pAppName = nullptr;
-			for (auto& x : asPktIdToName3) {
-				if (x.id == spobj->get_type()) {
-					pAppName = x.name;
-					break;
-				}
-			}
-			if (pAppName == nullptr) pAppName = L"N/A";
-			_trm << pAppName;
-
-			_trm << printfmt(_bwide ? " ID=%02x/%08x LQ=%03d" : " %02x/%08x L=%03d"
-						, spobj->common.src_lid
-						, spobj->common.src_addr
-						, spobj->common.lqi
-						);
-
-			uint32_t t = spobj->common.tick + 50;
-			t = t % (10000 * 1000); // loop at 9999.9sec
-			if (_bwide) {
-				_trm << printfmt(" T=%d.%ds", t / 1000, (t % 100) / 10);
-			} else {
-				// _trm << printfmt(" T=%d", t / 1000);
-			}
+			if (_nsel == i) _trm << "\033[7m";
+			print_obj(spobj);
+			if (_nsel == i) _trm << "\033[0m";
+		}
+		else {
+			_trm << "---";
 		}
 
-		if(_nsel == i) _trm << "\033[0m";
 		_trm << "\033[4G"; // move cursor at column 2.
 	}
 
 	// update status line
 	update_status();
+}
+
+void App_Glancer::pkt_data_and_view::print_obj(spTwePacket& spobj) {
+	// display sensor data
+	if (identify_packet_type(spobj) != E_PKT::PKT_ERROR) {
+		auto&& pal = refTwePacketPal(spobj);
+
+		const wchar_t* pAppName = nullptr;
+		for (auto& x : asPktIdToName3) {
+			if (x.id == spobj->get_type()) {
+				pAppName = x.name;
+				break;
+			}
+		}
+		if (pAppName == nullptr) pAppName = L"N/A";
+		else _trm << pAppName;
+
+		_trm << printfmt("%3d/x%08X %3dLq %4dmV"
+			, spobj->common.src_lid
+			, spobj->common.src_addr
+			, spobj->common.lqi
+			, spobj->common.volt
+		);
+
+		uint32_t t = spobj->common.tick + 50;
+		t = t % (10000 * 1000); // loop at 9999.9sec
+
+		_trm << printfmt(" %4d.%ds", t / 1000, (t % 100) / 10);
+	}
 }
 
 void App_Glancer::pkt_data_and_view::update_term_solo(spTwePacket pal_upd, bool update_all) {
@@ -394,29 +402,7 @@ void App_Glancer::pkt_data_and_view::update_term_solo(spTwePacket pal_upd, bool 
 			for (int i = i_end; i > 0; i--) {
 				auto& spobj = _dat_solo[-i];
 
-				const wchar_t *pAppName = nullptr;
-				for (auto& x : asPktIdToName3) {
-					if (x.id == spobj->get_type()) {
-						pAppName = x.name;
-						break;
-					}
-				}
-				if (pAppName == nullptr) pAppName = L"N/A";
-				_trm << pAppName;
-
-				_trm << printfmt(_bwide ? " ID=%02x/%08x LQ=%03d" : " %02x/%08x L=%03d"
-							, spobj->common.src_lid
-							, spobj->common.src_addr
-							, spobj->common.lqi
-							);
-
-				uint32_t t = spobj->common.tick + 50;
-				t = t % (10000 * 1000); // loop at 9999.9sec
-				if (_bwide) {
-					_trm << printfmt(" T=%d.%ds", t / 1000, (t % 100) / 10);
-				} else {
-					// _trm << printfmt(" T=%d", t / 1000);
-				}
+				print_obj(spobj);
 
 				_trm << crlf;
 			}
@@ -557,7 +543,15 @@ void App_Glancer::pkt_data_and_view::sort_entries() {
 		);
 		break;
 
-	case 3: // Time
+	case 3: // Volt 
+		SmplBuf_Sort(_dat,
+			[](spTwePacket& a, spTwePacket& b) {
+				return a->common.volt > b->common.volt;
+			}
+		);
+		break;
+
+	case 4: // Time
 		SmplBuf_Sort(_dat,
 			[](spTwePacket& a, spTwePacket& b) {
 				return a->common.tick < b->common.tick; // bigger first
@@ -566,8 +560,7 @@ void App_Glancer::pkt_data_and_view::sort_entries() {
 		break;
 	}
 
-	++_sort_key;
-	if (_sort_key > 3) _sort_key = 0;
+	if (++_sort_key >= _SORT_KEYS_COUNT) _sort_key = 0;
 }
 
 void App_Glancer::pkt_data_and_view::enter_solo_mode() {

@@ -110,10 +110,15 @@ E_PKT TwePacketPal::parse(uint8_t* pb, uint16_t u16len) {
 	// set an error flag
 	if (bChecksumErr) u8sensors |= 0x80;
 
+	// store common data
 	TwePacket::common.tick = millis();
 	TwePacket::common.src_addr = DataPal::u32addr_src;
 	TwePacket::common.src_lid = DataPal::u8addr_src;
 	TwePacket::common.lqi = DataPal::u8lqi;
+
+	if (!(u8sensors & 0x80)) {
+		TwePacket::common.volt = query_volt();
+	}
 
 	// return packet ID
 	return E_PKT::PKT_PAL;
@@ -176,6 +181,7 @@ E_PKT TwePacketAppTAG::parse(uint8_t* pb, uint16_t u16len) {
 	TwePacket::common.src_addr = DataAppTAG::u32addr_src;
 	TwePacket::common.src_lid = DataAppTAG::u8addr_src;
 	TwePacket::common.lqi = DataAppTAG::u8lqi;
+	TwePacket::common.volt = DataAppTAG::u16Volt;
 
 	// return packet ID
 	return E_PKT::PKT_APPTAG;
@@ -263,6 +269,7 @@ E_PKT TwePacketTwelite::parse(uint8_t* pyld, uint16_t u16len) {
 	TwePacket::common.src_addr = DataTwelite::u32addr_src;
 	TwePacket::common.src_lid = DataTwelite::u8addr_src;
 	TwePacket::common.lqi = DataTwelite::u8lqi;
+	TwePacket::common.volt = DataTwelite::u16Volt;
 
 	bValid = true;
 	return bValid ? E_PKT::PKT_TWELITE : E_PKT::PKT_ERROR;
@@ -613,6 +620,28 @@ uint32_t TwePacketPal::store_data (uint8_t u8listct, void** vars,
 	}
 
 	return u32store_mask;
+}
+
+/**
+ * @fn	uint16_t TwePacketPal::query_volt ()
+ *
+ * @brief	Queries the module voltage
+ *
+ * @returns	The volt.
+ */
+uint16_t TwePacketPal::query_volt () {
+	uint16_t u16volt = 0;
+
+	// find data
+	void* argList[] = { &u16volt };
+	const uint8_t au8argsiz[] = { 2    };
+	const uint8_t au8argctm[] = { 1    };
+	const uint8_t au8dsList[] = { 0x30 };
+	const uint8_t au8exList[] = { 0x08 };
+
+	uint32_t u32StoredMask = store_data(1, argList, au8argsiz, au8argctm, au8dsList, au8exList);
+
+	return u16volt;
 }
 
 /// <summary>

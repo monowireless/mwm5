@@ -11,6 +11,7 @@ class App_Glancer : public TWE::APP_DEF {
 public:
 	static const int APP_ID = int(E_APP_ID::GLANCE);
 	static const wchar_t LAUNCH_MSG[];
+	static const int _SORT_KEYS_COUNT = 5;
 
 public:
 	typedef TWEUTILS::SimpleBuffer<spTwePacket> pkt_ary;
@@ -33,7 +34,7 @@ public:
 
 		bool _bsolo;	// solo display mode
 
-		int _sort_key;  // 0:SID, 1:LID, 2:LQI, 3:TYPE
+		int _sort_key;  // 0:SID, 1:LID, 2:LQI, 3:VOLT 4:TIME
 
 		struct {
 			uint32_t src_addr;
@@ -155,6 +156,9 @@ public:
 
 		// solo mode
 		void enter_solo_mode();
+
+		// print obj line
+		void print_obj(spTwePacket &spobj);
 	};
 
 private:

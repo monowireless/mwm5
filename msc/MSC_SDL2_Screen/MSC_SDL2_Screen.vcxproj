@@ -32,6 +32,7 @@
     <ClInclude Include="..\..\src\gen\sdl2_button.hpp" />
     <ClInclude Include="..\..\src\gen\sdl2_clipboard.hpp" />
     <ClInclude Include="..\..\src\gen\sdl2_common.h" />
+    <ClInclude Include="..\..\src\gen\sdl2_icon.h" />
     <ClInclude Include="..\..\src\gen\sdl2_keyb.hpp" />
     <ClInclude Include="..\..\src\gen\serial_ftdi.hpp" />
     <ClInclude Include="..\..\src\gen\twe_sdl_m5.h" />
@@ -42,6 +43,7 @@
     <ClCompile Include="..\..\src\gen\modctrl_ftdi.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_button.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_clipboard.cpp" />
+    <ClCompile Include="..\..\src\gen\sdl2_icon.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_keyb.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_main.cpp" />
     <ClCompile Include="..\..\src\gen\serial_ftdi.cpp" />

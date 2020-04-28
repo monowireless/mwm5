@@ -388,10 +388,10 @@ struct app_core_sdl {
 			sub_screen << crlf << STR_ALT"+V : ｸﾘｯﾌﾟﾎﾞｰﾄﾞよりペースト";
 
 			sub_screen << crlf << crlf << "[その他]";
-			sub_screen << crlf << STR_ALT"+W : サイズ変更";
-			sub_screen << crlf << STR_ALT"+G : 描画方法変更";
 			sub_screen << crlf << STR_ALT"+F : フルスクリーン";
 			sub_screen << crlf << "  Shift+" STR_ALT " 可能なら更に拡大";
+			sub_screen << crlf << STR_ALT"+G : 描画方法変更";
+			sub_screen << crlf << STR_ALT"+J : ｳｲﾝﾄﾞｳｻｲｽﾞ変更";
 
 			sub_screen << crlf;
 			sub_screen << crlf << STR_ALT"+Q : 終了";
@@ -897,15 +897,15 @@ struct app_core_sdl {
 				}
 				break;
 
-			case SDL_SCANCODE_W:
+			case SDL_SCANCODE_J:
 				if (e.key.keysym.mod & (KMOD_STG)) {
 					if (e.type == SDL_KEYDOWN) {
 						update_help_desc(L"画面サイズを変更します。"
 						                 L"キーの入力ごとに640x480/960x720/1280x720/1920x1080/320x240の順で変更します");
+
 					} else {
 						sdlop_window_size(SDLOP_NEXT);
-						g_quit_sdl_loop = false; // cancel quiting on osx
-						quit_loop_count = -1;
+
 						bhandled = true;
 					}
 				}
@@ -1327,11 +1327,23 @@ static void s_init_sdl() {
 		exit_err("SDL_CreateWindow()");
 
 	// system icon
-	g_pixdata_icon_win.reset(new uint32_t[128*128]);
-	prepare_icon_data(g_pixdata_icon_win.get(), 128, 128, pix_icon_win_128);
-	gSurface_icon_win = SDL_CreateRGBSurfaceFrom(g_pixdata_icon_win.get(),128,128,32,128*4,0xFF000000,0xFF0000,0xFF00,0xFF);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	// for Windows, choose 32x32 for Window ICON
+	g_pixdata_icon_win.reset(new uint32_t[32 * 32]);
+	prepare_icon_data(g_pixdata_icon_win.get(), 32, 32, pix_icon_win_32);
+	gSurface_icon_win = SDL_CreateRGBSurfaceFrom(g_pixdata_icon_win.get(), 32, 32, 32, 32 * 4, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+
 	if (gSurface_icon_win == NULL) exit_err("SDL_CreateRGBSurfaceFrom()");
 	SDL_SetWindowIcon(gWindow, gSurface_icon_win);
+#elif defined(__APPLE__) || defined(__linux)
+	// for Linux/osx choose 128x128.
+	g_pixdata_icon_win.reset(new uint32_t[128 * 128]);
+	prepare_icon_data(g_pixdata_icon_win.get(), 128, 128, pix_icon_win_128);
+	gSurface_icon_win = SDL_CreateRGBSurfaceFrom(g_pixdata_icon_win.get(), 128, 128, 32, 128 * 4, 0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+
+	if (gSurface_icon_win == NULL) exit_err("SDL_CreateRGBSurfaceFrom()");
+	SDL_SetWindowIcon(gWindow, gSurface_icon_win);
+#endif
 
 	// Renderer
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -1513,15 +1525,15 @@ int main(int argc, char* args[]) {
 	// check command line agrs
 	s_getopt(argc, args);
 
-	printf("\033[2J\033[H*** TWELITE STAGE (v%d-%d-%d) ***", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR);
+	printf("\033[2J\033[H");
 
 	// initialize
-	
 	s_init();
 	s_init_sdl();
 	
 	// console setup
 	con_screen.setup();
+	con_screen << printfmt("*** TWELITE STAGE (v%d-%d-%d) ***", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR) << crlf;
 
 	// init SDL instance
 	the_app_core.setup();
@@ -1537,14 +1549,12 @@ int main(int argc, char* args[]) {
 
 #if defined(__APPLE__) || defined(__linux)
 	int apiret = system("clear"); (void)apiret;
-#endif
 
-#if defined(__APPLE__) // || defined(__linux)
 	// force terminate...
 	_exit(0); // terminate here to pass rest of clean up process. (may not open crash report dialogue.)
-#else
-	return 0;
 #endif
+
+	return 0;
 }
 
 #endif // WIN/MAC

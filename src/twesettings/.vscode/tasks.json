@@ -1,0 +1,176 @@
+// .vscode/tasks.json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean All",
+            "type": "shell",
+            "windows": {
+                "command": "make",
+                "args": [
+                    "cleanall",
+                ],
+                "options": {
+                    "env": {
+                        "PATH": "${workspaceRoot}\\..\\..\\..\\..\\Tools\\MinGW\\msys\\1.0\\bin"
+                    }
+                }
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "linux": {
+                "command": "make",
+                "args": [
+                    "cleanall"
+                ]
+            },
+            "osx": {
+                "command": "make",
+                "args": [
+                    "cleanall"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Build Library (BLUE)",
+            "type": "shell",
+            "windows": {
+                "command": "make",
+                "args": [
+                    "TWELITE=BLUE",
+                    "all"
+                ],
+                "options": {
+                    "env": {
+                        "PATH": "${workspaceRoot}\\..\\..\\..\\..\\Tools\\MinGW\\msys\\1.0\\bin"
+                    }
+                }
+            },
+            "linux": {
+                "command": "make",
+                "args": [
+                    "TWELITE=BLUE",
+                    ""
+                ]
+            },
+            "osx": {
+                "command": "make",
+                "args": [
+                    "TWELITE=BLUE",
+                    ""
+                ]
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Build Library (RED)",
+            "type": "shell",
+            "windows": {
+                "command": "make",
+                "args": [
+                    "TWELITE=RED",
+                    "all"
+                ],
+                "options": {
+                    "env": {
+                        "PATH": "${workspaceRoot}\\..\\..\\..\\..\\Tools\\MinGW\\msys\\1.0\\bin"
+                    }
+                }
+            },
+            "linux": {
+                "command": "make",
+                "args": [
+                    "TWELITE=RED"
+                ]
+            },
+            "osx": {
+                "command": "make",
+                "args": [
+                    "TWELITE=RED"
+                ]
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": "build"
+        },
+        {
+            "label": "install (BLUE)",
+            "type": "shell",
+            "windows": {
+                "command": "make",
+                "args": [
+                    "TWELITE=BLUE",
+                    "install"
+                ],
+                "options": {
+                    "env": {
+                        "PATH": "${workspaceRoot}\\..\\..\\..\\..\\Tools\\MinGW\\msys\\1.0\\bin"
+                    }
+                }
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": "build"
+        },
+        {
+            "label": "install (RED)",
+            "type": "shell",
+            "windows": {
+                "command": "make",
+                "args": [
+                    "TWELITE=RED",
+                    "install"
+                ],
+                "options": {
+                    "env": {
+                        "PATH": "${workspaceRoot}\\..\\..\\..\\..\\Tools\\MinGW\\msys\\1.0\\bin"
+                    }
+                }
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "absolute"
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": "build"
+        }
+    ]
+}

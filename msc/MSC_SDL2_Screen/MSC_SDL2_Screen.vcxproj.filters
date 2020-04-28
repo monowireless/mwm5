@@ -39,6 +39,9 @@
     <ClInclude Include="..\..\src\version.h">
       <Filter>gen</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_icon.h">
+      <Filter>gen</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\win\msc_term.cpp">
@@ -60,6 +63,9 @@
       <Filter>gen</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gen\sdl2_clipboard.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\sdl2_icon.cpp">
       <Filter>gen</Filter>
     </ClCompile>
   </ItemGroup>

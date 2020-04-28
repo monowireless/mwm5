@@ -42,11 +42,13 @@ namespace TWEFMT {
 			uint32_t src_addr;
 			uint8_t src_lid;
 			uint8_t lqi;
+			uint16_t volt;
 			void clear() {
 				tick = 0;
 				src_addr = 0;
 				src_lid = 0;
 				lqi = 0;
+				volt = 0;
 			}
 		} common;
 	};
@@ -140,6 +142,8 @@ namespace TWEFMT {
 		TwePacketPal() : TwePacket(_pkt_id), DataPal({ 0 }) { }
 		~TwePacketPal() { }
 		E_PKT parse(uint8_t* p, uint16_t len);
+
+		uint16_t query_volt();
 
 		PalMag& operator >> (PalMag& out);
 		PalMag get_PalMag() {

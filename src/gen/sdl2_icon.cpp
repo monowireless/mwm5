@@ -14,7 +14,7 @@ void prepare_icon_data(uint32_t* u32pixmap, int w, int h, const char* pixdata) {
     
         uint32_t a = (r + g + b) / 3;
 
-        u32pixmap[i] = c16 ? 0xFFFFFF00 | a : 0;
+        u32pixmap[i] = c16 ? 0xFAFBB700 | a : 0;
     }
 }
 
