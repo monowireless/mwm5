@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="printf">
+      <UniqueIdentifier>{50aa2765-4058-44c5-91c2-b50332d1835c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="twesettings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweprintf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweserial.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twestring.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweinputstring.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesercmd_chat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesercmd_plus3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweinteractive.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesercmd_ascii.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesercmd_binary.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesercmd_timeout.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesettings_std.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesettings_std_defsets.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twecrc8.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesettings_cmd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twesettings_validator.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweinteractive_defmenus.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweinteractive_nvmutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tweinteractive_settings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="msc_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="twenvm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="msc_eep.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\printf\printf.c">
+      <Filter>printf</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="twecommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweprintf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweserial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twestring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesercmd_plus3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesercmd_gen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweinputstring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweinteractive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesettings_std.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesettings_std_defsets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twecrc8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesettings_cmd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twesettings_validator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweinteractive_defmenus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweinteractive_nvmutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweinteractive_settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tweserial_jen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="msc_eep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="twenvm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\printf\printf.h">
+      <Filter>printf</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,120 @@
+{
+    "configurations": [
+        {
+            "name": "TWELITE BLUE",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/twenet",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/twenetutils",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/Common/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/AppApi/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/HardwareApi/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/MAC/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/gcc1",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/gcc2"
+            ],
+            "defines": [
+                "VERSION_MAIN=0",
+                "VERSION_SUB=0",
+                "VERSION_VAR=0",
+                "JN516x=5160",
+                "JN5164=5164",
+                "JENNIC_CHIP_NAME=_JN5164",
+                "JENNIC_CHIP_FAMILY_NAME=_JN516x",
+                "WATCHDOG_ENABLED",
+                "JENNIC_HW_BBC_RXINCCA=1",
+                "JENNIC_HW_BBC_DMA=1",
+                "JENNIC_HW_BBC_ISA=0",
+                "JENNIC_SW_EXTERNAL_FLASH=0",
+                "JN516X_DMA_UART_BACKWARDS_COMPATIBLE_API=1",
+                "UART_BACKWARDS_COMPATIBLE_API=1",
+                "JENNIC_CHIP=JN5164",
+                "JENNIC_CHIP_JN5164",
+                "JENNIC_CHIP_FAMILY=JN516x",
+                "JENNIC_CHIP_FAMILY_JN516x",
+                "JENNIC_STACK_MAC",
+                "JENNIC_MAC_MAC"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+	                "${workspaceFolder}/Child/Source",
+	                "${workspaceFolder}/Parent/Source",
+                    "${workspaceFolder}/Common/Source",
+                    "${workspaceFolder}/Common/twesettings",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/twenet",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/twenetutils",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/Common/Include",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/AppApi/Include",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/HardwareApi/Include",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/MAC/Include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "TWELITE RED",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/twenet",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/twenetutils",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/Common/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/AppApi/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/HardwareApi/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/MAC/Include",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/gcc1",
+                "${workspaceRoot}/../../../../Tools/VSCode/include/gcc2"
+            ],
+            "defines": [
+                "VERSION_MAIN=0",
+                "VERSION_SUB=0",
+                "VERSION_VAR=0",
+                "EMBEDDED",
+                "USER_VSR_HANDLER",
+                "JN516x=5160",
+                "JN5169=5169",
+                "JENNIC_CHIP_NAME=_JN5169",
+                "JENNIC_CHIP_FAMILY_NAME=_JN516x",
+                "WATCHDOG_ENABLED",
+                "JENNIC_HW_BBC_RXINCCA=1",
+                "JENNIC_HW_BBC_DMA=1",
+                "JENNIC_HW_BBC_ISA=0",
+                "JENNIC_SW_EXTERNAL_FLASH=0",
+                "JN516X_DMA_UART_BACKWARDS_COMPATIBLE_API=1",
+                "UART_BACKWARDS_COMPATIBLE_API=1",
+                "RXPOWERADJUST_SUPPORT",
+                "JENNIC_CHIP=JN5169",
+                "JENNIC_CHIP_JN5169",
+                "JENNIC_CHIP_FAMILY=JN516x",
+                "JENNIC_CHIP_FAMILY_JN516x",
+                "JENNIC_STACK_MAC",
+                "JENNIC_MAC_MAC"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/twenet",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/twenetutils",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/Common/Include",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/AppApi/Include",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/HardwareApi/Include",
+                    "${workspaceRoot}/../../../../Tools/VSCode/include/chiplib/MAC/Include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe"
+        }
+    ],
+    "version": 4
+}
