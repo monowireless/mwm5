@@ -1,0 +1,1 @@
+This directory for dummy header file for VS of coding hints.

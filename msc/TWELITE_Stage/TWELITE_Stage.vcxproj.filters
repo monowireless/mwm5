@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sketch">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Version">
+      <UniqueIdentifier>{025c3db4-808f-4f90-9603-5226a55cc73b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_FirmProg.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_PAL.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_RootMenu.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_SelectPort.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Twelite.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Console.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\menu.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\menu_defs.c">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Settings.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\TWELITE_Stage.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Interactive.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\version_msc.cpp">
+      <Filter>Version</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\_AppVer.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\menu_info.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_PAL.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_RootMenu.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_SelectPort.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Twelite.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Console.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\menu.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\menu_defs.h">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Settings.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\AppIDs.h">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Interactive.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\common.h">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="version_msc.h">
+      <Filter>Version</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\menu_info.h">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Glancer.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\examples\TWELITE_Stage\build\Makefile">
+      <Filter>Version</Filter>
+    </None>
+  </ItemGroup>
+</Project>

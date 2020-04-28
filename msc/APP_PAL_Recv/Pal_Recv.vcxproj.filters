@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sketch">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Version">
+      <UniqueIdentifier>{5c0fd2cd-51c3-444f-82e8-0f610cac92e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\examples\PAL_Recv\screen.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\examples\PAL_Recv\main.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\PAL_Recv\screen.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\version_msc.cpp">
+      <Filter>Version</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

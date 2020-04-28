@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="win">
+      <UniqueIdentifier>{bd121c29-bbfb-4271-975d-76400c679842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gen">
+      <UniqueIdentifier>{189176f7-0f7e-4fbc-85b3-c7892d826f07}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\win\msc_term.hpp">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\M5Stack.h">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\modctrl_ftdi.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_button.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_keyb.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\serial_ftdi.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\twe_sdl_m5.h">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_clipboard.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_common.h">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\version.h">
+      <Filter>gen</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\win\msc_term.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\modctrl_ftdi.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\sdl2_button.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\sdl2_keyb.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\sdl2_main.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\serial_ftdi.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\sdl2_clipboard.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
