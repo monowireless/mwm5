@@ -43,7 +43,7 @@ bool_t EEP_6x_bRead(uint16 u16StartAddr, uint16 u16Bytes, uint8 *pu8Buffer) {
 }
 
 /*!
- * EEPROM 書き込み関数 (MSC EEPROM シミュレート用)
+ * EEPROM 書き込み関数
  * 
  * \param u16StartAddr
  * \param u16Bytes
@@ -58,7 +58,10 @@ bool_t EEP_6x_bWrite(uint16 u16StartAddr, uint16 u16Bytes, uint8 *pu8Buffer) {
 		EEPROM.write(u16StartAddr + i, pu8Buffer[i]);
 	}
 
-	return EEPROM.commit() ? TRUE : FALSE;
+	bRet = EEPROM.commit();
+	delay(10);
+
+	return bRet;
 }
 
 #endif

@@ -9,7 +9,7 @@
 
 // just simulate eeprom on JN51XX.
 #define EEPROM_6X_SEGMENT_SIZE  (64)
-#define EEPROM_6X_USER_SEGMENTS (16)
+#define EEPROM_6X_USER_SEGMENTS (60)
 
  /* Values derived from configurable parameters */
 #define EEPROM_6X_USER_SIZE      (EEPROM_6X_SEGMENT_SIZE * EEPROM_6X_USER_SEGMENTS)

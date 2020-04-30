@@ -278,12 +278,12 @@ void TWEINTCT_vProcessInputString_nvmutils(TWEINTRCT_tsContext *psIntr, TWEINPST
 				TWE_fputs(_TWELB, psIntr->pStream);
 				while(u8sec < EEPROM_6X_USER_SEGMENTS) {
 					TWE_fputc('.', psIntr->pStream);
-					TWENVM_bErase(u8sec);
+					bool_t b = TWENVM_bErase(u8sec);
 					u8sec++;
 				}
 				TWE_fputs(_TWELB "(ERASED)", psIntr->pStream);
 				psIntr->i16SelectedIndex = -1;
-				psIntr->u16HoldUpdateScreen = 96;
+				psIntr->u16HoldUpdateScreen = 0;
 			} else {
 				TWE_fputs("(canceled)", psIntr->pStream);
 				psIntr->u16HoldUpdateScreen = 96;
