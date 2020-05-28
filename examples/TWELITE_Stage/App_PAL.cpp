@@ -10,8 +10,8 @@ L"             \033[4m"
 		                   L"             ""\r\n"
 L"\r\n"
 L"センサPALから受信したデータを、設定した ""\r\n"
-L"子機ID順に表示します。STAGE側のTWELITEに""\r\n"
-L"はPAL親機アプリを書換えておきます。"     "\r\n";
+L"子機ID順に表示します。TWELITEにはPAL親機""\r\n"
+L"またはApp_Wingsを書き込みます。"         "\r\n";
 
 void App_PAL::setup() {
 	// preference
