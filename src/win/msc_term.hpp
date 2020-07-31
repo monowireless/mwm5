@@ -52,9 +52,10 @@ public:
 /// windows console based terminal.
 /// </summary>
 class TWETerm_WinConsole : public TWETERM::ITerm {
+	bool _builtin_term;
 	bool _prog_mode;
 public:
-	TWETerm_WinConsole(uint8_t u8c, uint8_t u8l) : ITerm(u8c, u8l), _prog_mode(true) {
+	TWETerm_WinConsole(uint8_t u8c, uint8_t u8l) : ITerm(u8c, u8l), _builtin_term(false), _prog_mode(true) {
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		DWORD dwMode = 0;
 		GetConsoleMode(hOut, &dwMode);
@@ -82,6 +83,22 @@ public:
 	void close_term();
 
 	void refresh();
+
+public:
+	// set true to activate built-in term.
+	bool set_term_mode(bool mode) {
+		_builtin_term = mode;
+	}
+
+	// override () method to choose built-in term or output as-is.
+	TWE::IStreamOut& operator ()(char_t c) {
+		if (_builtin_term)
+			return ITerm::operator()(c);
+		else {
+			_putch(c);
+			return *this;
+		}
+	}
 };
 
 /// <summary>

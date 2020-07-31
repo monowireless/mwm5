@@ -79,10 +79,10 @@ APPSRC_CXX+=esp32/esp32_modctrl.cpp
 APPSRC_CXX+=esp32/esp32_lcdconsole.cpp
 APPSRC_CXX+=esp32/esp32_keyb.cpp
 
-APPSRC_CXX+=font/lcd_font_shinonome14.cpp
-APPSRC_CXX+=font/lcd_font_shinonome16.cpp
+APPSRC_CXX+=font/lcd_font_Shinonome12.cpp
+APPSRC_CXX+=font/lcd_font_Shinonome14.cpp
+APPSRC_CXX+=font/lcd_font_Shinonome16.cpp
 APPSRC_CXX+=font/lcd_font_MP10.cpp
-APPSRC_CXX+=font/lcd_font_shinonome12.cpp
 APPSRC_CXX+=font/lcd_font_MP12.cpp
 APPSRC_CXX+=font/lcd_font_8x6.cpp
 

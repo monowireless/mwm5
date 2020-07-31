@@ -20,7 +20,7 @@ void App_Interactive::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ\033[0m";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ\033[0m";
 
 	// set new handler
 	APP_HNDLR::new_hndlr(&App_Interactive::hndlr_init_screen);
@@ -129,7 +129,7 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 		// button navigation
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "   --/長押:MENU          ズーム/--                --/-- ";
+		the_screen_c << "        --/長押:MENU     ズーム/--          ﾌｧｰﾑ書換/-- ";
 		the_screen_c.force_refresh();
 
 		// reserve struct
@@ -176,9 +176,13 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 				change_screen_font();
 				break;
 
+			case KeyInput::KEY_BUTTON_C:
+				// move to firm prom menu
+				the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
+				break;
+
 			case KeyInput::KEY_BUTTON_A:
 			case KeyInput::KEY_BUTTON_B_LONG:
-			case KeyInput::KEY_BUTTON_C:
 			case KeyInput::KEY_BUTTON_C_LONG:
 				break;
 

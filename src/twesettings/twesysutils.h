@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 void TWESYSUTL_vWaitPoll(uint32 u32WaitCt);
-
+void TWESYSUTL_vWaitPollMicro(uint32 u32WaitCt);
 
 #ifdef __cplusplus
 }

@@ -24,16 +24,19 @@
 #include <windows.h>
 #include <conio.h>
 #include <signal.h>
-#elif defined(__APPLE__)
-#include <signal.h>
-#include <unistd.h>
-#include <mach-o/dyld.h>
-#include <limits.h>
-#elif defined(__linux)
+#elif defined(__APPLE__) || defined(__linux)
 #include <signal.h>
 #include <unistd.h>
 #include <limits.h>
+#include <time.h>
+# ifdef __APPLE__
+# include <mach-o/dyld.h>
+# endif
 #endif
+
+// for logging
+#include <iostream>
+#include <fstream>
 
 #include "mwm50.h"
 #include "M5Stack.h"
@@ -74,6 +77,8 @@ static void s_sketch_loop();
 
 static void exit_err(const char* msg, const char * msg_param = nullptr);
 static void signalHandler( int signum );
+
+static void s_ser_hook_on_write(const uint8_t* p, int len);
 
 #ifdef _DEBUG_MESSAGE
 #define DBGOUT(...) fprintf(stderr, __VA_ARGS__) 
@@ -144,12 +149,11 @@ struct _gen_preference {
 } the_pref;
 
 /***********************************************************
- * ICON
+ * FILES
  ***********************************************************/
-
-/***********************************************************
- * IMPLEMENTATION
- ***********************************************************/
+#define LOG_DIRNAME L"log"
+#define LOG_FINENAME L"twestage"
+#define LOG_FILEEXT L"log"
 
 // procedure for generic operation
 struct app_core_generic_procs {
@@ -241,6 +245,20 @@ struct app_core_sdl {
 	int _bfullscr;
 	int _nscrsiz;
 
+	// focus
+	bool _is_get_focus;
+	bool _is_window_hidden;
+	int _render_cnt;
+
+	// tick control
+	uint32_t _u32tick_sdl_loop_head;
+
+	// log file
+	bool _b_logging;
+	std::unique_ptr<std::filebuf> _file_buf;
+	std::unique_ptr<std::ostream> _file_os;
+	SmplBuf_ByteSL<1024> _file_fullpath; // not in wchar_t (for ShellExecureA())
+
 	// constructor
 	app_core_sdl()
 		: mTexture(nullptr)
@@ -264,6 +282,12 @@ struct app_core_sdl {
 		, _nscrsiz(0)
 		, _nTextEdtLen(0)
 		, nTextEditing(0)
+		, _file_buf(), _file_os(), _file_fullpath()
+		, _b_logging(false)
+		, _is_get_focus(true)
+		, _is_window_hidden(false)
+		, _render_cnt(0)
+		, _u32tick_sdl_loop_head(0)
 	{
 	}
 
@@ -364,6 +388,16 @@ struct app_core_sdl {
 			}
 		}
 		sub_screen_tr << crlf << STR_ALT "+0 : 切断&再スキャン";
+
+
+		sub_screen_tr << crlf;
+		sub_screen_tr << crlf << STR_ALT "+L : ログ";
+		if (_b_logging) {
+			sub_screen_tr << "\033[33;1m(記録中)\033[0m";
+		}
+#if (defined(_MSC_VER) || defined(__APPLE__) || defined(__MINGW32__))
+		sub_screen << crlf << "  Shift+" STR_ALT " ログフォルダを開く";
+#endif
 
 		static bool b_static_message = false;
 		if (!b_static_message) {
@@ -628,6 +662,28 @@ struct app_core_sdl {
 			if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
 				refresh_entirescreen();
 			}
+
+			if (e.window.event  == SDL_WINDOWEVENT_FOCUS_GAINED) {
+				_is_get_focus = true;
+				SDL_DisableScreenSaver();
+			}
+
+			if (e.window.event  == SDL_WINDOWEVENT_FOCUS_LOST) {
+				_is_get_focus = false;
+				SDL_EnableScreenSaver();
+			}
+
+			if (   e.window.event == SDL_WINDOWEVENT_MINIMIZED
+				|| e.window.event == SDL_WINDOWEVENT_HIDDEN) {
+				_is_window_hidden = true;
+			}
+
+			if (   e.window.event == SDL_WINDOWEVENT_SHOWN
+				|| e.window.event == SDL_WINDOWEVENT_RESTORED
+				|| e.window.event == SDL_WINDOWEVENT_EXPOSED) {
+				_is_window_hidden = false;
+			}
+
 		}
 
 		/* HANDLE BUTTON PRESS EVENT */
@@ -939,6 +995,124 @@ struct app_core_sdl {
 				}
 				break;
 
+			case SDL_SCANCODE_L:
+				if (e.key.keysym.mod & (KMOD_STG)) {
+					if (e.type == SDL_KEYDOWN) {
+						update_help_desc(L"twestage.logにシリアルログを追記します");
+					} else
+					if (e.key.keysym.mod & (KMOD_SHIFT)) { // KEY UP WITH SHIFT
+						// opens log storing dir
+						SmplBuf_ByteSL<1024> dir_log;
+						dir_log << make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME);
+						
+						if (TweDir::create_dir(make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME).c_str())) {
+#if defined(_MSC_VER) || defined(__MINGW32__)
+							ShellExecute(NULL, "open", (LPCSTR)dir_log.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
+#elif defined(__APPLE__)
+							SmplBuf_ByteSL<1024> cmd;
+							cmd << "open ";
+							cmd << dir_log;
+							system((const char*)cmd.c_str());
+#endif
+						}
+						else {
+							SDL_ShowSimpleMessageBox(
+								SDL_MESSAGEBOX_INFORMATION,
+								"TWELITE Stage",
+								"ログファイルを格納するディレクトリが生成できません",
+								gWindow
+							);
+						}
+
+						bhandled = true;
+					} else { // KEY UP
+						if (!_b_logging) {
+							_file_fullpath.get().emptify(); // clear buffer
+							SmplBuf_ByteSL<64> _txt_date;   // date text "YYYYMMDD_hhmmss"
+							SmplBuf_WChar _file_name;       // "twestage_YYYYMMDD_hhmmss.log"
+
+
+							// create time text as "YYYYMMDD_hhmmss" format
+#if (defined(_MSC_VER) || defined(__MINGW32__))
+							SYSTEMTIME sysTime;
+							GetLocalTime(&sysTime);
+
+							_txt_date  << printfmt("%04d%02d%02d",
+													sysTime.wYear, sysTime.wMonth, sysTime.wDay)
+									   << printfmt("-%02d%02d%02d",
+													sysTime.wHour, sysTime.wMinute, sysTime.wSecond);							
+#elif defined(__APPLE__) || defined(__linux)
+							time_t rawtime;
+							struct tm* info;
+							time(&rawtime);
+							info = localtime(&rawtime);
+
+							_txt_date  << printfmt("%04d%02d%02d",
+													(info->tm_year + 1900), (info->tm_mon + 1), info->tm_mday)
+									   << printfmt("-%02d%02d%02d",
+													info->tm_hour, info->tm_min, info->tm_sec);
+
+#endif
+							// create filename and fullpath
+							_file_name << LOG_FINENAME << '_' << (const char*)_txt_date.c_str() << '.' << LOG_FILEEXT;
+							_file_fullpath << make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME, _file_name);
+
+							// open log file
+							try {
+								if (!TweDir::create_dir(
+									make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME).c_str()
+								)) throw nullptr;
+
+								_file_buf.reset(new std::filebuf());
+								_file_buf->open((const char*)_file_fullpath.c_str(), std::ios::binary |std::ios::app);
+								_file_os.reset(new std::ostream(_file_buf.get()));
+
+								// output timestamp string as the first line.
+								*_file_os << "[" << (const char*)_txt_date.c_str() << "]" << std::endl;
+
+								_b_logging = true;
+							}
+							catch (...) {
+								_file_buf.reset();
+								_file_os.reset();
+								_b_logging = false;
+
+								SDL_ShowSimpleMessageBox(
+									SDL_MESSAGEBOX_INFORMATION,
+									"TWELITE Stage",
+									"ログファイルの作成に失敗しました",
+									gWindow
+								);
+							}
+						}
+						else {
+							// close log file
+							if(_file_buf) _file_buf->close();
+							_file_os.reset();
+							_file_buf.reset();
+
+							_b_logging = false;
+
+							// open a log file
+							SDL_Delay(100);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+							ShellExecute(NULL, "open", (LPCSTR)_file_fullpath.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
+#elif defined(__APPLE__)
+							SmplBuf_ByteSL<1024> cmd;
+							cmd << "open ";
+							cmd << _file_fullpath;
+
+							system((const char*)cmd.c_str());
+#endif
+						}
+
+						update_help_screen();
+
+						bhandled = true;
+					}
+				}
+				break;
+
 			default:
 				break;
 			}
@@ -1147,18 +1321,24 @@ struct app_core_sdl {
 		}
 	}
 
+	void log_write(char_t c) {
+		if (_b_logging) {
+			*_file_os << c;
+		}
+	}
+
 	void setup() {
 		init_sdl();
 		init_sdl_sub();
 	}
 
 	void loop() {
-
 		SDL_Event e;
-
 		SDL_Point screenCenter = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
 
 		while (g_quit_sdl_loop == false || quit_loop_count > 0) {
+			_u32tick_sdl_loop_head = SDL_GetTicks();
+			
 			//Event handler
 			while (SDL_PollEvent(&e) != 0) {
 				handle_sdl_event(e);	
@@ -1167,45 +1347,78 @@ struct app_core_sdl {
 			// SKETCH WORKS
 			::s_sketch_loop();
 
-			// Update Alt Screen	
-			static FT_HANDLE ser2handle = (FT_HANDLE)(-1);
-			if (Serial2.get_handle() != ser2handle) {
-				ser2handle = Serial2.get_handle();
-				update_help_screen();
+			bool render = true;
+
+			if (_is_window_hidden) {
+				render = false;
+			} else
+			if (!_is_get_focus) {
+				_render_cnt++;
+
+				if (!_is_window_hidden) {
+					render = ((_render_cnt & 15) == 15);
+				} else {
+					render = ((_render_cnt & 63) == 63);
+				}
 			}
-			sub_screen.refresh(); // update sub screen
-			sub_screen_tr.refresh();
-			sub_screen_br.refresh();
-			sub_textediting.refresh();
+			if (render) {
+				// Update Alt Screen	
+				static FT_HANDLE ser2handle = (FT_HANDLE)(-1);
+				if (Serial2.get_handle() != ser2handle) {
+					ser2handle = Serial2.get_handle();
+					update_help_screen();
+				}
+				sub_screen.refresh(); // update sub screen
+				sub_screen_tr.refresh();
+				sub_screen_br.refresh();
+				sub_textediting.refresh();
 
-			// clear back margin
-			if (_bfullscr > 0 && (SCREEN_POS_X != 0 || SCREEN_POS_Y != 0)) {
-				Uint8 r, g, b, a;
-				SDL_GetRenderDrawColor(gRenderer, &r, &g, &b, &a);
-				SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-				SDL_RenderClear(gRenderer);
-				SDL_SetRenderDrawColor(gRenderer, r, g, b, a);
+				// clear back margin
+				if (_bfullscr > 0 && (SCREEN_POS_X != 0 || SCREEN_POS_Y != 0)) {
+					Uint8 r, g, b, a;
+					SDL_GetRenderDrawColor(gRenderer, &r, &g, &b, &a);
+					SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+					SDL_RenderClear(gRenderer);
+					SDL_SetRenderDrawColor(gRenderer, r, g, b, a);
+				}
+
+				// render M5stack area
+				render_main_screen();
+				
+				/* RENDER ALT SCREEN (HELP, SOME OPERATION) */
+				render_help_screen();
+
+				// TEXTEDITING box
+				render_texte_box();
+				
+				/* RENDER BOTTONS */
+				sp_btn_A->render_sdl(gRenderer);
+				sp_btn_B->render_sdl(gRenderer);
+				sp_btn_C->render_sdl(gRenderer);
+
+				// BUTTON QUIT
+				sp_btn_quit->render_sdl(gRenderer);
+
+				// Update screen (wait until VSYNC, if set)
+				SDL_RenderPresent(gRenderer);
 			}
 
-			// render M5stack area
-			render_main_screen();
-			
-			/* RENDER ALT SCREEN (HELP, SOME OPERATION) */
-			render_help_screen();
+			// delay for next tick (every 16ms)
+			{
+				const int LOOP_MS = 16;
+				uint32_t u32tick_now = SDL_GetTicks();
+				int delay = (u32tick_now - _u32tick_sdl_loop_head);
 
-			// TEXTEDITING box
-			render_texte_box();
-			
-			/* RENDER BOTTONS */
-			sp_btn_A->render_sdl(gRenderer);
-			sp_btn_B->render_sdl(gRenderer);
-			sp_btn_C->render_sdl(gRenderer);
-
-			// BUTTON QUIT
-			sp_btn_quit->render_sdl(gRenderer);
-
-			// Update screen (may wait here to VSYNC)
-			SDL_RenderPresent(gRenderer);
+				if (delay >= LOOP_MS) {
+					delay = -1; // already passed LOOP_MS
+				} else if (delay >= 0) {
+					delay = LOOP_MS - delay;
+				} else {
+					delay = LOOP_MS; // error?
+				}
+				if (delay > 0) SDL_Delay(delay);
+				// con_screen << printfmt("[%d]", delay);
+			}
 
 			if (quit_loop_count == -1 && g_quit_sdl_loop) {
 				quit_loop_count = QUIT_LOOP_COUNT_MAX;
@@ -1221,7 +1434,8 @@ struct app_core_sdl {
 			}
 		}	
 	}
-} the_app_core;
+};
+std::unique_ptr<app_core_sdl> the_app_core;
 
 /**
  * @fn	int exit_err(const char* msg, const char * msg_param = NULL)
@@ -1281,6 +1495,7 @@ static void s_init() {
 	
 	// prepare serial port
 	SerialFtdi::list_devices();
+	Serial2.set_hook_on_write(s_ser_hook_on_write);
 }
 
 static void s_init_sdl() {
@@ -1346,7 +1561,7 @@ static void s_init_sdl() {
 #endif
 
 	// Renderer
-	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED); // | SDL_RENDERER_PRESENTVSYNC);
 
 	if (gRenderer == NULL)
 		exit_err("SDL_CreateRenderer()");
@@ -1374,7 +1589,9 @@ static void s_sketch_loop() {
 		// handle serial input from TWE
 		if (nSer2 >= 1) {
 			for (int i = 0; i < nSer2; i++) {
+				char_t c = Serial2._get_last_buf(i);
 				con_screen << char_t(Serial2._get_last_buf(i));
+				the_app_core->log_write(c);
 			}
 		}
 
@@ -1453,6 +1670,31 @@ static void s_sketch_loop() {
 }
 
 /**
+ * @fn	static void s_ser_hook_on_write(const uint8_t p, int len)
+ *
+ * @brief	log input chars passed to TWELITE with quote character.
+ *
+ * @param	p  	An uint8_t to process.
+ * @param	len	The length.
+ */
+static void s_ser_hook_on_write(const uint8_t *p, int len) {
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	const char_t cIn = 0xA2;  // ｢ (for Japanese windows, CP932 is mostly assumed)
+	const char_t cOut = 0xA3; // ｣
+#elif defined(__APPLE__) || defined(__linux)
+	const char_t cIn = 0xAB;  // « (for others, chose quote char from latin1ex part)
+	const char_t cOut = 0xBB; // »
+#endif
+
+	if (!twe_prog.is_protocol_busy()) {
+		the_app_core->log_write(cIn);
+		for (int i = 0; i < len; i++)
+			the_app_core->log_write(p[i]);
+		the_app_core->log_write(cOut);
+	}
+}
+
+/**
  * @fn	static void s_getopt(int argc, char* args[])
  *
  * @brief	getopts using oss_getopt() (simple implementation of getopt())
@@ -1511,6 +1753,7 @@ int TWESYS::Get_Logical_CPU_COUNT() {
 	return SDL_GetCPUCount();
 }
 
+
 /**
  * @fn	int main(int argc, char* args[])
  *
@@ -1528,6 +1771,7 @@ int main(int argc, char* args[]) {
 	printf("\033[2J\033[H");
 
 	// initialize
+	the_app_core.reset(new app_core_sdl());
 	s_init();
 	s_init_sdl();
 	
@@ -1536,14 +1780,22 @@ int main(int argc, char* args[]) {
 	con_screen << printfmt("*** TWELITE STAGE (v%d-%d-%d) ***", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR) << crlf;
 
 	// init SDL instance
-	the_app_core.setup();
+	the_app_core->setup();
 
 	// call sketch setup();
 	s_sketch_setup();
 
 	// SDL MainLoop
-	the_app_core.loop();
+	the_app_core->loop();
 
+	// delete instance
+	try {
+		the_app_core.reset();
+	}
+	catch (...) {
+		; /* exception */
+	}
+	
 	// on exit 
 	con_screen.close_term(); // shall take the screen back before calling _exit().
 

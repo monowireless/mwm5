@@ -22,7 +22,7 @@ void App_TweLite::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1m標準アプリ\033[0m (ｺﾏﾝﾄﾞ0x81)";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[G\033[1mSTAGE\033[0m 標準ｱﾌﾟﾘ (ｽﾃｰﾀｽ 0x81)";
 
 	// button navigation
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols

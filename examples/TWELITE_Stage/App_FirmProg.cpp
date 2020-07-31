@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <cstdio>
 #include <cstdlib>
+#include <wchar.h>
 namespace fs = std::filesystem;
 #endif
 
@@ -192,6 +193,10 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 			::twe_prog.reset_module();
 			break;
 
+		case SubScreen::EXIT_PREV:
+			::the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
+			break;
+
 		case SubScreen::EXIT_BACK_TO_MENU:
 		default:
 			::the_app.exit(APP_ID);
@@ -343,7 +348,7 @@ int App_FirmProg::Screen_OpenMenu::_i_selected = -1; // the last selected item
 void App_FirmProg::Screen_OpenMenu::setup() {
 
 	the_screen_t.clear_screen();
-	the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®ﾌﾟﾛｸﾞﾗﾏ - 書換ﾒﾆｭｰ";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - 書換ﾒﾆｭｰ";
 
 	// NOTE: MUST ADD ORDER OF ID NUMBER OF MENU_??? 
 	_listMenu.push_back(L"BINから選択", uint16_t(MENU_REGULAR_APP));
@@ -359,6 +364,13 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 
 	_listMenu.push_back(L"直前", uint16_t(MENU_LAST));
 	update_dropmenu();
+
+	// if constructor option is passed, choose the one
+	if (_parent->_n_opt_construct == EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD) {
+		_parent->_n_opt_construct = 0; // clear opt
+		_i_selected = MENU_LAST;
+		// the_keyboard.push(TWECUI::KeyInput::KEY_ENTER);
+	}
 
 	_listMenu.set_view(0, _i_selected >= 0 && _i_selected < _listMenu.size() ? _i_selected : -1);
 	_listMenu.update_view(true);
@@ -400,8 +412,15 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 		case MENU_NONE:
 			b_menu_none = true;
 			break;
-		case MENU_REGULAR_APP:
 		case MENU_DROP_DIR:
+			if (_listMenu[MENU_DROP_DIR].first.length() > 5) {
+				l << L" [" << std::pair(_listMenu[MENU_DROP_DIR].first.begin() + 4, _listMenu[MENU_DROP_DIR].first.end() - 1) << L']';
+			}
+			else {
+				l << L" []";
+			}
+			break;
+		case MENU_REGULAR_APP:
 			if (_parent->_firmfile_disp.size() == 0) {
 				b_menu_none = true;
 			}
@@ -444,6 +463,11 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 
 				_i_selected = _listMenu.get_selected_index();
 
+				// 直前のメニューがドロップディレクトリの場合、そのメニューを選択
+				if (_parent->_last_menu_number == MENU_DROP_DIR && iext == MENU_LAST) {
+					iext = MENU_DROP_DIR;
+				}
+
 				switch (iext) {
 				case MENU_REGULAR_APP:
 					//_parent->_firmfile_dir.clear();
@@ -457,17 +481,6 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 					if (_parent->_dirname_drop.size() > 0) {
 						_parent->_last_menu_number = MENU_DROP_DIR;
 
-						// find .BIN files
-						{
-							TweDir dir;
-							auto files = dir.find_files(_parent->_dirname_drop.c_str(), L".BIN");
-							if (files.size() > 0) {
-								_parent->_firmfile_dir = as_copying(_parent->_dirname_drop); // set browse
-								exit(EXIT_NEXT); // move to dir list (firmware write)
-								break;
-							}
-						}
-
 						// find build dir -> building
 						if (TweDir::is_dir(make_full_path(_parent->_dirname_drop, L"BUILD").c_str())) {
 							_parent->_build_project_prev.clear();
@@ -478,6 +491,17 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 
 							exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_ACT);
 							break;
+						}
+
+						// find .BIN files
+						{
+							TweDir dir;
+							auto files = dir.find_files(_parent->_dirname_drop.c_str(), L".BIN");
+							if (files.size() > 0) {
+								_parent->_firmfile_dir = as_copying(_parent->_dirname_drop); // set browse
+								exit(EXIT_NEXT); // move to dir list (firmware write)
+								break;
+							}
 						}
 
 						_parent->_build_workspace = as_copying(_parent->_dirname_drop);
@@ -511,8 +535,8 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 
 				case MENU_LAST: // PREVIOUS
 					switch (_parent->_last_menu_number) {
-					case MENU_REGULAR_APP:
 					case MENU_DROP_DIR:
+					case MENU_REGULAR_APP:
 						if (_parent->_firmfile_disp.size() > 0 && _parent->_firmfile_name.size() > 0) {
 							exit(EXIT_NEXT2); // move to prog
 							return;
@@ -579,12 +603,12 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	the_screen << "\033[2J";
 
 	// put a init message
-	the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®ﾌﾟﾛｸﾞﾗﾏ - ﾌｧｰﾑｳｪｱ選択";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - ﾌｧｰﾑｳｪｱ選択";
 
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     前/長押:MENU          選択/--                次/--";
+	the_screen_c << "     ↑/長押:MENU          決定/--                ↓/";
 
 	// test for list files
 	_listFiles.clear();
@@ -704,7 +728,7 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 }
 
 void App_FirmProg::Screen_FatalError::setup() {
-	the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®ﾌﾟﾛｸﾞﾗﾏ - エラー";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - エラー";
 	
 	the_screen.clear_screen();
 
@@ -817,7 +841,7 @@ void App_FirmProg::Screen_ModIdentify::cb_protocol(
 
 
 void App_FirmProg::Screen_ModIdentify::setup() {
-	the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®ﾌﾟﾛｸﾞﾗﾏ - モジュール認識";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - ﾓｼﾞｭｰﾙ認識";
 	the_screen.clear_screen();
 
 	twe_prog.add_cb(cb_protocol, (void*)this);
@@ -945,12 +969,12 @@ void App_FirmProg::Screen_FileProg::setup() {
 	the_screen << "\033[2J";
 
 	// put a init message
-	the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®ﾌﾟﾛｸﾞﾗﾏ - 書き換え中";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - 書換中";
 
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     前/長押:MENU          書換/--                次/--";
+	the_screen_c << "     ↑/長押:MENU          書換/--                ↓/--";
 
 	// error
 	if (_parent->_firmfile_dir.size() == 0 || _parent->_firmfile_name.size() == 0) {
@@ -1053,15 +1077,15 @@ void App_FirmProg::Screen_FileProg::hndlr_success(event_type ev, arg_type arg) {
 		the_screen_c.clear_screen();
 		if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 0) {
 			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-			the_screen_c << "     前/長押:MENU     " 
+			the_screen_c << "     ↑/長押:MENU     " 
 									   "\033[42;30m成功:設定\033[0m"
-														   "/--                次/--";
+														   "/--                ↓/--";
 		}
 		else {
 			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-			the_screen_c << "     前/長押:MENU    " 
+			the_screen_c << "     ↑/長押:MENU    " 
 									  "\033[42;30m成功:ﾀｰﾐﾅﾙ\033[0m"
-														   "/--                次/--";
+														   "/--                ↓/--";
 
 		}
 		break;
@@ -1102,14 +1126,15 @@ void App_FirmProg::Screen_FileProg::hndlr_error(event_type ev, arg_type arg) {
 
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:MENU        再書換/--                次/--";
+		the_screen_c << "     ↑/長押:MENU        再書換/--                ↓/--";
 		break;
 
 	case EV_LOOP:
 		// KEYBOARD
 		switch (int c = the_keyboard.read()) {
 		case KeyInput::KEY_ENTER:
-			if (!_b_protocol) {	start_protocol(); } // try again
+			//if (!_b_protocol) {	start_protocol(); } // try again (NG: may cause hung up.)
+			exit(EXIT_PREV); // back to menu w/ last app.
 			break;
 
 		case KeyInput::KEY_ESC:
@@ -1262,16 +1287,11 @@ void App_FirmProg::Screen_ActBuild::setup() {
 	// put a init message
 	the_screen_t.clear_screen();
 	if (_opt == OPT_START_BUILD_ACT || _opt == OPT_START_DIR_LIST_ACT) {
-		the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®Act ビルド";
+		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Act ビルド";
 	}
 	else {
-		the_screen_t << "\033[G\033[K\033[1mTWELITE\033[0m®TWELITE APPS ビルド";
+		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m TWELITE APPS ビルド";
 	}
-
-	// button navigation
-	the_screen_c.clear_screen();
-	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     前/長押:MENU          選択/n.a               次/n.a";
 
 	if (_opt == OPT_START_BUILD_ACT || _opt == OPT_START_BUILD_TWEAPPS) {
 		// change to previous dir (start build)
@@ -1301,6 +1321,15 @@ void App_FirmProg::Screen_ActBuild::loop() {
 void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 	switch (ev) {
 	case EV_SETUP: {
+		the_screen_c.clear_screen();
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+#else
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#endif
+		the_screen_c.force_refresh();
+
 		TweDir dir;
 		int idx = 0, idx_sel = -1;
 
@@ -1325,17 +1354,23 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 
 				// skip Common and starting with `.'.
 				if (filename_sys.size() > 0
-					&& (   !wcscmp(filename_sys.c_str(), L"Common")
+					&& (   !_SmplBuf_SCompare(filename_sys, SmplBuf_WChar(L"COMMON"), [](wchar_t z) { return toupper(z); })
+						|| !_SmplBuf_SCompare(filename_sys, SmplBuf_WChar(L"SOURCE"), [](wchar_t z) { return toupper(z); })
 					    || filename_sys[0] == L'.'
 					   )
 				   ) {
 					continue;
 				}
 
+				
 				// check the file name and add into the list.
 				_listFiles.push_back(filename_disp, filename_sys);
 				idx++;
 			}
+		}
+		else {
+			// if dir is not opened.
+			_listFiles.clear();
 		}
 
 		if (_listFiles.size() == 0) {
@@ -1399,35 +1434,51 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 				}
 			}
 			else
-			switch (c) {
-			case KeyInput::KEY_ESC:
-			case KeyInput::KEY_BUTTON_A_LONG:
-				if (_parent->_build_project.empty()) {
-					exit(EXIT_BACK_TO_MENU);
+				switch (c) {
+				case KeyInput::KEY_ESC:
+				case KeyInput::KEY_BUTTON_A_LONG:
+					if (_parent->_build_project.empty()) {
+						exit(EXIT_BACK_TO_MENU);
+					}
+					else {
+						_parent->_build_project_prev = as_moving(_parent->_build_project);
+						_parent->_build_project.clear();
+						APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_actdir); // open again
+					}
+					return;
+
+				case KeyInput::KEY_BUTTON_A:
+					the_keyboard.push(TWECUI::KeyInput::KEY_UP);
+					break;
+
+				case KeyInput::KEY_BUTTON_B:
+					the_keyboard.push(TWECUI::KeyInput::KEY_ENTER);
+					break;
+
+				case KeyInput::KEY_BUTTON_B_LONG:
+					break;
+
+				case KeyInput::KEY_BUTTON_C:
+					the_keyboard.push(TWECUI::KeyInput::KEY_DOWN);
+					break;
+
+				case KeyInput::KEY_BUTTON_C_LONG:
+				{
+					// convert dir path name into uint8[] from wchar_t[].
+					SmplBuf_ByteSL<1024> dir_a;
+#if defined(__APPLE__)
+					dir_a << "open ";
+#endif
+					dir_a << make_full_path(_parent->_build_workspace, _parent->_build_project, _listFiles.get_selected().first).c_str();
+
+					// open project dir.
+#if defined(_MSC_VER) || defined(__MINGW32__)
+					ShellExecute(NULL, "open", (LPCSTR)dir_a.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
+#elif defined(__APPLE__)
+					system((const char*)dir_a.c_str());
+#endif
 				}
-				else {
-					_parent->_build_project_prev = as_moving(_parent->_build_project);
-					_parent->_build_project.clear();
-					APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_actdir); // open again
-				}
-				return;
 
-			case KeyInput::KEY_BUTTON_A:
-				the_keyboard.push(TWECUI::KeyInput::KEY_UP);
-				break;
-
-			case KeyInput::KEY_BUTTON_B:
-				the_keyboard.push(TWECUI::KeyInput::KEY_ENTER);
-				break;
-
-			case KeyInput::KEY_BUTTON_B_LONG:
-				break;
-
-			case KeyInput::KEY_BUTTON_C:
-				the_keyboard.push(TWECUI::KeyInput::KEY_DOWN);
-				break;
-
-			case KeyInput::KEY_BUTTON_C_LONG:
 				break;
 			}
 		} while (the_keyboard.available());
@@ -1444,6 +1495,15 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 	// - sdk dir is confirmed.
 	// - _parent->_build_name is set.
 	case EV_SETUP: {
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
+		the_screen_c.clear_screen();
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/ﾌｫﾙﾀﾞ";
+#else
+		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--                --/--";
+#endif
+		the_screen_c.force_refresh();
+
 		_act_dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _parent->_build_name, L"build");
 		the_cwd.change_dir(_act_dir);
 
@@ -1455,7 +1515,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 
 		SmplBuf_ByteSL<1024> cmdstr;
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__) 
 		#define MAKE_CMD_TERM "\""
 		cmdstr << the_cwd.get_dir_sdk() << char(WCHR_PATH_SEP)
 			// << "Tools\\MinGW\\msys\\1.0\\bin\\make.exe -j" << printfmt("%d", ct_cpu);
@@ -1523,6 +1583,27 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				case KeyInput::KEY_ENTER:
 					APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_build);
 					return;
+
+				case KeyInput::KEY_BUTTON_C:
+					// open builderr.log as shell function
+#if defined(_MSC_VER) || defined(__MINGW32__)
+					ShellExecute(NULL, "open", STR_BUILD_ERROR_LOG, NULL, NULL, SW_SHOWNORMAL); 
+#elif defined(__APPLE__)
+					{
+						SmplBuf_ByteSL<1024> buf;
+						buf << "open " << STR_BUILD_ERROR_LOG;
+						system((const char*)buf.c_str());
+					}
+#endif
+					return;
+				case KeyInput::KEY_BUTTON_C_LONG:
+					// open source dir.
+#if defined(_MSC_VER) || defined(__MINGW32__)
+					ShellExecute(NULL, "open", "..", NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+					system("open ..");
+#endif
+					return;
 				}
 			}
 			// if timer is started, no further process
@@ -1566,10 +1647,8 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 						_act_build_file << m_target[1].str().c_str();
 					}
 
-					// output to the raw console (the_sys_console is now set as in-visible())
-					std::cout << buff.c_str();
-					std::cout << std::endl;
-					std::cout.flush();
+					// output to the system console
+					the_sys_console << buff.c_str() << crlf;
 				}
 			}
 		} else { // success call
@@ -1578,7 +1657,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				std::ifstream ifs(STR_BUILD_ERROR_LOG);
 				std::string buff;
 				
-				auto _re_gcc_error = std::regex(R"(([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP])\:([0-9]+)\:([0-9]+)\:[ \t]error:[ \t](.+))");
+				auto _re_gcc_error = std::regex(R"(([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP])\:([0-9]+)\:([0-9]+)\:[ \t](fatal error|error):[ \t](.+))");
 				auto _re_gcc_error0 = std::regex(R"(error\:)");
 				auto _re_gcc_warning0 = std::regex(R"(warning\:)");
 				auto _re_gcc_ld_undef_ref = std::regex(R"((\: undefined reference to )(.+))");
@@ -1600,7 +1679,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 
 						if (std::regex_search(buff, m_err, _re_gcc_error)) {
 							SmplBuf_ByteSL<64> msgerr; // limit to 64chars
-							msgerr << m_err[5].str().c_str();
+							msgerr << m_err[6].str().c_str();
 
 							// compile error
 							the_screen
@@ -1644,12 +1723,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 						b_match_warning_message = true;
 					}
 
-					if (b_match_err_message) std::cout << "\033[31;47m"; // RED/WHITE
-					if (b_match_warning_message) std::cout << "\033[33;40m"; // YELLOW/BLACK
-					std::cerr << buff;
-					if (b_match_err_message || b_match_warning_message) std::cout << "\033[0m";
-					std::cerr << std::endl;
-					std::cerr.flush();
+					if (b_match_err_message) the_sys_console << "\033[31;47m"; // RED/WHITE
+					if (b_match_warning_message) the_sys_console << "\033[33;40m"; // YELLOW/BLACK
+					the_sys_console << buff.c_str();
+					if (b_match_err_message || b_match_warning_message) the_sys_console << "\033[0m";
+					the_sys_console << crlf;
 				}
 			}
 			catch (...) { ; }

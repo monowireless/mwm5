@@ -173,13 +173,13 @@
     <ClCompile Include="..\src\font\lcd_font_MP12.cpp">
       <Filter>TWELibSrc\font</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\font\lcd_font_shinonome12.cpp">
+    <ClCompile Include="..\src\font\lcd_font_Shinonome12.cpp">
       <Filter>TWELibSrc\font</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\font\lcd_font_shinonome14.cpp">
+    <ClCompile Include="..\src\font\lcd_font_Shinonome14.cpp">
       <Filter>TWELibSrc\font</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\font\lcd_font_shinonome16.cpp">
+    <ClCompile Include="..\src\font\lcd_font_Shinonome16.cpp">
       <Filter>TWELibSrc\font</Filter>
     </ClCompile>
     <ClCompile Include="..\src\esp32\esp32_lcdconsole.cpp">
@@ -379,13 +379,13 @@
     <ClInclude Include="..\src\font\lcd_font_MP12.h">
       <Filter>TWELibSrc\font</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\font\lcd_font_shinonome12.h">
+    <ClInclude Include="..\src\font\lcd_font_Shinonome12.h">
       <Filter>TWELibSrc\font</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\font\lcd_font_shinonome14.h">
+    <ClInclude Include="..\src\font\lcd_font_Shinonome14.h">
       <Filter>TWELibSrc\font</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\font\lcd_font_shinonome16.h">
+    <ClInclude Include="..\src\font\lcd_font_Shinonome16.h">
       <Filter>TWELibSrc\font</Filter>
     </ClInclude>
     <ClInclude Include="..\src\esp32\esp32_common.h">

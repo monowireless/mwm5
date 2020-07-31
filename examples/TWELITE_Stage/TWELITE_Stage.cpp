@@ -149,9 +149,8 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 		the_app.new_app<App_Glancer>();
 		break;
 
-
 	case App_FirmProg::APP_ID:
-		the_app.new_app<App_FirmProg>();
+		the_app.new_app<App_FirmProg>(exit_id);
 		break;
 
 	case App_Interactive::APP_ID:
@@ -172,7 +171,7 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 		break;
 #endif
 
-	case APP_MGR::NEXT_APP_DEFAULT:
+	case APP_MGR::NEXT_APP_DEFAULT: // -1
 	case App_RootMenu::APP_ID: // should be 0
 	default:
 		the_app.new_app<App_RootMenu>(exit_id);

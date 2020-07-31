@@ -31,10 +31,6 @@ void App_RootMenu::setup() {
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 
-	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m® \033[1mSTAGE\033[0m"
-				 << printfmt(" (v%d-%d-%d)", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR);
-
 	// nav-bars
 	set_title_status();
 
@@ -267,22 +263,25 @@ void App_RootMenu::check_for_refresh() {
 void App_RootMenu::set_title_status() {
 	the_screen_c.clear_screen();
 
+	if (this->_b_appmenu) {
+		// put a init message
+		the_screen_t.clear_screen();
+		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ビューア";
+
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << "     ↑/長押:戻る          決定/--                ↓/--";
+	} else {
+		// put a init message
+		the_screen_t.clear_screen();
+		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m"
+			<< printfmt(" (v%d-%d-%d)", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR);
+
 #ifdef ESP32
-	if (this->_b_appmenu) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:戻る          選択/--                次/--";
-	} else {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:電源OFF       選択/--                次/--";
-	}
-	
+		the_screen_c << "     ↑/長押:電源OFF       決定/--                ↓/--";
 #else
-	if (this->_b_appmenu) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:戻る          選択/--                次/--";
-	} else {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:終了          選択/--                次/--";
-	}
+		the_screen_c << "     ↑/長押:終了          決定/--                ↓/--";
 #endif
+	}
 }

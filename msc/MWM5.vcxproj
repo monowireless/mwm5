@@ -53,9 +53,9 @@
     <ClCompile Include="..\src\font\lcd_font_8x6.cpp" />
     <ClCompile Include="..\src\font\lcd_font_MP10.cpp" />
     <ClCompile Include="..\src\font\lcd_font_MP12.cpp" />
-    <ClCompile Include="..\src\font\lcd_font_shinonome12.cpp" />
-    <ClCompile Include="..\src\font\lcd_font_shinonome14.cpp" />
-    <ClCompile Include="..\src\font\lcd_font_shinonome16.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_Shinonome12.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_Shinonome14.cpp" />
+    <ClCompile Include="..\src\font\lcd_font_Shinonome16.cpp" />
     <ClCompile Include="..\src\oss\oss_getopt.c" />
     <ClCompile Include="..\src\oss\oss_regex.cpp" />
     <ClCompile Include="..\src\printf\printf.c" />
@@ -125,9 +125,9 @@
     <ClInclude Include="..\src\font\lcd_font_8x6.h" />
     <ClInclude Include="..\src\font\lcd_font_MP10.h" />
     <ClInclude Include="..\src\font\lcd_font_MP12.h" />
-    <ClInclude Include="..\src\font\lcd_font_shinonome12.h" />
-    <ClInclude Include="..\src\font\lcd_font_shinonome14.h" />
-    <ClInclude Include="..\src\font\lcd_font_shinonome16.h" />
+    <ClInclude Include="..\src\font\lcd_font_Shinonome12.h" />
+    <ClInclude Include="..\src\font\lcd_font_Shinonome14.h" />
+    <ClInclude Include="..\src\font\lcd_font_Shinonome16.h" />
     <ClInclude Include="..\src\mwm5.h" />
     <ClInclude Include="..\src\mwm50.h" />
     <ClInclude Include="..\src\oss\oss_getopt.h" />

@@ -1,103 +1,48 @@
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
-
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
 #include "twe_font.hpp"
-#include "lcd_font_shinonome14.h"
-
-#define FONT_SHINO14_DATA_ROWS 14
-#define FONT_SHINO14_ROWS 14
-#define FONT_SHINO14_COLS 7
-#define FONT_SHINO14_DBL_CHARS 2645
-#define FONT_SHINO14_DBL_CHARS_FULL 6868
-
+#include "lcd_font_Shinonome14.h"
 
 namespace TWEFONT {
-	extern const uint8_t font_shinonome_f14r[128 * FONT_SHINO14_DATA_ROWS];
-	extern const uint8_t font_shinonome_f14r_jisx201[64 * FONT_SHINO14_DATA_ROWS];
-	extern const uint8_t font_shinonome_f14r_latin1ex[96 * FONT_SHINO14_DATA_ROWS];
-	extern const uint16_t font_shinonome_f14j_idx[FONT_SHINO14_DBL_CHARS];
-	extern const uint8_t font_shinonome_f14j_data[FONT_SHINO14_DBL_CHARS * FONT_SHINO14_DATA_ROWS * 2];
-	extern const uint8_t font_shinonome_f14j_unsupported[FONT_SHINO14_DATA_ROWS * 2];
+	extern const uint8_t font_Shinonome14k_unsupported[14*2];
+	extern const uint8_t font_Shinonome14r[1792];
+	extern const uint8_t font_Shinonome14r_latin1ex[1344];
+	extern const uint8_t font_Shinonome14r_jisx201[896];
 
-	extern const uint16_t font_shinonome_f14j_idx_full[FONT_SHINO14_DBL_CHARS_FULL];
-	extern const uint8_t font_shinonome_f14j_data_full[FONT_SHINO14_DBL_CHARS_FULL * FONT_SHINO14_DATA_ROWS * 2];
 
-	/// <summary>
-	/// create Shinonome 14dot font (Joyo Kanji)
-	/// </summary>
-	/// <param name="id">font id, used for display changing</param>
-	/// <param name="line_space">add line spacing by pixel</param>
-	/// <param name="char_space">add char to char spacing by pixel</param>
-	/// <returns></returns>
+	/**********************************************************
+	 * createFontShinonome14 [chrs = 576]
+	 **********************************************************/
+	extern const uint16_t font_Shinonome14k_idx[576];
+	extern const uint8_t font_Shinonome14k_data[576*14*2];
+
 	const FontDef& createFontShinonome14(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
 		auto font = _queryFont(id);
 
 		if (font != nullptr) {
 			font->font_code = id;
-			font->font_name = "Shinonome 14dot";
+			font->font_name = "Shinonome font 14dot (Shinonome14, 576)";
 
-			font->width = FONT_SHINO14_COLS;
-			font->height = FONT_SHINO14_ROWS;
+			font->width = 7;
+			font->height = 14;
 
-			font->data_cols = FONT_SHINO14_COLS;
-			font->data_rows = FONT_SHINO14_DATA_ROWS;
-
-			font->h_space = line_space;
-			font->w_space = char_space;
-
-			font->font_latin1 = font_shinonome_f14r;
-			font->font_jisx201 = font_shinonome_f14r_jisx201;
-			font->font_latin1_ex = font_shinonome_f14r_latin1ex;
-
-			font->font_wide = font_shinonome_f14j_data;		// WIDE FONT DATA 
-			font->font_wide_missing = font_shinonome_f14j_unsupported;
-			font->font_wide_idx = font_shinonome_f14j_idx;	// UNICODE index 
-			font->font_wide_count = FONT_SHINO14_DBL_CHARS;
-
-			font->opt = opt;
-
-
-			return *font;
-		}
-		else {
-			return queryFont(0);
-		}
-
-	}
-
-	/// <summary>
-	/// create Shinonome 14dot font (Kanji fullset)
-	/// </summary>
-	/// <param name="id">font id, used for display changing</param>
-	/// <param name="line_space">add line spacing by pixel</param>
-	/// <param name="char_space">add char to char spacing by pixel</param>
-	/// <returns></returns>
-	const FontDef& createFontShinonome14_full(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
-		auto font = _queryFont(id);
-
-		if (font != nullptr) {
-			font->font_code = id;
-			font->font_name = "Shinonome 14dot";
-
-			font->width = FONT_SHINO14_COLS;
-			font->height = FONT_SHINO14_ROWS;
-
-			font->data_cols = FONT_SHINO14_COLS;
-			font->data_rows = FONT_SHINO14_DATA_ROWS;
+			font->data_cols = 7;
+			font->data_rows = 14;
 
 			font->h_space = line_space;
 			font->w_space = char_space;
 
-			font->font_latin1 = font_shinonome_f14r;
-			font->font_jisx201 = font_shinonome_f14r_jisx201;
-			font->font_latin1_ex = font_shinonome_f14r_latin1ex;
+			font->font_latin1 = font_Shinonome14r;
+			font->font_jisx201 = font_Shinonome14r_jisx201;
+			font->font_latin1_ex = font_Shinonome14r_latin1ex;
 
-			font->font_wide = font_shinonome_f14j_data_full;		// WIDE FONT DATA 
-			font->font_wide_missing = font_shinonome_f14j_unsupported;
-			font->font_wide_idx = font_shinonome_f14j_idx_full;	// UNICODE index 
-			font->font_wide_count = FONT_SHINO14_DBL_CHARS_FULL;
+			font->font_wide = font_Shinonome14k_data;		// WIDE FONT DATA 
+			font->font_wide_idx = font_Shinonome14k_idx;	// UNICODE index 
+			font->font_wide_missing = font_Shinonome14k_unsupported;
+
+			font->font_wide_count = 576;
 
 			font->opt = opt;
 			return *font;
@@ -106,7 +51,93 @@ namespace TWEFONT {
 			return queryFont(0);  // returns default font
 		}
 	}
+
+
+	/**********************************************************
+	 * createFontShinonome14_std [chrs = 2645]
+	 **********************************************************/
+	extern const uint16_t font_Shinonome14k_std_idx[2645];
+	extern const uint8_t font_Shinonome14k_std_data[2645*14*2];
+
+	const FontDef& createFontShinonome14_std(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
+		auto font = _queryFont(id);
+
+		if (font != nullptr) {
+			font->font_code = id;
+			font->font_name = "Shinonome font 14dot (Shinonome14_std, 2645)";
+
+			font->width = 7;
+			font->height = 14;
+
+			font->data_cols = 7;
+			font->data_rows = 14;
+
+			font->h_space = line_space;
+			font->w_space = char_space;
+
+			font->font_latin1 = font_Shinonome14r;
+			font->font_jisx201 = font_Shinonome14r_jisx201;
+			font->font_latin1_ex = font_Shinonome14r_latin1ex;
+
+			font->font_wide = font_Shinonome14k_std_data;		// WIDE FONT DATA 
+			font->font_wide_idx = font_Shinonome14k_std_idx;	// UNICODE index 
+			font->font_wide_missing = font_Shinonome14k_unsupported;
+
+			font->font_wide_count = 2645;
+
+			font->opt = opt;
+			return *font;
+		}
+		else {
+			return queryFont(0);  // returns default font
+		}
+	}
+
+
+	/**********************************************************
+	 * createFontShinonome14_full [chrs = 6867]
+	 **********************************************************/
+	extern const uint16_t font_Shinonome14k_full_idx[6867];
+	extern const uint8_t font_Shinonome14k_full_data[6867*14*2];
+
+	const FontDef& createFontShinonome14_full(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
+		auto font = _queryFont(id);
+
+		if (font != nullptr) {
+			font->font_code = id;
+			font->font_name = "Shinonome font 14dot (Shinonome14_full, 6867)";
+
+			font->width = 7;
+			font->height = 14;
+
+			font->data_cols = 7;
+			font->data_rows = 14;
+
+			font->h_space = line_space;
+			font->w_space = char_space;
+
+			font->font_latin1 = font_Shinonome14r;
+			font->font_jisx201 = font_Shinonome14r_jisx201;
+			font->font_latin1_ex = font_Shinonome14r_latin1ex;
+
+			font->font_wide = font_Shinonome14k_full_data;		// WIDE FONT DATA 
+			font->font_wide_idx = font_Shinonome14k_full_idx;	// UNICODE index 
+			font->font_wide_missing = font_Shinonome14k_unsupported;
+
+			font->font_wide_count = 6867;
+
+			font->opt = opt;
+			return *font;
+		}
+		else {
+			return queryFont(0);  // returns default font
+		}
+	}
+
+
 }
 
-// include the font table here (TODO: separate .cpp file would have _unreferenced link error)
-#include "lcd_font_shinonome14_table.src"
+#include "Shinonome14r.src"
+#include "Shinonome14k.src"
+#include "Shinonome14k_std.src"
+#include "Shinonome14k_full.src"

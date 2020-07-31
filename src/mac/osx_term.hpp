@@ -41,12 +41,30 @@ public:
 /// windows console based terminal.
 /// </summary>
 class TWETerm_MacConsole : public TWETERM::ITerm {
+	bool _builtin_term;
+
 public:
 	TWETerm_MacConsole(uint8_t u8c, uint8_t u8l);
 	~TWETerm_MacConsole();
 	void setup();
 	void refresh();
 	void close_term();
+
+	// set true to activate built-in term.
+	bool set_term_mode(bool mode) {
+		_builtin_term = mode;
+		return mode;
+	}
+
+	// override () method to choose built-in term or output as-is.
+	TWE::IStreamOut& operator ()(char_t c) {
+		if (_builtin_term)
+			return ITerm::operator()(c);
+		else {
+			putchar(c);
+			return *this;
+		}
+	}
 };
 
 /// <summary>

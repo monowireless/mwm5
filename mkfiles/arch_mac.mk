@@ -45,7 +45,7 @@ CFLAGS += -D_REENTRANT
 LDFLAGS += -L$(root_dir)/osx/lib/FTDI/
 
 ifneq ($(DEBUG_BUILD),1)
-CFLAGS += -DUSE_CURSES
+#CFLAGS += -DUSE_CURSES
 endif
 
 ifeq ($(DYNAMIC_LINK),1)

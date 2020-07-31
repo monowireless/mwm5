@@ -548,10 +548,18 @@ void TweCwd::_get_sdk_dir() {
 		}
 	}
 
-	// 2. {exe dir}/.. has MWSDK dir
-	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_exe(), L"..", STR_MWSDK, STR_TWENET).c_str())) {
-		if (TweDir::is_dir(make_full_path(get_dir_exe(), L"..", STR_MWSDK, STR_ACTSAMPLES).c_str())) {
-			_dir_sdk = make_full_path(get_dir_exe(), L"..", STR_MWSDK);
+	// 2.1 {exe dir} IS MWSDK dir
+	if (_dir_sdk.empty()) {
+		if (TweDir::is_dir(make_full_path(get_dir_exe(), STR_ACTSAMPLES).c_str())) {
+			_dir_sdk = make_full_path(get_dir_exe());
+			return;
+		}
+	}
+
+	// 2.2 {exe dir}/.. IS MWSDK dir
+	if (_dir_sdk.empty()) {
+		if (TweDir::is_dir(make_full_path(get_dir_exe(), L"..", STR_ACTSAMPLES).c_str())) {
+			_dir_sdk = make_full_path(get_dir_exe(), L"..");
 			return;
 		}
 	}

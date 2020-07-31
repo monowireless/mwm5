@@ -373,7 +373,7 @@ TWE_APIRET TWEINTRCT_u32MenuOpKey(TWEINTRCT_tsContext *pContext, TWEINTRCT_tkeyc
 
 	case '!': // MODULE RESET
 		if(!psIntr->config.u8NoSysReset) {
-			TWE_fprintf(psIntr->pStream, _TWELB"!!! RESET the system !!!");
+			TWE_fprintf(psIntr->pStream, _TWELB"!INF RESET SYSTEM.");
 			TWEINTRCT_cbu32GenericHandler(psIntr, E_TWEINRCT_OP_WAIT, 100, 0, NULL);
 			TWEINTRCT_cbu32GenericHandler(psIntr, E_TWEINRCT_OP_RESET, 0, 0, NULL);
 		}

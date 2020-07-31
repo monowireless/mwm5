@@ -23,6 +23,8 @@ namespace TWE {
 
 		char _devname[32];
 
+		void (*_hook_on_write)(const uint8_t* p, int len);
+
 	public:
 		// Serial Devices, global information
 		static ISerial::tsAryChar32 ser_devname;
@@ -43,7 +45,7 @@ namespace TWE {
 		 *
 		 * @param	bufsize	(Optional) The bufsize of internal queue.
 		 */
-		SerialFtdi(size_t bufsize = 2048) : _ftStatus{}, _ftHandle{}, _ftDevice{}
+		SerialFtdi(size_t bufsize = 2048) : _ftStatus{}, _ftHandle{}, _ftDevice{}, _hook_on_write(nullptr)
 			, _que(TWEUTILS::FixedQueue<uint8_t>::size_type(bufsize))
 			, _buf_len(0)
 			, _buf{}
@@ -217,6 +219,7 @@ namespace TWE {
 			DWORD len_written = 0;
 			if (_ftHandle != NULL) {
 				FT_Write(_ftHandle, (LPVOID)p, (DWORD)len, &len_written);
+				if (_hook_on_write) _hook_on_write(p, len);
 			}
 
 			return len_written;
@@ -314,6 +317,17 @@ namespace TWE {
 				flush();
 				FT_SetBaudRate(_ftHandle, baud);
 			}
+		}
+
+		/**
+		 * @fn	void SerialFtdi::set_hook_on_write(void (*ptr)(char_t))
+		 *
+		 * @brief	Sets hook on write
+		 *
+		 * @param [in,out]	ptr	If non-null, the pointer.
+		 */
+		void set_hook_on_write(void (*ptr)(const uint8_t* p, int len)) {
+			_hook_on_write = ptr;
 		}
 
 		// do nothing

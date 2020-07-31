@@ -17,7 +17,7 @@ void App_SelectPort::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m® ｼﾘｱﾙﾎﾟｰﾄ選択";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｼﾘｱﾙﾎﾟｰﾄ選択";
 
 	// add items
 	SerialFtdi::list_devices();
@@ -79,7 +79,7 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 		// button navigation
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:--            選択/--                次/--";
+		the_screen_c << "     ↑/長押:--            決定/--                ↓/--";
 
 		if (sAppData.au8_TWESTG_STAGE_FTDI_ADDR[1] <= 0x20) {
 			int c = sAppData.au8_TWESTG_STAGE_FTDI_ADDR[0];

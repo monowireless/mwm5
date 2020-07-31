@@ -21,7 +21,7 @@ void App_PAL::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	const char* fmt_title = "\033[G\033[1m\033[1mTWELITE\033[0m®PALﾋﾞｭｰｱ\033[0m : %s";
+	const char* fmt_title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m PALﾋﾞｭｰｱ\033[0m : %s";
 	the_screen_t << printfmt(fmt_title, "---"); // accepts UTF-8 codes
 	pkt_data.init_screen(fmt_title);
 

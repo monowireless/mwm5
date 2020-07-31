@@ -119,8 +119,14 @@ namespace TWE {
 			>::value
 		>::type
     >
-    bool _make_full_path_is_empty(T& fname) {
-        return (int)fname.size() == 0;
+    int _make_full_path_is_empty(T& fname) {
+        int r = ((int)fname.size() == 0);
+
+        // check if fname is "."(as empty) or ".."(returns -1).
+        if (fname.size() == 1 && fname[0] == 0x2e) r = 1;
+        if (fname.size() == 2 && fname[0] == 0x2e && fname[1] == 0x2e) r = -1;
+
+        return r;
     }
 
     /** @brief	Check if fname is empty string or not. (for wchar_t[]) */
@@ -135,8 +141,14 @@ namespace TWE {
 		    >::value // is_same
         >::type // enable_if
     > // template 
-    bool _make_full_path_is_empty(T(&fname)[N]) {
-        return N == 1;
+    int _make_full_path_is_empty(T(&fname)[N]) {
+        int r = (N == 1);
+
+        // check if fname is "."(as empty) or ".."(returns -1).
+        if (N == 1 + 1 && fname[0] == 0x2e) r = 1;
+        if (N == 2 + 1 && fname[0] == 0x2e && fname[1] == 0x2e) r = -1;
+
+        return r;
     }
 
     /** @brief	Check if fname is empty string or not. (for wchar_t*) */
@@ -153,8 +165,14 @@ namespace TWE {
             >::value // is_same
         >::type // enable_if
     > // template
-    bool _make_full_path_is_empty(T fname) {
-        return fname[0] == 0;
+    int _make_full_path_is_empty(T fname) {
+        int r = (fname[0] == 0);
+
+        // check if fname is "."(as empty) or ".."(returns -1).
+        if (!r && fname[0] == 0x2e && fname[1] == 0) r = 1;
+        if (!r && fname[0] == 0x2e && fname[1] == 0x2e && fname[2] == 0) r = -1;
+
+        return r;
     }
 
     /** @brief parameter pack recursive process, the final call (w/ empty arg)
@@ -168,11 +186,44 @@ namespace TWE {
     /** @brief parameter pack recursive process, copy fname into buf. */
     template <class Head, class... Tail>
     static inline void _make_full_path_copy(TWEUTILS::SmplBuf_WChar& buf, wchar_t sep, Head&& fname, Tail&&... tail) {
-        if (!_make_full_path_is_empty(fname)) {
+        int emp = _make_full_path_is_empty(fname);
+
+        if (emp == 1) {
+            // fname is empty or ".", just skip
+            ; 
+        }
+        else if (emp == 0) {
+            // fname has file or dir name, add fname to buf.
             buf << fname;
+
+            // append '/'or'\\' at the tail.
             if (buf[-1] != sep) {
-		        buf.push_back(sep);
+                buf.push_back(sep);
             }
+        }
+        else if (emp == -1) {
+            // fname is "..", take last name back.
+            
+            // remove '/'or'\\' at the tail.
+            if (buf[-1] == sep) {
+                buf.pop_back();
+            }
+
+            // find the last ('/'or'\\')
+            auto p = find_last_pathsep(buf);
+            if (p == buf.cend()) {
+                // not find any '/'or'\\', clean buffer.
+                buf.emptify(); 
+            }
+            else {
+                // trunk as ..
+                int new_len = p - buf.cbegin();
+                buf.resize(new_len);
+
+                // add ('/'or'\\')
+                buf.push_back(sep);
+            }
+            
         }
 		
         _make_full_path_copy(buf, sep, std::forward<Tail>(tail)...);
@@ -284,6 +335,13 @@ namespace TWE {
 			}
 			return false;
 		}
+
+        static bool create_dir(const wchar_t* p_dirname) {
+            if (!is_dir(p_dirname)) {
+                std::filesystem::create_directory(p_dirname);
+            }
+            return is_dir(p_dirname);
+        }
 	};
 
     class TweFile {

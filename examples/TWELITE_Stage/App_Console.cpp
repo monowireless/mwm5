@@ -12,8 +12,8 @@ L"\r\n"
 L"TWELITE無線モジュールのシリアル入出力を ""\r\n"
 L"行うターミナルビューアです。通信条件は、""\r\n"
 L"115200bps 8N1 に固定されています。"      "\r\n"
-L"左ボタン長押・ESCを素早く２回入力するこ ""\r\n"
-L"とでビューアを終了します。" "\r\n";
+L"左ボタン長押またはESCｷｰを素早く２回押し ""\r\n"
+L"でビューアを終了します。" "\r\n";
 
  void App_Console::setup() {
 	// preference
@@ -23,7 +23,7 @@ L"とでビューアを終了します。" "\r\n";
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << L"\033[G\033[1mTWELITE\033[0m®\033[1mﾀｰﾐﾅﾙ\033[0m";
+	the_screen_t << L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾀｰﾐﾅﾙ";
 
 	// button navigation
 	//              "0....+....1....+....2....+....3....+....4....+....5....+...."
@@ -143,11 +143,11 @@ void App_Console::set_navbtn_bar() {
 
 	if (bWrap) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << L" 設定(+++)/長押:MENU    ズーム/折返[ON]          --/ﾘｾｯﾄ";
+		the_screen_c << L" 設定(+++)/長押:MENU    ズーム/折返[ON]      ﾌｧｰﾑ書換/ﾘｾｯﾄ";
 	}
 	else {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << L" 設定(+++)/長押:MENU    ズーム/折返        　    --/ﾘｾｯﾄ";
+		the_screen_c << L" 設定(+++)/長押:MENU    ズーム/折返        　ﾌｧｰﾑ書換/ﾘｾｯﾄ";
 	}
 
 	the_screen_c.force_refresh();
@@ -212,9 +212,12 @@ void App_Console::process_input() {
 			break;
 
 		case KeyInput::KEY_BUTTON_C:
+			// back to menu
+			the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
 			break;
 
 		case KeyInput::KEY_BUTTON_C_LONG:
+			the_screen.clear_screen();
 			twe_prog.reset_module();
 			break;
 

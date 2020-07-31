@@ -66,9 +66,6 @@ private:
 	// dir/filenames
 	static const wchar_t _dirname_regular[];
 
-	//const wchar_t* _dirname;
-	//const wchar_t* _filename;
-
 #ifndef ESP32
 	SmplBuf_WChar _dirname_drop; // dropped dirname
 	bool _b_drop_available;
@@ -88,8 +85,11 @@ private:
 	// APPS
 	TWE::APP_MGR _subscr;
 
+	// CONSTRUCTOR OPTION
+	int _n_opt_construct;
+
 public:
-	App_FirmProg()
+	App_FirmProg(int opt=0x0)
 		: parse_ascii(256)
 		, the_screen(64, 20, { 0,  18, 320, 144 }, M5)
 		, the_screen_l(64, 20, { 0,  18 + 144, 320, 28 }, M5)
@@ -107,6 +107,7 @@ public:
 		, _b_drop_available(false)
 #endif
 		, _subscr()
+		, _n_opt_construct(opt) // constuctor option
 	{
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 		SubScreen::_parent = this;

@@ -19,7 +19,7 @@
 const TWESTG_tsElement TWESTG_DEFSETS_BASE[] = {
 	{ E_TWESTG_DEFSETS_APPID,  // アプリケーションID
 		{ TWESTG_DATATYPE_UINT32, sizeof(uint32), 0, 0, {.u32 = 0x67726301 }}, // 32bit (デフォルトのIDは配列決め打ちなので、ボード定義でオーバライドが必要)
-		{ "AID", "Application ID1 [HEX:32bit]", "" },
+		{ "AID", "Application ID [HEX:32bit]", "" },
 		{ E_TWEINPUTSTRING_DATATYPE_HEX, 8, 'a' },
 		{ {.u32 = 0}, {.u32 = 0}, TWESTGS_VLD_u32AppId, NULL },
 	},
@@ -37,8 +37,10 @@ const TWESTG_tsElement TWESTG_DEFSETS_BASE[] = {
 	},
 	{ E_TWESTG_DEFSETS_CHANNELS_3,
 		{ TWESTG_DATATYPE_UINT16, sizeof(uint16), 0, 0, {.u16 = ((1UL << 18) >> 11) }},
-		{ "CHL", "Channels Set", "Input up to 3 channels like '11,15,24'." },
-		{ E_TWEINPUTSTRING_DATATYPE_CUSTOM_DISP_MASK | E_TWEINPUTSTRING_DATATYPE_STRING, 8, 'C' },
+		{ "CHL", "Channels Set", 
+		  "Input up to 3 channels like '11,15,24'."
+		},
+		{ E_TWEINPUTSTRING_DATATYPE_CUSTOM_DISP_MASK | E_TWEINPUTSTRING_DATATYPE_STRING, 8, 'c' },
 		{ {.u16 = 0}, {.u16 = 0xFFFF}, TWESTGS_VLD_u32ChList, NULL },
 	},
 	{ E_TWESTG_DEFSETS_POWER_N_RETRY,
@@ -71,7 +73,7 @@ const TWESTG_tsElement TWESTG_DEFSETS_BASE[] = {
 const TWESTG_tsElement TWESTG_DEFSETS_BASE_MWX[] = {
 	{ E_TWESTG_DEFSETS_APPID,  // アプリケーションID
 		{ TWESTG_DATATYPE_UINT32, sizeof(uint32), 0, 0, {.u32 = 0x67726301 }}, // 32bit (デフォルトのIDは配列決め打ちなので、ボード定義でオーバライドが必要)
-		{ "AID", "Application ID1 [HEX:32bit]", "" },
+		{ "AID", "Application ID [HEX:32bit]", "" },
 		{ E_TWEINPUTSTRING_DATATYPE_HEX, 8, 'a' },
 		{ {.u32 = 0}, {.u32 = 0}, TWESTGS_VLD_u32AppId, NULL },
 	},

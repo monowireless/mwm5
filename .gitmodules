@@ -1,0 +1,3 @@
+[submodule "src/twesettings"]
+	path = src/twesettings
+	url = http://gauss:7990/scm/libtwestg/twesettings.git

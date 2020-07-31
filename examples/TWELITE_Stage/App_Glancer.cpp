@@ -30,7 +30,7 @@ void App_Glancer::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	const char* fmt_title = "\033[G\033[1m\033[1mTWELITE\033[0m® グランサー\033[0m : %s";
+	const char* fmt_title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m グランサー\033[0m : %s";
 	the_screen_t << printfmt(fmt_title, "---"); // accepts UTF-8 codes
 	pkt_data.init_screen(fmt_title);
 
@@ -49,7 +49,7 @@ void App_Glancer::set_nav_bar() {
 	}
 	else {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     前/長押:戻る          選択/ｿｰﾄ               次/ﾘｾｯﾄ";
+		the_screen_c << "     ↑/長押:戻る          決定/ｿｰﾄ               ↓/ﾘｾｯﾄ";
 	}
 }
 

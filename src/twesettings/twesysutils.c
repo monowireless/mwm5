@@ -28,12 +28,17 @@
  * @param u32WaitCt 待ちカウンタ
  */
 void TWESYSUTL_vWaitPoll(uint32 u32WaitCt) {
-    
     // tick counter のカウントを数えながら ms 待ちを行う
     uint32 u32tc = u32AHI_TickTimerRead();
     uint32 u32total = 0;
-    uint32 u32maxtick = 16000000UL / sToCoNet_AppContext.u16TickHz;
-    uint32 u32target = 0; // オーバーヘッド分、少しだけ短く設定
+    uint32 u32maxtick;
+    switch(sToCoNet_AppContext.u16TickHz) { // 割り算は勘弁だ！
+    case 1000: u32maxtick = (16000000UL / 1000); break; // 1ms
+    case 500: u32maxtick = (16000000UL / 500); break; // 2ms
+    case 250: u32maxtick = (16000000UL / 250); break; // 4ms
+    default: u32maxtick = 16000000UL / sToCoNet_AppContext.u16TickHz;
+    }
+    uint32 u32target = 0;
     uint16 u16wdtct = 0;
 
     if (u32WaitCt >= 3) {
@@ -67,6 +72,44 @@ void TWESYSUTL_vWaitPoll(uint32 u32WaitCt) {
     }
     if (u32WaitCt >= 3) {
         bAHI_SetClockRate(sToCoNet_AppContext.u8CPUClk); // revert clock
+    }
+}
+
+/**
+ * @brief TWENET のシステムカウンタを用いたポーリング待ち処理(Micro sec版)
+ *   - TickTimer のカウント値を基に時間待ちを行う
+ * 
+ * @param u32WaitCt 待ちカウンタ
+ */
+void TWESYSUTL_vWaitPollMicro(uint32 u32WaitCt) {
+    // tick counter のカウントを数えながら ms 待ちを行う
+    uint32 u32tc = u32AHI_TickTimerRead();
+    uint32 u32maxtick;
+    switch(sToCoNet_AppContext.u16TickHz) { // 割り算は勘弁だ！
+    case 1000: u32maxtick = (16000000UL / 1000); break; // 1ms
+    case 500: u32maxtick = (16000000UL / 500); break; // 2ms
+    case 250: u32maxtick = (16000000UL / 250); break; // 4ms
+    default: u32maxtick = 16000000UL / sToCoNet_AppContext.u16TickHz;
+    }
+    uint32 u32target = 0; 
+    uint32 u32total = 12; // オーバーヘッド分、少しだけ短く設定
+
+    // 16Mhz or 32Mhz を想定
+    u32target = u32WaitCt * 16;
+    while(TRUE) {
+        uint32 u32tc1 = u32AHI_TickTimerRead();
+        if (u32tc1 >= u32tc) {
+            u32total += (u32tc1 - u32tc);
+        } else {
+            u32total += (u32maxtick - u32tc);
+            u32total += u32tc1;
+        }
+
+        // 目標のカウント値になったらブレーク
+        if (u32total > u32target) break;
+
+        // カウントの更新
+        u32tc = u32tc1;
     }
 }
 

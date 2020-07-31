@@ -45,9 +45,9 @@
 #include "font/lcd_font_8x6.h"
 #include "font/lcd_font_MP10.h"
 #include "font/lcd_font_MP12.h"
-#include "font/lcd_font_shinonome16.h"
-#include "font/lcd_font_shinonome14.h"
-#include "font/lcd_font_shinonome12.h"
+#include "font/lcd_font_Shinonome16.h"
+#include "font/lcd_font_Shinonome14.h"
+#include "font/lcd_font_Shinonome12.h"
 
 // for PC/Win/Linux
 #include "gen/sdl2_clipboard.hpp"

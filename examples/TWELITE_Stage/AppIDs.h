@@ -26,8 +26,12 @@ enum class E_APP_ID {
     _END_,
 };
 
+// if exiting with next_app=FIRM_PROG, this exit_id would show last build menu.
+const int EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD = 0x1001;
 
+// name table
 const char STR_APPNAMES_STRLEN = 64;
 extern const char str_appnames[int(E_APP_ID::_END_)][STR_APPNAMES_STRLEN];
 
+// find twesetting's slot ID from E_APP_ID
 int appid_to_slotid(int appid);
