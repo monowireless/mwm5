@@ -203,6 +203,7 @@ private: // SUBSCREEN
 
 	private:
 		void update_dropmenu();
+		void update_navigation();
 
 	public:
 		static const int MENU_REGULAR_APP = 0;

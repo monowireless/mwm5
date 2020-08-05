@@ -21,6 +21,7 @@ struct _sAppData {
 	uint8_t u8_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS;
 #endif
 	uint8_t u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN;
+	uint8_t u8_TWESTG_STAGE_OPEN_CODE; // if set, open dir with "code" command.
 };
 
 extern struct _sAppData sAppData;

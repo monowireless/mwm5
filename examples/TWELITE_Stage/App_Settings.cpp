@@ -95,7 +95,7 @@ void App_Settings::loop() {
 
 void App_Settings::setup_screen() {
 	// font register (note: to save flash area, don't create too much!)
-	TWEFONT::createFontMP10(1, 0, 0); // MP10 font
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
 	TWEFONT::createFontMP12(10, 0, 0); // MP12 font
 	TWEFONT::createFontShinonome16(11, 0, 0); // shinonome 16 font

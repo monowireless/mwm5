@@ -72,7 +72,7 @@ const TWESTG_tsElement TWESTG_STAGE_BASE[] = {
 static const uint8 DEF_TWESTG_DATATYPE_STRING[32] = ""; 
 const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 #ifndef ESP32
-#if 0
+# if 0
 	{ E_TWESTG_STAGE_APPWRT_BUILD_SDKROOT,
 		{ TWESTG_DATATYPE_STRING,  32, 0, 0, { .pu8 = (uint8*)DEF_TWESTG_DATATYPE_STRING }}, 
 		{ "SDKR", "SDKのルートフォルダ",
@@ -82,7 +82,7 @@ const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 		{ E_TWEINPUTSTRING_DATATYPE_STRING, 32, 'r' },
 		{ {.u32 = 0}, {.u32 = 0}, TWESTGS_VLD_u32String, NULL },
 	},
-#endif
+# endif
 	{ E_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS,
 		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
 		{ "JOBS", "ビルド時のmakeジョブ数",
@@ -92,6 +92,15 @@ const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 		  "1以上: ジョブ数。物理CPU数前後が最適です。" },
 		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'j' },
 		{ {.u32 = 0}, {.u32 = 0xFFFFFF}, TWESTGS_VLD_u32MinMax, NULL } },
+	{ E_TWESTG_STAGE_APPWRT_OPEN_CODE,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "VSC", "codeでフォルダを開く(VSCode)",
+		  "フォルダを code で開きます\r\n"
+		  "0: 通常の方法でフォルダを開きます。\r\n"
+		  "1: code コマンドでフォルダを開きます。\r\n"
+		  "   VSCodeのｲﾝｽﾄｰﾙや設定が必要になります。"},
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'v' },
+		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
 #endif
 	{ E_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN,
 		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
@@ -101,7 +110,7 @@ const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 		  "1: ターミナル画面にします。" },
 		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'n' },
 		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
-	{E_TWESTG_DEFSETS_VOID}
+	{E_TWESTG_DEFSETS_VOID} // TERMINATOR
 };
 
 const TWESTG_tsElement TWESTG_SLOT_SCREEN_INTRCT[] = {

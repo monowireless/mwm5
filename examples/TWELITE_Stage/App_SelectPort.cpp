@@ -192,7 +192,7 @@ void App_SelectPort::setup_screen() {
 	default_fg_color = ALMOST_WHITE;
 
 	// font register (note: to save flash area, don't create too much!)
-	TWEFONT::createFontMP10(1, 0, 0); // MP10 font
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
 	TWEFONT::createFontShinonome16(10, 0, 0); // shinonome 16 font
 	TWEFONT::createFontShinonome16(11, 1, 0); // shinonome 16 font

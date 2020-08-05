@@ -28,6 +28,8 @@ void MyTweMenu::vQueryAppData() {
 			sAppData.u32_TWESTG_STAGE_BG_COLOR = TWESTG_ITER_tsFinal_G_U32(sp); break;
 		case E_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN:
 			sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN = TWESTG_ITER_tsFinal_G_U8(sp); break;
+		case E_TWESTG_STAGE_APPWRT_OPEN_CODE:
+			sAppData.u8_TWESTG_STAGE_OPEN_CODE = TWESTG_ITER_tsFinal_G_U8(sp); break;
 #ifndef ESP32
 		case E_TWESTG_STAGE_SCREEN_MODE:
 			sAppData.u8_TWESTG_STAGE_SCREEN_MODE = TWESTG_ITER_tsFinal_G_U8(sp); break;

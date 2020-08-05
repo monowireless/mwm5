@@ -255,7 +255,7 @@ void App_FirmProg::setup_screen() {
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
 
 	// font register (note: to save flash area, don't create too much!)
-	TWEFONT::createFontMP10(1, 0, 0); // MP10 font
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
 	TWEFONT::createFontShinonome16(10, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // shinonome 16 font (TATE BAIKAKU)
 	TWEFONT::createFontShinonome16(11, 1, 0); // shinonome 16 font
@@ -374,8 +374,36 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 
 	_listMenu.set_view(0, _i_selected >= 0 && _i_selected < _listMenu.size() ? _i_selected : -1);
 	_listMenu.update_view(true);
+	update_navigation();
 
 	_parent->_b_drop_available = true; // force to update drop menu at loop()
+}
+
+void App_FirmProg::Screen_OpenMenu::update_navigation() {
+	int isel = _listMenu.get_selected_index();
+	int iext = isel >= 0 ? _listMenu.get_selected().second[0] : -1;
+
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
+	switch (iext) {
+	case MENU_REGULAR_APP:
+	case MENU_ACT:
+	case MENU_TWEAPPS:
+		the_screen_c.clear_screen();
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+		break;
+	case MENU_DROP_DIR:
+	case MENU_LAST:
+		the_screen_c.clear_screen();
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
+		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+		break;
+	default:
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+		break;
+	}
+#else
+	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#endif
 }
 
 void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
@@ -456,6 +484,8 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 		int c = the_keyboard.read();
 
 		if (_listMenu.size() > 0 && _listMenu.key_event(c)) {
+			update_navigation();
+
 			if (_listMenu.is_selection_completed()) {
 				auto& l = _listMenu.get_selected().first;
 				int isel = _listMenu.get_selected_index();
@@ -590,6 +620,56 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 			break;
 
 		case KeyInput::KEY_BUTTON_C_LONG:
+			// open last or drop dir, if selected the menu
+			{
+				SmplBuf_ByteSL<1024> lb;
+				auto&& dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _parent->_build_name);
+
+				switch (_listMenu.get_selected().second[0]) {
+				case MENU_REGULAR_APP:
+#if defined(_MSC_VER) || defined(__MINGW32__)
+					lb << the_cwd.get_dir_tweapps();
+					ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+					lb << "open " << the_cwd.get_dir_tweapps();
+					system((const char*)lb.c_str());
+#endif
+					break;
+
+				case MENU_ACT:
+#if defined(_MSC_VER) || defined(__MINGW32__)
+					lb << the_cwd.get_dir_wks_acts();
+					ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+					lb << "open " << the_cwd.get_dir_wks_acts();
+					system((const char*)lb.c_str());
+#endif
+					break;
+
+				case MENU_TWEAPPS:
+#if defined(_MSC_VER) || defined(__MINGW32__)
+					lb << the_cwd.get_dir_wks_tweapps();
+					ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+					lb << "open " << the_cwd.get_dir_wks_tweapps();
+					system((const char*)lb.c_str());
+#endif
+
+				case MENU_DROP_DIR:
+					if (TweDir::is_dir(_parent->_dirname_drop.c_str())) {
+						lb << "code " << _parent->_dirname_drop;
+						system((const char*)lb.c_str());
+					}
+				break;
+
+				default:
+					if (TweDir::is_dir(dir.c_str())) {
+						lb << "code " << dir;
+						system((const char*)lb.c_str());
+					}
+				break;
+				}
+			}
 			break;
 		}
 	} while (the_keyboard.available());
@@ -608,7 +688,11 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     ↑/長押:MENU          決定/--                ↓/";
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
+	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+#else
+	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#endif
 
 	// test for list files
 	_listFiles.clear();
@@ -719,6 +803,17 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 			break;
 
 		case KeyInput::KEY_BUTTON_C_LONG:
+			{
+				// open dir firmware
+				SmplBuf_ByteSL<1024> lb;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+				lb << _parent->_firmfile_dir;
+				ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+				lb << "open " << _parent->_firmfile_dir;
+				system((const char*)lb.c_str());
+#endif
+			}
 			break;
 		}
 	} while (the_keyboard.available());
@@ -1324,7 +1419,8 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
-		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
+		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
 #else
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 #endif
@@ -1433,7 +1529,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 					}
 				}
 			}
-			else
+			else {
 				switch (c) {
 				case KeyInput::KEY_ESC:
 				case KeyInput::KEY_BUTTON_A_LONG:
@@ -1463,30 +1559,44 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 					break;
 
 				case KeyInput::KEY_BUTTON_C_LONG:
-				{
-					// convert dir path name into uint8[] from wchar_t[].
-					SmplBuf_ByteSL<1024> dir_a;
-#if defined(__APPLE__)
-					dir_a << "open ";
-#endif
-					dir_a << make_full_path(_parent->_build_workspace, _parent->_build_project, _listFiles.get_selected().first).c_str();
+					if (_listFiles.get_selected_index() >= 0) {
+						SmplBuf_ByteSL<1024> dir_a;
 
-					// open project dir.
 #if defined(_MSC_VER) || defined(__MINGW32__)
-					ShellExecute(NULL, "open", (LPCSTR)dir_a.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
 #elif defined(__APPLE__)
-					system((const char*)dir_a.c_str());
+						if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+							dir_a << "code "; // open with VSCode (code command shall be installed)
+						}
+						else {
+							dir_a << "open ";
+						}
 #endif
-				}
+						dir_a << make_full_path(_parent->_build_workspace, _parent->_build_project, _listFiles.get_selected().first).c_str();
 
-				break;
-			}
+						// open project dir.
+#if defined(_MSC_VER) || defined(__MINGW32__)
+						if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+							ShellExecute(NULL, "open", "code", (LPCSTR)dir_a.c_str(), NULL, SW_SHOWNORMAL); // open builderr.log as shell function
+						}
+						else {
+							ShellExecute(NULL, "open", (LPCSTR)dir_a.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
+						}
+#elif defined(__APPLE__)
+						system((const char*)dir_a.c_str());
+#endif
+					}
+					break;
+
+				default:
+					break;
+				} // switch
+			} // if() else
 		} while (the_keyboard.available());
 		break;
 
 	case EV_EXIT:
 		break;
-	}
+	} // switch
 }
 
 void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
@@ -1498,7 +1608,9 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/ﾌｫﾙﾀﾞ";
+		
+		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/";
+		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
 #else
 		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--                --/--";
 #endif
@@ -1552,10 +1664,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 
 			// generate regex to capture compile message
 			_re_target = std::regex(R"(!!!TARGET=([0-9a-zA-Z_\-]+\.[bB][iI][nN]))");
-			_re_gcc = std::regex(R"(bin/ba-elf-(gcc|g\+\+)(\.exe)?[ \t])");
+			//_re_gcc = std::regex(R"(bin/ba-elf-(gcc|g\+\+)(\.exe)?[ \t])");
+			_re_gcc = std::regex(R"(^Compiling)"); // makefile outputs this message for each c/cpp file.
 			_re_link = std::regex(R"(-Wl,--gc-sections)");
-			_re_cfile = std::regex(R"(/([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP])[ \t\r\n\:$])");
-
+			// _re_cfile = std::regex(R"(/([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP])[ \t\r\n\:$])");
+			_re_cfile = std::regex(R"(/([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP]) \.\.\.)");
 
 		} else {
 			the_screen << crlf << "\033[7m" << L"ビルドが開始できません" << "\033[0m";
@@ -1599,9 +1712,19 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				case KeyInput::KEY_BUTTON_C_LONG:
 					// open source dir.
 #if defined(_MSC_VER) || defined(__MINGW32__)
-					ShellExecute(NULL, "open", "..", NULL, NULL, SW_SHOWNORMAL);
+					if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+						ShellExecute(NULL, "open", "code", "..", NULL, SW_SHOWNORMAL);
+					}
+					else {
+						ShellExecute(NULL, "open", "..", NULL, NULL, SW_SHOWNORMAL);
+					}
 #elif defined(__APPLE__)
-					system("open ..");
+					if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+						system("code ..");
+					}
+					else {
+						system("open ..");
+					}
 #endif
 					return;
 				}

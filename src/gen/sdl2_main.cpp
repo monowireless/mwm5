@@ -396,7 +396,7 @@ struct app_core_sdl {
 			sub_screen_tr << "\033[33;1m(記録中)\033[0m";
 		}
 #if (defined(_MSC_VER) || defined(__APPLE__) || defined(__MINGW32__))
-		sub_screen << crlf << "  Shift+" STR_ALT " ログフォルダを開く";
+		sub_screen_tr << crlf << "  Shift+" STR_ALT " ログフォルダを開く";
 #endif
 
 		static bool b_static_message = false;
@@ -687,40 +687,42 @@ struct app_core_sdl {
 		}
 
 		/* HANDLE BUTTON PRESS EVENT */
-		if (sp_btn_quit->update(e)) {
-			if (sp_btn_quit->available()) {
-				auto readstate = sp_btn_quit->read();
-				g_quit_sdl_loop = true;
-				return;
+		if (_is_get_focus) { // behave only in focus.
+			if (sp_btn_quit->update(e)) {
+				if (sp_btn_quit->available()) {
+					auto readstate = sp_btn_quit->read();
+					g_quit_sdl_loop = true;
+					return;
+				}
 			}
-		}
 
-		if (sp_btn_A->update(e)) {
-			if (sp_btn_A->available()) {
-				auto readstate = sp_btn_A->read();
-				if (readstate == 1) M5.BtnA._press = true;
-				if (readstate == 2) M5.BtnA._lpress = true;
+			if (sp_btn_A->update(e)) {
+				if (sp_btn_A->available()) {
+					auto readstate = sp_btn_A->read();
+					if (readstate == 1) M5.BtnA._press = true;
+					if (readstate == 2) M5.BtnA._lpress = true;
+				}
 			}
-		}
 
-		if (sp_btn_B->update(e)) {
-			if (sp_btn_B->available()) {
-				auto readstate = sp_btn_B->read();
-				if (readstate == 1) M5.BtnB._press = true;
-				if (readstate == 2) M5.BtnB._lpress = true;
+			if (sp_btn_B->update(e)) {
+				if (sp_btn_B->available()) {
+					auto readstate = sp_btn_B->read();
+					if (readstate == 1) M5.BtnB._press = true;
+					if (readstate == 2) M5.BtnB._lpress = true;
+				}
 			}
-		}
 
-		if (sp_btn_C->update(e)) {
-			if (sp_btn_C->available()) {
-				auto readstate = sp_btn_C->read();
-				if (readstate == 1) M5.BtnC._press = true;
-				if (readstate == 2) M5.BtnC._lpress = true;
+			if (sp_btn_C->update(e)) {
+				if (sp_btn_C->available()) {
+					auto readstate = sp_btn_C->read();
+					if (readstate == 1) M5.BtnC._press = true;
+					if (readstate == 2) M5.BtnC._lpress = true;
+				}
 			}
 		}
 
 		/* MOUSE MOTION */
-		if (e.type == SDL_MOUSEMOTION) {
+		if (e.type == SDL_MOUSEMOTION && _is_get_focus) { // behave only in focus.
 			int d = screen_weight(32);
 
 			if (e.motion.x < d && e.motion.y) {
@@ -730,7 +732,8 @@ struct app_core_sdl {
 			}
 			else {
 				if (nAltDown == 2) {
-					nAltDown = -7;
+					if (_is_get_focus) nAltDown = -7;
+					else nAltDown = 0;
 				}
 			}
 		}
@@ -991,6 +994,36 @@ struct app_core_sdl {
 						
 						g_quit_sdl_loop = true;
 						bhandled = true;
+					}
+				}
+				break;
+
+			case SDL_SCANCODE_T: // open TWENET/current/src/twesettigns via `code'
+				if ((e.key.keysym.mod & KMOD_STG)
+					&& (e.key.keysym.mod & KMOD_SHIFT)
+					&& (e.key.keysym.mod & KMOD_CTRL)
+					) {
+					if (e.type == SDL_KEYDOWN) {
+						SmplBuf_ByteSL<1024> cmd;
+
+						cmd << "code ";
+						cmd << make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"twesettings");
+						system((const char*)cmd.c_str());
+					}
+				}
+				break;
+
+			case SDL_SCANCODE_M: // open TWENET/current/src/mwx via `code'
+				if ((e.key.keysym.mod & KMOD_STG) 
+					&& (e.key.keysym.mod & KMOD_SHIFT)
+					&& (e.key.keysym.mod & KMOD_CTRL)
+				) {
+					if (e.type == SDL_KEYDOWN) {
+						SmplBuf_ByteSL<1024> cmd;
+
+						cmd << "code ";
+						cmd << make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"mwx");
+						system((const char*)cmd.c_str());
 					}
 				}
 				break;

@@ -60,9 +60,9 @@ void App_Console::setup_screen() {
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
 
 	// font register (note: to save flash area, don't create too much!)
-	TWEFONT::createFontMP10(1, 0, 0); // MP10 font
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
-	TWEFONT::createFontMP10(10, 0, 0); // MP10 font
+	TWEFONT::createFontMP10_std(10, 0, 0); // MP10 font
 	TWEFONT::createFontShinonome16(11, 0, 0); // shinonome 16 font
 
 	// main screen area
