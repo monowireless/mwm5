@@ -139,3 +139,10 @@ https://mwm5.twelite.info を参照ください。
 * ライセンス
 * 使用方法
 * APIリファレンス
+
+
+
+
+## 修正情報
+wikiページにリリース前の修正点について付記します。
+https://github.com/monowireless/mwm5/wiki
