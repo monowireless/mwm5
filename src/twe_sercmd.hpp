@@ -126,6 +126,8 @@ namespace TWESERCMD {
 
 		// putting a byte and do parse
 		inline IParser& operator << (char_t c) { return Parse(c); }
+		inline IParser& operator << (int c) { return Parse(c); }
+
 		// duplicate payload buffer.
 		inline TWEUTILS::SmplBuf_Byte& operator >> (TWEUTILS::SmplBuf_Byte &b) {
 			b.reserve(b.length() + payload.length());

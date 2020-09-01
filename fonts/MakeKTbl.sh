@@ -2,7 +2,7 @@
 
 export LANG=en_US.utf8
 
-## ENVs
+## ENV
 DIR=$1
 SRC=./MakeKTbl.tmp
 MANDATE=./MakeKTbl.mandate

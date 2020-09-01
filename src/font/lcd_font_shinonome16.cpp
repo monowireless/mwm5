@@ -13,17 +13,17 @@ namespace TWEFONT {
 
 
 	/**********************************************************
-	 * createFontShinonome16 [chrs = 577]
+	 * createFontShinonome16_mini [chrs = 577]
 	 **********************************************************/
-	extern const uint16_t font_Shinonome16k_idx[577];
-	extern const uint8_t font_Shinonome16k_data[577*16*2];
+	extern const uint16_t font_Shinonome16k_mini_idx[577];
+	extern const uint8_t font_Shinonome16k_mini_data[577*16*2];
 
-	const FontDef& createFontShinonome16(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
+	const FontDef& createFontShinonome16_mini(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
 		auto font = _queryFont(id);
 
 		if (font != nullptr) {
 			font->font_code = id;
-			font->font_name = "Shinonome font 16dot (Shinonome16, 577)";
+			font->font_name = "Shinonome font 16dot (Shinonome16_mini, 577)";
 
 			font->width = 8;
 			font->height = 16;
@@ -38,8 +38,8 @@ namespace TWEFONT {
 			font->font_jisx201 = font_Shinonome16r_jisx201;
 			font->font_latin1_ex = font_Shinonome16r_latin1ex;
 
-			font->font_wide = font_Shinonome16k_data;		// WIDE FONT DATA 
-			font->font_wide_idx = font_Shinonome16k_idx;	// UNICODE index 
+			font->font_wide = font_Shinonome16k_mini_data;		// WIDE FONT DATA 
+			font->font_wide_idx = font_Shinonome16k_mini_idx;	// UNICODE index 
 			font->font_wide_missing = font_Shinonome16k_unsupported;
 
 			font->font_wide_count = 577;
@@ -138,6 +138,6 @@ namespace TWEFONT {
 }
 
 #include "Shinonome16r.src"
-#include "Shinonome16k.src"
+#include "Shinonome16k_mini.src"
 #include "Shinonome16k_std.src"
 #include "Shinonome16k_full.src"

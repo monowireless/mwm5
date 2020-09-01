@@ -127,6 +127,15 @@ namespace TWEARD {
 		struct _Btn {
 			_Btn() : _press(false), _lpress(false) {}
 
+			// same with Released so far.
+			bool wasPressed() {
+				if (_press) {
+					_press = false;
+					return true;
+				}
+				return false;
+			}
+
 			bool wasReleased() {
 				if (_press) {
 					_press = false;

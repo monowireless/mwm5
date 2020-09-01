@@ -6,7 +6,9 @@
 #include "twe_font.hpp"
 
 namespace TWEFONT {
-	const FontDef& createFontShinonome14(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0);
+	const FontDef& createFontShinonome14_mini(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0);
 	const FontDef& createFontShinonome14_std(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0);
 	const FontDef& createFontShinonome14_full(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0);
+	static inline const FontDef& createFontShinonome14(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0) {
+			return createFontShinonome14_std(id, line_space, char_space, u32Opt); }
 }

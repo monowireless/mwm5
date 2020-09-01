@@ -63,7 +63,7 @@ void App_Console::setup_screen() {
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
 	TWEFONT::createFontMP10_std(10, 0, 0); // MP10 font
-	TWEFONT::createFontShinonome16(11, 0, 0); // shinonome 16 font
+	TWEFONT::createFontShinonome16_mini(11, 0, 0); // shinonome 16 font
 
 	// main screen area
 	the_screen.set_color(default_fg_color, default_bg_color);

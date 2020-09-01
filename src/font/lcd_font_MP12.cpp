@@ -13,17 +13,17 @@ namespace TWEFONT {
 
 
 	/**********************************************************
-	 * createFontMP12 [chrs = 577]
+	 * createFontMP12_mini [chrs = 577]
 	 **********************************************************/
-	extern const uint16_t font_MP12k_idx[577];
-	extern const uint8_t font_MP12k_data[577*12*2];
+	extern const uint16_t font_MP12k_mini_idx[577];
+	extern const uint8_t font_MP12k_mini_data[577*12*2];
 
-	const FontDef& createFontMP12(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
+	const FontDef& createFontMP12_mini(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
 		auto font = _queryFont(id);
 
 		if (font != nullptr) {
 			font->font_code = id;
-			font->font_name = "M+ BITMAP FONTS 12dot (MP12, 577)";
+			font->font_name = "M+ BITMAP FONTS 12dot (MP12_mini, 577)";
 
 			font->width = 6;
 			font->height = 12;
@@ -38,8 +38,8 @@ namespace TWEFONT {
 			font->font_jisx201 = font_MP12r_jisx201;
 			font->font_latin1_ex = font_MP12r_latin1ex;
 
-			font->font_wide = font_MP12k_data;		// WIDE FONT DATA 
-			font->font_wide_idx = font_MP12k_idx;	// UNICODE index 
+			font->font_wide = font_MP12k_mini_data;		// WIDE FONT DATA 
+			font->font_wide_idx = font_MP12k_mini_idx;	// UNICODE index 
 			font->font_wide_missing = font_MP12k_unsupported;
 
 			font->font_wide_count = 577;
@@ -138,6 +138,6 @@ namespace TWEFONT {
 }
 
 #include "MP12r.src"
-#include "MP12k.src"
+#include "MP12k_mini.src"
 #include "MP12k_std.src"
 #include "MP12k_full.src"

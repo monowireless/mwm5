@@ -13,5 +13,10 @@ for f in $DIRS; do
 done
 
 # copy files to source dir
-cp -vf outdir/* ../src/font
+echo --------------------------------------------------
+echo -n "Copy source files to ../src/font? [y/N]"
+read i
+if [ "$i" == "y" -o "$i" == "Y" ]; then
+  cp -vf outdir/* ../src/font
+fi
 

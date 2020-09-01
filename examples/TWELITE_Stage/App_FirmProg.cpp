@@ -257,10 +257,10 @@ void App_FirmProg::setup_screen() {
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
-	TWEFONT::createFontShinonome16(10, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // shinonome 16 font (TATE BAIKAKU)
-	TWEFONT::createFontShinonome16(11, 1, 0); // shinonome 16 font
-	TWEFONT::createFontMP12(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
-	TWEFONT::createFontMP12(13, 0, 0); // MP10 font
+	TWEFONT::createFontShinonome16_mini(10, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // shinonome 16 font (TATE BAIKAKU)
+	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
+	TWEFONT::createFontMP12_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
+	TWEFONT::createFontMP12_mini(13, 0, 0); // MP10 font
 
 	// main screen area
 	the_screen.set_font(13);
@@ -359,6 +359,9 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 	_listMenu.push_back(L"TWELITE APPSビルド&書換", uint16_t(MENU_TWEAPPS));
 	_listMenu.attach_term(the_screen);
 
+	_listMenu.push_back(L"Actエクストラ", uint16_t(MENU_ACT_EXTRA));
+	_listMenu.attach_term(the_screen);
+
 	_listMenu.push_back(L"指定", uint16_t(MENU_DROP_DIR));
 	update_dropmenu();
 
@@ -387,6 +390,7 @@ void App_FirmProg::Screen_OpenMenu::update_navigation() {
 	switch (iext) {
 	case MENU_REGULAR_APP:
 	case MENU_ACT:
+	case MENU_ACT_EXTRA:
 	case MENU_TWEAPPS:
 		the_screen_c.clear_screen();
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
@@ -457,6 +461,7 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 			}
 			break;
 		case MENU_ACT:
+		case MENU_ACT_EXTRA:
 		case MENU_TWEAPPS:
 			if (_parent->_build_name.size() == 0) {
 				b_menu_none = true;
@@ -555,6 +560,14 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 					exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_DIR_LIST_ACT);
 					break;
 
+				case MENU_ACT_EXTRA: // ACT BUILD
+					_parent->_last_menu_number = MENU_ACT_EXTRA;
+					_parent->_build_workspace = as_copying(the_cwd.get_dir_wks_act_extras());
+					_parent->_build_project_prev.clear();
+					_parent->_build_project.clear();
+					exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_DIR_LIST_ACT);
+					break;
+
 				case MENU_TWEAPPS:
 					_parent->_last_menu_number = MENU_TWEAPPS;
 					_parent->_build_workspace = as_copying(the_cwd.get_dir_wks_tweapps());
@@ -572,6 +585,7 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 							return;
 						}
 						break;
+					case MENU_ACT_EXTRA:
 					case MENU_ACT:
 						if (_parent->_build_name.size() > 0) {
 							exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_ACT); // last selected act
@@ -636,6 +650,7 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 #endif
 					break;
 
+				case MENU_ACT_EXTRA:
 				case MENU_ACT:
 #if defined(_MSC_VER) || defined(__MINGW32__)
 					lb << the_cwd.get_dir_wks_acts();
@@ -1780,7 +1795,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				std::ifstream ifs(STR_BUILD_ERROR_LOG);
 				std::string buff;
 				
-				auto _re_gcc_error = std::regex(R"(([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP])\:([0-9]+)\:([0-9]+)\:[ \t](fatal error|error):[ \t](.+))");
+				auto _re_gcc_error = std::regex(R"(([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP]|[hH]|[hH][pP][pP])\:([0-9]+)\:([0-9]+)\:[ \t](fatal error|error):[ \t](.+))");
 				auto _re_gcc_error0 = std::regex(R"(error\:)");
 				auto _re_gcc_warning0 = std::regex(R"(warning\:)");
 				auto _re_gcc_ld_undef_ref = std::regex(R"((\: undefined reference to )(.+))");

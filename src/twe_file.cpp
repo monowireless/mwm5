@@ -32,6 +32,7 @@ using namespace TWEUTILS;
 // defs
 #define STR_FIRM_BIN L"BIN"
 #define STR_ACTSAMPLES L"Act_samples"
+#define STR_ACTEXTRAS L"Act_extras"
 #define STR_TWENET L"TWENET"
 #define STR_MWSDK L"MWSDK"
 
@@ -644,7 +645,7 @@ void TweCwd::_get_wks_dir() {
 
 	_dir_tweapps.c_str();
 
-	// Wks Acts (0. cur dir, 1. exe dir, 2. sdk dir, 3. sdk dir sample)
+	// Wks Acts or Act_samples (0. cur dir, 1. exe dir, 2. sdk dir, 3. Act_samples at sdk dir)
 	_dir_wks_acts = make_full_path(get_dir_launch(), STR_WKS_ACTS);
 	if (!TweDir::is_dir(_dir_wks_acts.c_str())) {
 		_dir_wks_acts = make_full_path(get_dir_exe(), STR_WKS_ACTS);
@@ -656,6 +657,12 @@ void TweCwd::_get_wks_dir() {
 		}
 	}
 	_dir_wks_acts.c_str();
+
+	// Act_extras (at sdk dir)
+	if (!TweDir::is_dir(_dir_wks_act_extras.c_str())) {
+		_dir_wks_act_extras = make_full_path(get_dir_sdk(), STR_ACTEXTRAS);
+	}
+	_dir_wks_act_extras.c_str();
 
 	// TweApps Acts (0. cur dir, 1. exe dir, 2. sdk dir, 3. sdk dir sample)
 	_dir_wks_tweapps = make_full_path(get_dir_launch(), STR_WKS_TWEAPPS);

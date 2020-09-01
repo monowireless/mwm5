@@ -208,9 +208,10 @@ private: // SUBSCREEN
 	public:
 		static const int MENU_REGULAR_APP = 0;
 		static const int MENU_ACT = 1;
-		static const int MENU_TWEAPPS = 2; 
-		static const int MENU_DROP_DIR = 3;
-		static const int MENU_LAST = 4;
+		static const int MENU_TWEAPPS = 2;
+		static const int MENU_ACT_EXTRA = 3;
+		static const int MENU_DROP_DIR = 4;
+		static const int MENU_LAST = 5;
 		static const int MENU_NONE = -1;
 	};
 	friend class Screen_OpenMenu;

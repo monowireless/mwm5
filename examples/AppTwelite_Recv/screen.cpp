@@ -47,11 +47,11 @@ void setup_screen() {
 	TWEFONT::createFontMP10(1, 0, 0); // MP10 font
 	// TWEFONT::createFontLcd8x6(1, 0, 0); // LCD fonts (no Japanese)
 
-	TWEFONT::createFontShinonome16(10, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // shinonome 16 font (TATE BAIKAKU)
-	TWEFONT::createFontShinonome16(11, 1, 0); // shinonome 16 font
+	TWEFONT::createFontShinonome16_mini(10, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // shinonome 16 font (TATE BAIKAKU)
+	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
 	TWEFONT::createFontMP12(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
 	TWEFONT::createFontMP12(13, 0, 0); // MP10 font
-	// TWEFONT::createFontShinonome16(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI); // shinonome 16 font (TATE/YOKO BAIKAKU)
+	// TWEFONT::createFontShinonome16_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI); // shinonome 16 font (TATE/YOKO BAIKAKU)
 
 	// main screen area
 	the_screen.set_font(10, APP_COLUMN, APP_ROW);

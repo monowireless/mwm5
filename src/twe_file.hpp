@@ -515,6 +515,7 @@ namespace TWE {
 
         TWEUTILS::SmplBuf_WChar _dir_tweapps;
         TWEUTILS::SmplBuf_WChar _dir_wks_acts;
+        TWEUTILS::SmplBuf_WChar _dir_wks_act_extras;
         TWEUTILS::SmplBuf_WChar _dir_wks_tweapps;
 
 		TWEUTILS::SmplBuf_ByteS _save_profile_name;
@@ -533,7 +534,8 @@ namespace TWE {
 		TWEUTILS::SmplBuf_WChar& get_dir_cur() { return _dir_cur; }
 		TWEUTILS::SmplBuf_WChar& get_dir_tweapps() { return _dir_tweapps; }
 		TWEUTILS::SmplBuf_WChar& get_dir_wks_acts() { return _dir_wks_acts; }
-		TWEUTILS::SmplBuf_WChar& get_dir_wks_tweapps() { return _dir_wks_tweapps; }
+        TWEUTILS::SmplBuf_WChar& get_dir_wks_act_extras() { return _dir_wks_act_extras; }
+        TWEUTILS::SmplBuf_WChar& get_dir_wks_tweapps() { return _dir_wks_tweapps; }
 		TWEUTILS::SmplBuf_WChar& get_dir_launch() { return _dir_launch; }
 	};
 

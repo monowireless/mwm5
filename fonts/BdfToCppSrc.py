@@ -518,7 +518,7 @@ def process_double(fnameFont, fnameJoyo, cpp_file, name, w_, h_, excl_range=[], 
 
 	lstsrc.append((name[0],name[1]))
 
-process_double(ini_font_kanji, ini_ktable_mini, fd_cpp, (fbase,''), ini_w, ini_h, excl_range=range(0x391,0x451+1), fnameGaiji=ini_font_gaiji)
+process_double(ini_font_kanji, ini_ktable_mini, fd_cpp, (fbase,'_mini'), ini_w, ini_h, excl_range=range(0x391,0x451+1), fnameGaiji=ini_font_gaiji)
 process_double(ini_font_kanji, ini_ktable_std, fd_cpp, (fbase,'_std'), ini_w, ini_h, fnameGaiji=ini_font_gaiji)
 process_double(ini_font_kanji, None, fd_cpp, (fbase,'_full'), ini_w, ini_h, fnameGaiji=ini_font_gaiji)
 
@@ -540,7 +540,12 @@ fd_h.write("""
 
 namespace TWEFONT {
 """)
+# each method `createFont{FONTNAME}_{SET}'
 for l in lstsrc:
 	fd_h.write("""\tconst FontDef& createFont%s%s(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0);\n""" % (l[0],l[1]))
+# alias to default method `createFont{FONTNAME}'
+fd_h.write("""\tstatic inline const FontDef& createFont%s(uint8_t id, uint8_t line_space = 0, uint8_t char_space = 0, uint32_t u32Opt = 0) {\n""" % (lstsrc[0][0]))
+fd_h.write("""\t\t\treturn createFont%s%s(id, line_space, char_space, u32Opt); }\n""" % (lstsrc[0][0], '_std'))
+# close
 fd_h.write("}\n")
 fd_h.close()
