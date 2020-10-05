@@ -160,16 +160,6 @@ namespace TWE {
 		}
 
 		/**
-		 * @fn	void APP_MGR::set_nextapp(int n)
-		 *
-		 * @brief	Sets the next application ID.
-		 *
-		 * @param	n	Set value of 1.., then request application change
-		 * 				to the switcher function.
-		 */
-		void set_nextapp(int n) { _next_app = n; }
-
-		/**
 		 * @fn	APP_DEF* APP_MGR::query_appobj()
 		 *
 		 * @brief	Queries the appobj
@@ -182,6 +172,19 @@ namespace TWE {
 	};
 
 	extern class APP_MGR the_app;
+
+
+	/**
+	 * @struct	APP_HANDLR_DC
+	 *
+	 * @brief	An application handlr device-context.
+	 */
+	struct APP_HANDLR_DC {
+		const int _class_id;
+		APP_HANDLR_DC(int id) : _class_id(id) {}
+		virtual int get_class_id() = 0;
+		virtual ~APP_HANDLR_DC() {}
+	};
 
 	/**
 	 * @class	APP_HNDLR
@@ -228,17 +231,43 @@ namespace TWE {
 
 	private:
 		tpf_func_handler _pf;
+		std::unique_ptr<APP_HANDLR_DC> _dc;
 
 	public:
 		APP_HNDLR() : _pf(nullptr) {}
 		~APP_HNDLR() {
+			// here, calling _pf() may cause a problem.
+		}
+
+
+		/**
+		 * @fn	void APP_HNDLR::on_close()
+		 *
+		 * @brief	Handles close signals.
+		 * 			if EV_EXIT call is mandate for handlers on destructing a class inherits APP_HNDLR,
+		 * 			call this on the class destructor.
+		 */
+		void on_close() {
 			if (_pf) {
 				auto derived = static_cast<T*>(this);
 				((*derived).*(_pf))(EV_EXIT, 0);
 				_pf = nullptr;
 			}
+
+			if (_dc) {
+				_dc.reset();
+			}
 		}
 
+
+		/**
+		 * @fn	void APP_HNDLR::new_hndlr(tpf_func_handler hnd_next, arg_type arg = 0)
+		 *
+		 * @brief	Switch to the new handler. The old one is destructed here.
+		 *
+		 * @param	hnd_next	The handle next.
+		 * @param	arg			(Optional) The argument.
+		 */
 		void new_hndlr(tpf_func_handler hnd_next, arg_type arg = 0) {
 			auto derived = static_cast<T*>(this);
 
@@ -246,6 +275,8 @@ namespace TWE {
 			if (_pf) {
 				((*derived).*(_pf))(EV_EXIT, 0);
 				_pf = nullptr;
+				
+				if (_dc) _dc.reset();
 			}
 
 			_pf = hnd_next;
@@ -255,10 +286,45 @@ namespace TWE {
 			}
 		}
 
+
+		/**
+		 * @fn	void APP_HNDLR::loop(arg_type arg = 0)
+		 *
+		 * @brief	Loops the given argument
+		 *
+		 * @param	arg	(Optional) The argument.
+		 */
 		void loop(arg_type arg = 0) {
 			if (_pf) {
 				auto derived = static_cast<T*>(this);
 				((*derived).*(_pf))(EV_LOOP, arg);
+			}
+		}
+
+
+		/**
+		 * @fn	template <class DC> DC& APP_HNDLR::use()
+		 *
+		 * @brief	Prepare data context (dc) for each handlers.
+		 *
+		 * @tparam	DC	Generic type parameter.
+		 * 				- This class must have int DC::CLS_ID as public scope.  
+		 * 				- Recommended to be friend class to sub-app (derived class of APP_DEF)
+		 *
+		 * @returns	A reference to the data context
+		 */
+		template <class DC>
+		DC& use() {
+			if (_dc && _dc->_class_id == DC::CLS_ID) {
+				// existing object
+				return *static_cast<DC*>(_dc.get());
+			}
+			else {
+				// create new DC instance (if obj class id differs)
+				T* papp = static_cast<T*>(this);
+				DC* pdc = new DC(*papp);
+				_dc.reset(pdc);
+				return *pdc;
 			}
 		}
 	};

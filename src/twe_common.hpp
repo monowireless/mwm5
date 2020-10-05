@@ -25,7 +25,7 @@ typedef char char_t;
 
 // key input type
 namespace TWE {
-	typedef int16_t keyinput_type;
+	typedef int32_t keyinput_type;
 
 	/**
 	 * @class	APIRET
@@ -54,7 +54,7 @@ namespace TWE {
 #if defined(ESP32)
 # undef TWE_USE_RTTI // you can enable it (but you need to edit platform.txt)
 #elif defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
-// #define TWE_USE_RTTI // not use RTTI so far
+#define TWE_USE_RTTI
 #endif
 
 // Architecture specific header

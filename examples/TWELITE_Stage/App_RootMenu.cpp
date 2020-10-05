@@ -104,12 +104,20 @@ void App_RootMenu::loop() {
 			switch (key) {
 			case KeyInput::KEY_BUTTON_A_LONG:
 			case KeyInput::KEY_ESC:
-				// the_app.set_nextapp(APP_ID); // reload this memu
 				the_app.exit(-1); // reload this memu
 				return;
 			case KeyInput::KEY_ENTER:
 			case KeyInput::KEY_BUTTON_B:
-				the_app.set_nextapp(_i_selected_viewer_app);
+				the_app.exit(-1, _i_selected_viewer_app);
+				break;
+			default:
+				if (TWECUI::KeyInput::MOUSE_UP::is_type(key)) {
+					// press LEFT mouse button to proceed.
+					TWECUI::KeyInput::MOUSE_UP ev(key);
+					if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {				
+						the_app.exit(-1, _i_selected_viewer_app);
+					}
+				}
 			}
 
 			continue;
@@ -128,7 +136,7 @@ void App_RootMenu::loop() {
 					// auto-launch at booting.
 					if (s_bstarted == 2) {
 						s_bstarted = 3;
-						the_app.set_nextapp(sel_app_id);
+						the_app.exit(-1, sel_app_id);
 						return;
 					}
 
@@ -151,7 +159,7 @@ void App_RootMenu::loop() {
 
 					continue;
 				}
-				else the_app.set_nextapp(sel_app_id); // switch to the app.
+				else the_app.exit(-1, sel_app_id); // switch to the app.
 			}
 			return;
 		}

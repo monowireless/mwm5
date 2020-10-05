@@ -8,6 +8,7 @@
 #include "twe_utils_simplebuffer.hpp"
 #include "twe_console.hpp"
 #include "twe_cui_keyboard.hpp"
+#include "twe_cui_button.hpp"
 
 #include <utility>
 
@@ -29,17 +30,31 @@ namespace TWECUI {
 		bool_type _b_sel_comp_pre; // if selection is performed, set this flag. (display as selected)
 		bool_type _b_sel_comp; // after small timer(100ms), this flag will be set.
 
-		bool_type _b_enabled;
+		bool_type _b_enabled; // so far not used, true if the widget is active/visible.
+
+		bool_type _b_status_line; // true if status line is shown.
+		index_type _n_status_line_center_col; // center column of status line
+
+		bool_type _b_rspot_show; // bitmap to show bottons (b0:_btn_r1 present, b1:_btn_r2 present)
+		bool_type _b_rspot_clicked; // if info area is pressed, set true.
+		TWEUTILS::SmplBuf_WChar _btn_r1_label; // info area's label
+		TWEUTILS::SmplBuf_WChar _btn_r2_label; // info area's label
 
 		TWETERM::ITerm* _pterm;
 		index_type _n_view_start;
 		index_type _n_view_selected;
+		index_type _n_view_selected_on_button_down; // last selected item by button down
 		count_type _n_view_rows;
 		count_type _n_view_cols;
 		count_type _n_view_rows_disp;
 
 		uint32_t _tick_selected; // millis when selection is performed.
-		
+
+		std::unique_ptr<TWE_Button> _btn_s1;
+		std::unique_ptr<TWE_Button> _btn_s2;
+		std::unique_ptr<TWE_Button> _btn_r1;
+		std::unique_ptr<TWE_Button> _btn_r2;
+
 	private:	
 		inline index_type calc_item_from_selected() {
 			return _n_view_selected == -1 ? -1 : _n_view_start + _n_view_selected;
@@ -54,17 +69,31 @@ namespace TWECUI {
 			, _b_sel_comp_pre(0)
 			, _pterm(nullptr)
 			, _n_view_start(0)
-			, _n_view_selected(0)
+			, _n_view_selected(0), _n_view_selected_on_button_down(0)
 			, _n_view_rows(0)
 			, _n_view_cols(0)
 			, _n_view_rows_disp(0)
 			, _b_enabled(true)
+			, _b_status_line(false), _n_status_line_center_col(0)
 			, _tick_selected(0)
+			, _b_rspot_show(false), _b_rspot_clicked(0x00)
+			, _btn_r1_label(), _btn_r2_label()
+			, _btn_s1(), _btn_s2()
+			, _btn_r1(), _btn_r2()
 		{
 			;
 		}
 
-		void attach_term(TWETERM::ITerm& trm);
+
+		/**
+		 * @fn	void TWE_ListView::attach_term(TWETERM::ITerm& trm, bool b_status);
+		 *
+		 * @brief	Attach term
+		 *
+		 * @param [in,out]	trm			The trm.
+		 * @param 		  	b_status	True to have status line
+		 */
+		void attach_term(TWETERM::ITerm& trm, bool b_status = false);
 
 		/* ITEMS */		
 		template <typename T1>
@@ -107,6 +136,9 @@ namespace TWECUI {
 			_n_view_selected = -1;
 			_b_sel_comp = false;
 			_b_sel_comp_pre = false;
+
+			_btn_r1.reset();
+			_btn_r2.reset();
 		}
 
 		inline index_type get_selected_index() {
@@ -136,6 +168,34 @@ namespace TWECUI {
 		inline bool is_selection_completed() {
 			bool ret = _b_sel_comp;
 			_b_sel_comp = false;
+			return ret;
+		}
+
+
+		/**
+		 * @fn	void TWE_ListView::set_info_area(const wchar_t *pstr1, const wchar_t *pstr2 = nullptr)
+		 *
+		 * @brief	Add buttons on the selected item at rightmost.
+		 *
+		 * @param	pstr1	The first string pointer (if set, enable the first button)
+		 * @param	pstr2	(Optional) The second string pointer (if set, enable the second button)
+		 */
+		void set_info_area(const wchar_t *pstr1, const wchar_t *pstr2 = nullptr) {
+			// create bitmap if each button is enabled.
+			_b_rspot_show = ((pstr1 == nullptr) ? 0 : 1) | ((pstr1 == nullptr) ? 0 : 2);
+			
+			// clear the buffer
+			_btn_r1_label.clear();
+			_btn_r2_label.clear();
+
+			// set label string
+			if(pstr1) _btn_r1_label << pstr1;
+			if(pstr2) _btn_r2_label << pstr2;
+		}
+
+		inline bool_type is_info_selected() {
+			bool_type ret = _b_rspot_clicked;
+			_b_rspot_clicked = 0x00;
 			return ret;
 		}
 

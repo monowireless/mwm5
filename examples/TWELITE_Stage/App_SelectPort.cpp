@@ -61,6 +61,13 @@ void App_SelectPort::hndlr_not_found(event_type ev, arg_type arg) {
 				the_app.exit(0);
 				break;
 			default:
+				if (TWECUI::KeyInput::MOUSE_UP::is_type(c)) {
+					// press LEFT mouse button to proceed.
+					TWECUI::KeyInput::MOUSE_UP ev(c);
+					if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
+						the_app.exit(0);
+					}
+				}
 				break;
 			}
 		}
@@ -96,15 +103,28 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 		}
 
 		for (int i = 0; i < SerialFtdi::ser_count; i++) {
-			int n = _listPorts.push_back(SerialFtdi::ser_devname[i]);
+			int n = _listPorts.push_back(""); // insert a new entry.
+
+			// get entry object
 			auto item_p = _listPorts.get(n);
 			auto& item = item_p.first;
+			auto& item_second = item_p.second;
 
-			item << L" (";
+			// set display name
+			item.clear();
 			item << SerialFtdi::ser_desc[i];
-			item << L")";
 
-			// if ser# of FTDI device is specicied, check with it.
+			item << ' ';
+			item << '(';
+			item << SerialFtdi::ser_devname[i];
+			item << ')';
+			
+			// set device serial as second data.
+			item_second.clear();
+			item_second << SerialFtdi::ser_devname[i];
+
+
+			// if ser# of FTDI device is specified over settings, check with it.
 			if (!strncmp(SerialFtdi::ser_devname[i]
 				, (const char*)sAppData.au8_TWESTG_STAGE_FTDI_ADDR
 				, 8)) {
@@ -131,23 +151,18 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 					int i_sel = _listPorts.get_selected_index();
 
 					// find ser# string from head to space. "XXXXX (DESC)"
-					SmplBuf_ByteL<32> devname;
-					auto& wstr = _listPorts[i_sel].first;
-					auto pos_space = std::find(wstr.begin(), wstr.end(), L' '); // find the first blank space.
-					if (pos_space != wstr.end()) {
-						// convert wchar_t to char
-						auto p = wstr.begin();
-						auto e = pos_space;
-						while (p != e) { devname.push_back(uint8_t(*p)); ++p; }
+					SmplBuf_ByteSL<32> devname;
+					auto& wstr = _listPorts[i_sel].second;
+					devname << wstr;
+
 						
-						if (Serial2.is_opened()) Serial2.close();
-						Serial2.open((const char*)devname.c_str()); // open the device
+					if (Serial2.is_opened()) Serial2.close();
+					Serial2.open((const char*)devname.c_str()); // open the device
 
-						// start exit timer
-						the_app.exit(APP_ID);
+					// start exit timer
+					the_app.exit(APP_ID);
 
-						return; // wait for exit timer expiration.
-					}
+					return; // wait for exit timer expiration.
 				}
 			}
 			else

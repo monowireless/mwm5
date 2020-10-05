@@ -49,7 +49,9 @@
 #include "twe_stream.hpp"
 #include "twe_utils.hpp"
 #include "twe_stream.hpp"
+#ifndef TWE_STDINOUT_ONLY
 #include "twe_console.hpp"
+#endif
 
 #include "twe_utils_fixedque.hpp"
 
@@ -161,10 +163,12 @@ namespace TWESERCMD {
 		return lhs;
 	}
 
+#ifndef TWE_STDINOUT_ONLY
 	inline TWE::IStreamOut& operator << (TWETERM::ITerm& lhs, IParser& rhs) {
 		rhs.operator>>(lhs);
 		return lhs;
 	}
+#endif
 }
 
 extern TWEUTILS::InputQueue<uint8_t> the_uart_queue;

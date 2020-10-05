@@ -40,6 +40,13 @@ using namespace TWEUTILS;
 #define STR_WKS_TWEAPPS L"Wks_TweApps"
 //#define STR_MANIFEST L"000manifest"
 
+#ifndef ESP32
+const wchar_t TWE::WSTR_LANG_NAMES[E_TWE_LANG::_COUNT_][16] = {
+	L"[ENGLISH]",
+	L"[JAPANESE]"
+};
+#endif
+
 // function name alias
 #ifndef ESP32
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -765,3 +772,194 @@ const wchar_t* TWE::get_dir_tweapps() {
 	return the_cwd.get_dir_tweapps().c_str();
 #endif
 }
+
+#ifndef ESP32
+/**
+ * @fn	bool TweDesc::load(const wchar_t* descfile, E_TWE_LANG::value_type lang)
+ *
+ * @brief	Loads a 000desc.txt file.
+ * 			The format of 000desc.txt file is in two ways,
+ * 			1) simple format
+ * 			   TITLE LINE   / single line
+ * 			   DESC LINE(S) / single or multi lines
+ * 			   URL LINE     / OPTIONAL, begins with "https://"
+ * 			   
+ * 			2) complex, w/ sections for LANGUAGE selection.
+ * 			   [LANG1]      / section (the first entry must be located at the first line)
+ * 			   TITLE=XXXX   / TITLE line, single line
+ * 			   DESC=XXXX    / DESC line(s), single/multi lines
+ * 			   URL=XXXX     / URL line, optional, single
+ * 			   [LANG2]
+ * 			   ...
+ * 			   
+ *          If the first character of a line is ';', the line is skipped to read.
+ *
+ * @param	descfile	The descfile.
+ * @param	lang		The language.
+ *
+ * @returns	True if it succeeds, false if it fails.
+ */
+
+bool TweDesc::load(const wchar_t* descfile, E_TWE_LANG::value_type lang) {
+	this->_bloaded = false;
+
+	bool bComplexFormat = false;
+	bool bFoundLang = false;
+
+	this->_bloaded = false;
+	this->_title.clear();
+	this->_desc.clear();
+	this->_url.clear();
+
+	if (std::filesystem::is_regular_file(descfile)) {
+		SmplBuf_ByteSL<1024> sb_descfile;
+		sb_descfile << descfile;
+		
+		try {
+			std::ifstream ifs((const char*)sb_descfile.c_str());
+			std::string buff;
+
+			// find the first line (TITLE or [SECTION])
+			bool bFoundFirstLine = false;
+			while (getline(ifs, buff)) {
+				// skipping comment line
+				if (buff.size() > 0 && buff[0] == ';') continue;
+			
+				// remove \r, \n at the end
+				remove_endl(buff);
+
+				// remove BOM
+				if (buff.size() >= 3 && buff[0] == 0xEF && buff[1] == 0xBB && buff[2] == 0xBF) {
+					buff.erase(0, 3);
+				}
+
+				// check format of this line
+				SmplBuf_WChar l;
+				l << buff.c_str(); // with UTF-8 convert.
+
+				if (l.length() > 2 && l[0] == L'[' && l[-1] == L']') {
+					bComplexFormat = true;
+
+					if (l == WSTR_LANG_NAMES[lang]) {
+						bFoundLang = true;
+					}
+				}
+
+				// simple format (the first line)
+				if (!bComplexFormat) {
+					this->_title = l; // set TITLE string
+				}
+				
+				bFoundFirstLine = true;
+				break;
+			}
+
+			// not found first line, return with an error status
+			if (!bFoundFirstLine) return false;
+
+			// find desired language
+			if (bComplexFormat && !bFoundLang) {
+				while (getline(ifs, buff)) {
+					// skipping comment line
+					if (buff.size() > 0 && buff[0] == ';') continue;
+
+					// remove \r, \n at the end
+					remove_endl(buff);
+
+					// check format of this line
+					SmplBuf_WChar l;
+					l << buff.c_str(); // with UTF-8 convert.
+
+					// check if `[desired language name]'.
+					if (l == WSTR_LANG_NAMES[lang]) {
+						bFoundLang = true;
+						break;
+					}
+				}
+			}
+
+			// read the followings
+			if (!bComplexFormat) {
+				int ct = 0;
+				while (getline(ifs, buff) && ct < 4) { // four lines max
+					// skipping comment line
+					if (buff.size() > 0 && buff[0] == ';') continue;
+
+					// remove \r, \n at the end
+					remove_endl(buff);
+
+					// check format of this line
+					SmplBuf_WChar l;
+					l << buff.c_str(); // with UTF-8 convert.
+
+					if (beginsWith_NoCase(l, L"HTTP", 4)) {
+						// consider as URL if the line begins with "http".
+						this->_url = l;
+					} else {
+						if (ct > 0) this->_desc << L'\r' << L'\n'; // add line break
+						this->_desc << l;
+						ct++;
+					}
+				}
+
+				this->_bloaded = true;
+			}
+			else if (bComplexFormat && bFoundLang) {
+				enum class E_LAST {
+					NONE = 0,
+					TITLE,
+					DESC,
+					URL
+				} eLastItem;
+
+				eLastItem = E_LAST::NONE;
+
+				while (getline(ifs, buff)) { // four lines max
+					// skipping comment line
+					if (buff.size() > 0 && buff[0] == ';') continue;
+
+					// remove \r, \n at the end
+					remove_endl(buff);
+
+					// check format of this line
+					SmplBuf_WChar l;
+					l << buff.c_str(); // with UTF-8 convert.
+					(void*)l.c_str(); // terminate internal buffer
+
+					// found next section "[...]", finish here
+					if (l.length() > 2 && l[0] == L'[' && l[-1] == L']') {
+						break;
+					}
+
+					if (beginsWith_NoCase(l, L"TITLE=", 6)) {
+						this->_title << std::pair(l.begin() + 6, l.end());
+						eLastItem = E_LAST::TITLE;
+					} else 
+					if (beginsWith_NoCase(l, L"DESC=", 5)) {
+						this->_desc << std::pair(l.begin() + 5, l.end());
+						eLastItem = E_LAST::DESC;
+					} else 
+					if (beginsWith_NoCase(l, L"URL=", 4)) {
+						this->_url << std::pair(l.begin() + 4, l.end());
+						eLastItem = E_LAST::URL;
+					}
+					else {
+						if (l.length() > 0 && eLastItem == E_LAST::DESC) {
+							// append description
+							this->_desc << L'\r' << L'\n'; // add line break
+							this->_desc << l;
+						}
+					}
+				}
+
+				this->_bloaded = true;
+			}
+		}
+		catch (...) {
+			this->_bloaded = false;
+		}
+	}
+
+	return this->_bloaded;
+}
+#endif

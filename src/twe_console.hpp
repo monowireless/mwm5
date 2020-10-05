@@ -232,7 +232,7 @@ namespace TWETERM {
 		{
 			// alloc buffer dynamically
 			buf_astr_screen = new SimpBuf_GChar[u8l];
-			GChar* pBuff = new GChar[u8c * u8l];
+			GChar* pBuff = new GChar[int(u8c * u8l)];
 
 			_b_dynamic_alloc = true;
 
@@ -371,6 +371,9 @@ namespace TWETERM {
 			clear();
 			home();
 		}
+
+		// clear the line
+		void clear_line(uint8_t line, bool fill_blank = false);
 				
 		// set dirty flag to redraw screen
 		inline void force_refresh(uint8_t opt = 0) {
@@ -446,11 +449,26 @@ namespace TWETERM {
 		// cursor
 		inline void set_cursor(uint8_t m) { cursor_mode = m; }
 
+		void move_cursor(uint8_t cols, uint8_t lines);
+
 		// wrap text
 		inline void set_wraptext(bool b) { wrap_mode = b;  }
 
 		bool visible() const { return _bvisible; }
 		bool visible(bool bvis) { return _bvisible = bvis; }
+
+		struct _coord_cols_lines {
+			int16_t col;
+			int16_t lin;
+			uint8_t b_in_range;
+
+			operator bool() { return b_in_range; }
+		};
+
+		// get terminal col/lines from screen coord.
+		virtual _coord_cols_lines get_term_coord_from_screen(int16_t x, int16_t y) {
+			return { x, y, true };
+		}
 
 	public:
 		TWE::IStreamOut& operator << (TWE::IStreamSpecial& sc) { return sc(*this); }

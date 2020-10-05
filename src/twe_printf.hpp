@@ -36,7 +36,10 @@ namespace TWE {
 		_printobj(const char* fmt) : _fmt(fmt) {}
 		virtual void do_print(IStreamOut& of) {
 			char_t *p = (char_t *)_fmt;
-			while(*p != 0) of << *p;
+			while (*p != 0) {
+				of << *p;
+				++p;
+			}
 		};
 	};
 

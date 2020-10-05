@@ -318,17 +318,25 @@ namespace TWEUTILS {
 		template <signed N>
 		self_type& operator = (const T(&ref)[N]) {
 			reserve_and_set_empty(N);
-
-			for (int i = 0; i < N; i++) {
-				push_back(ref[i]);
-			}
-
+			
 			if (is_string_type) {
 				// for string type, array count of ref includes NUL char,
 				// so keep the last entry as is.
 				// If intended to use last entry, call resize_preserving_unused() to expand last entry.
 				//   e.g.) buff.resize_preserving_unused(buff.size() + 1);
-				_u16len--;
+				for (int i = 0; i < N; i++) {
+					push_back(ref[i]);
+
+					if (ref[i] == 0) {
+						_u16len--;
+						break;
+					}
+				}
+			}
+			else {
+				for (int i = 0; i < N; i++) {
+					push_back(ref[i]);
+				}
 			}
 
 			return *this;
@@ -407,13 +415,16 @@ namespace TWEUTILS {
 			if (_p && !_sp) {
 				// attaching existing memory region, no change.
 			} else {
-				std::unique_ptr<_SimpleBuffer_Dynamic<T>> buff(new _SimpleBuffer_Dynamic<T>(maxlen+is_string_type));
+				std::unique_ptr<_SimpleBuffer_Dynamic<T>> buff(new _SimpleBuffer_Dynamic<T>(int(maxlen+is_string_type)));
 				_u16maxlen = maxlen;
 
 				if (_u16len) {
 					auto _p_new = buff->get_pt();
-					for (size_type i = 0; i < _u16len; i++) {
-						_p_new[i] = std::move(_p[i]);
+					
+					if (_p) {
+						for (size_type i = 0; i < _u16len; i++) {
+							_p_new[i] = std::move(_p[i]);
+						}
 					}
 				}
 
@@ -659,10 +670,13 @@ namespace TWEUTILS {
 			return *this;
 		}
 
-		/// <summary>
-		/// 終端に来た場合（これ以上追加できない）
-		/// </summary>
-		/// <returns></returns>
+		/**
+		 * @fn	inline bool SimpleBuffer::is_end() const
+		 *
+		 * @brief	終端に来た場合（これ以上追加できない）
+		 *
+		 * @returns	True if end, false if not.
+		 */
 		inline bool is_end() const {
 			return (_u16len >= _u16maxlen) ? true : false;
 		}
@@ -675,24 +689,38 @@ namespace TWEUTILS {
 		/// <returns></returns>
 		inline T& operator [] (int i) { return (i < 0) ? _p[_u16len + i] : _p[i]; }
 		inline const T& operator [] (int i) const { return (i < 0) ? _p[_u16len + i] : _p[i]; }
-
+		
 		/**
-		 * @fn	inline T* SimpleBuffer::c_str()
-		 *
-		 * @brief	Gets the string
-		 *
-		 * @returns	Null if it fails, else a pointer to a T.
+		 * @brief Get the NUL terminated string (dedicated for uint8_t)
+		 * 
+		 * @param trm NUL char
+		 * @return const char* 
 		 */
-		inline T* c_str() {
-			static_assert(is_string_type == 1, "c_str() allows only string type");
-
+		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,uint8_t>::value >::type >
+		inline const char* c_str(T_ trm=0)
+		{
 			if (_p) {
-				_p[_u16len] = T{};
-				return _p;
+				_p[_u16len] = trm;
+				return (const char*)_p;
 			}
 			else return nullptr;
 		}
 
+		/**
+		 * @brief Get the NUL terminated string (dedicated for wchar_t)
+		 * 
+		 * @param trm NUL char
+		 * @return const wchar_t* 
+		 */
+		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,wchar_t>::value >::type >
+		inline const wchar_t* c_str(T_ trm=0)
+		{
+			if (_p) {
+				_p[_u16len] = trm;
+				return (const wchar_t*)_p;
+			}
+			else return nullptr;
+		}
 
 		/**
 		 * @fn	IStreamOut& SimpleBuffer::operator()(char_t c)
@@ -785,9 +813,13 @@ namespace TWEUTILS {
 		inline void push_back(const T& c) { _b.append(c); }
 		inline T* data() { return _b.data(); }
 		inline size_type size() { return _b.size(); }
-		inline T* c_str() { return _b.c_str(); }
+		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,uint8_t>::value >::type >
+		inline const char* c_str() { return _b.c_str(); }
+		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,wchar_t>::value >::type >
+		inline const wchar_t* c_str() { return _b.c_str(); }
 		inline size_type capacity() { return _b.capacity(); }
 		inline T& operator [] (int i) { return _b[i]; }
+		inline void clear() { _b.clear(); }
 
 		SOUT& operator ()(char_t c) {
 			return _b.operator()(c);

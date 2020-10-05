@@ -58,6 +58,18 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_NOTICE_0x01.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_Opening.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_TWELITE80.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp">
@@ -108,6 +120,10 @@
     <ClInclude Include="resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Commander.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="App_Commander.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\examples\TWELITE_Stage\build\Makefile">

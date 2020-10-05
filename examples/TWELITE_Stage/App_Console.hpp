@@ -13,7 +13,10 @@ class App_Console : public TWE::APP_DEF {
 public:
 	static const int APP_ID = int(E_APP_ID::CONSOLE);
 	static const wchar_t LAUNCH_MSG[];
-	
+
+	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
+	int get_APP_ID() { return APP_ID; }
+
 private:
 	// top bar
 	TWETerm_M5_Console the_screen_t; // init the screen.

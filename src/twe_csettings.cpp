@@ -28,9 +28,10 @@ void C_TWE_printf_support::s_init(struct _tsTWETERM_FILE* fp, TWE::IStreamOut* p
 int C_TWE_printf_support::s_getc(struct _tsTWETERM_FILE* fp) {
 	TWE::IStreamIn* pIn = (TWE::IStreamIn *)fp->vpContext_input;
 	if (pIn != nullptr) {
-		int c = pIn->get_a_byte();
+		uint32_t u32c = pIn->get_a_byte();
 
-		return c;
+		if (u32c <= 0xFFFF) return int(u32c); // ignore mouse event, etc.
+		else return -1;
 	}
 	else {
 		return - 1;

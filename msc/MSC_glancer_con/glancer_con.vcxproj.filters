@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\examples_con\glancer\glancer.cpp" />
+    <ClCompile Include="..\..\src\twe_fmt.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_sercmd.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_sercmd_ascii.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_utils_crc8.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\twe_common.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_sercmd.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_sercmd_ascii.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_stream.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_utils.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_utils_crc8.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_utils_fixedque.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_utils_simplebuffer.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src_from_mwm5">
+      <UniqueIdentifier>{6cf9ddc3-aace-4189-a24c-5b13e1825439}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

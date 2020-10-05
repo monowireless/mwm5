@@ -13,7 +13,7 @@
     <ClCompile Include="..\version_msc.cpp">
       <Filter>Version</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\APP_Scratch\Scratch.cpp">
+    <ClCompile Include="..\..\examples\_Scratch\Scratch.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
   </ItemGroup>

@@ -2,11 +2,20 @@
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include <string.h>
-#include "twe_sys.hpp"
 #include "twe_fmt.hpp"
 
 using namespace TWEFMT;
 using namespace TWEUTILS;
+
+#if defined(TWE_STDINOUT_ONLY)
+# ifdef TWE_HAS_MILLIS
+extern uint32_t millis();
+# else
+#define millis() (0)
+# endif
+#else
+#include "twe_sys.hpp"
+#endif
 
 /// <summary>
 /// parse the PAL packet.
@@ -17,7 +26,7 @@ E_PKT TwePacketPal::parse(uint8_t* pb, uint16_t u16len) {
 	uint8_t* p = pb;
 	uint8_t* e = pb + u16len;
 	uint8_t c = 0;
-	bool bChecksumErr = false;
+	bool bErr = false;
 
 	TwePacket::common.clear();
 	
@@ -84,13 +93,13 @@ E_PKT TwePacketPal::parse(uint8_t* pb, uint16_t u16len) {
 	if (iStored != u8sensors) {
 		// some error but accept parse sensor data.
 		u8sensors = iStored;
-		bChecksumErr = true;
+		bErr = true;
 	}
 	else {
 		// perform checksum check
 		uint8_t u8crc = TWEUTILS::CRC8_u8Calc(pb, (uint8_t)(p - pb));
 		uint8_t c = G_OCTET(p);
-		if (c != u8crc) bChecksumErr = true;
+		if (c != u8crc) bErr = true;
 	}
 
 	// copy data (copy serial format as is)
@@ -107,17 +116,29 @@ E_PKT TwePacketPal::parse(uint8_t* pb, uint16_t u16len) {
 		u8snsdatalen = len | 0x8000;
 	}
 
-	// set an error flag
-	if (bChecksumErr) u8sensors |= 0x80;
-
 	// store common data
 	TwePacket::common.tick = millis();
 	TwePacket::common.src_addr = DataPal::u32addr_src;
 	TwePacket::common.src_lid = DataPal::u8addr_src;
 	TwePacket::common.lqi = DataPal::u8lqi;
 
-	if (!(u8sensors & 0x80)) {
-		TwePacket::common.volt = query_volt();
+	if (!bErr) {
+		// store volt data
+		auto res_volt = query_volt();
+		if (res_volt.first) {
+			TwePacket::common.volt = res_volt.second;
+		}
+
+		auto res_ev = query_event();
+		if (res_ev.first) {
+			PalEvent::b_stored = true;
+			PalEvent::u8event_id = res_ev.second.u8event_id;
+			PalEvent::u8event_source = res_ev.second.u8event_source;
+			PalEvent::u32event_param = res_ev.second.u32event_param;
+		}
+		else {
+			PalEvent::b_stored = false;
+		}
 	}
 
 	// return packet ID
@@ -173,7 +194,7 @@ E_PKT TwePacketAppTAG::parse(uint8_t* pb, uint16_t u16len) {
 
 	// rest of bytes
 	if (p < e) {
-		DataAppTAG::payload.reserve_and_set_empty(e - p);
+		DataAppTAG::payload.reserve_and_set_empty(int(e - p));
 		DataAppTAG::payload << std::make_pair(p, e);
 	}
 	
@@ -289,6 +310,7 @@ E_PKT TwePacketTwelite::parse(uint8_t* pyld, uint16_t u16len) {
 E_PKT TwePacketAppIO::parse(uint8_t* pyld, uint16_t u16len) {	
 	//   0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 -
 	// :01810F01DB8630000200645F000040004F004000??
+	// :78811202848201015A003FC9000001000100010086
 	//    **--**LqAddr_srcAdTimsRpIostIoenIoit--Cs
 
 	bool bValid = false;
@@ -323,6 +345,10 @@ E_PKT TwePacketAppIO::parse(uint8_t* pyld, uint16_t u16len) {
 
 	u8rpt_cnt = G_OCTET(pyld);					 	// repeat count
 
+	DI_mask = G_WORD(pyld);
+	DI_active_mask = G_WORD(pyld);
+	DI_int_mask = G_WORD(pyld);
+
 	TwePacket::common.tick = millis();
 	TwePacket::common.src_addr = DataAppIO::u32addr_src;
 	TwePacket::common.src_lid = DataAppIO::u8addr_src;
@@ -343,7 +369,6 @@ E_PKT TwePacketAppUART::parse(uint8_t* pyld, uint16_t u16len) {
 	//  *4 通信品質(LQI)
 	//  *5 データ部バイト数 (0003=3バイト)
 	//  *6 データ (3バイトのデータ)
-
 	uint8_t* b = pyld;
 	uint8_t* e = pyld + u16len;
 	
@@ -360,7 +385,7 @@ E_PKT TwePacketAppUART::parse(uint8_t* pyld, uint16_t u16len) {
 	DataAppUART::u8addr_src = G_OCTET(pyld); 					// addr src
 
 	c = G_OCTET(pyld); // 0xA0
-	if (c != 0xA0) return E_PKT::PKT_ERROR;
+	if (!(c == 0xA0 || c == 0xAA)) return E_PKT::PKT_ERROR;
 
 	DataAppUART::u8response_id = G_OCTET(pyld);
 
@@ -452,11 +477,12 @@ E_PKT TWEFMT::identify_packet_type(uint8_t* p, uint16_t u16len) {
 	//
 	//   0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 -
 	// :01810F01DB8630000200645F000040004F004000??
+	// :78811202848201015A003FC9000001000100010086
 	//    **--**LqAddr_srcAdTimsRpIostIoenIoit--Cs
 	if (!bAccept
 		&& u16len == 20
 		&& p[1] == 0x81				// 0x81 command
-		&& p[3] == 0x01				// protocol version
+		&& p[3] == 0x02				// protocol version
 		&& (p[5] & 0x80) == 0x80 	// SID: MSB must be set
 		) {			// the difference from App_Twelite is the length 
 		return E_PKT::PKT_APPIO;
@@ -479,6 +505,27 @@ E_PKT TWEFMT::identify_packet_type(uint8_t* p, uint16_t u16len) {
 		&& ((p[12] * 256 + p[13]) == u16len - 14) // length
 		) {
 		return E_PKT::PKT_APPUART;
+	}
+
+	// Act
+	//   0 1 2 3 4 5 6 7 8 9 a b c d e f
+	// :FEAA008201015A00000000B7000F424154310F0CEE000B03FF03FF03FF92
+	//  ^1^2^3^^^^^^^4^^^^^^^5^6^^^7^^^^^^^^^^^^^^^^^^^^^^^^^^^^^8^9
+	//
+	//  *1 送信先LID
+	//  *2 0xAA 固定
+	//  *4 送信元アドレス
+	//  *5 宛先アドレス
+	//  *6 LQI
+	//  *7 データ部バイト数 (000F=15バイト)
+	//  *8 データ (15バイトのデータ)
+	if (!bAccept
+		&& u16len > 13
+		&& p[1] == 0xAA
+		&& (p[3] & 0x80) == 0x80
+		&& ((p[12] * 256 + p[13]) == u16len - 14) // length
+		) {
+		return E_PKT::PKT_ACT_STD;
 	}
 
 	// TWELITE TAG
@@ -535,6 +582,9 @@ spTwePacket TWEFMT::newTwePacket(uint8_t* p, uint16_t u16len, E_PKT eType) {
 	case E_PKT::PKT_APPUART:
 		return _newTwePacket_parse<TwePacketAppUART>(p, u16len);
 
+	case E_PKT::PKT_ACT_STD:
+		return _newTwePacket_parse<TwePacketActStd>(p, u16len);
+
 	case E_PKT::PKT_APPTAG:
 		return _newTwePacket_parse<TwePacketAppTAG>(p, u16len);
 
@@ -562,7 +612,7 @@ spTwePacketPal TWEFMT::newTwePacketPal(uint8_t* p, uint16_t u16len) {
 // parse function of sensors data, for operator >> (Pal???).
 // TODO: it does not have datatype check (normally, it does not have any mismatch).
 uint32_t TwePacketPal::store_data (uint8_t u8listct, void** vars, 
-			const uint8_t* pu8argsize, const uint8_t* pu8argcount_max, const uint8_t* pu8dsList, const uint8_t* pu8exList) {
+			const uint8_t* pu8argsize, const uint8_t* pu8argcount_max, const uint16_t* pu8dsList, const uint16_t* pu8exList, uint8_t* pu8exListReads) {
 	uint32_t u32store_mask = 0;
 	uint8_t* p = 0;
 
@@ -584,7 +634,8 @@ uint32_t TwePacketPal::store_data (uint8_t u8listct, void** vars,
 		for (int j = 0; j < u8listct; j++) {
 			uint32_t val = 0;
 			
-			if (u8ds == pu8dsList[j] && u8ex == pu8exList[j]) {
+			uint8_t u8ex_mask = (pu8exList[j] & 0xFF00) ? (pu8exList[j] >> 8) : 0xFF;
+			if (u8ds == pu8dsList[j] && (pu8exList[j] == 0xffff || (u8ex & u8ex_mask) == (pu8exList[j] & u8ex_mask) )) {
 				if (!(u8dt & 0x80)) {
 					uint8_t u8ty = u8dt & 0x3;
 					uint8_t typ_siz = (u8ty <= 2) ? 1 << u8ty : 1;
@@ -605,10 +656,12 @@ uint32_t TwePacketPal::store_data (uint8_t u8listct, void** vars,
 					case 1: // short 
 						for (uint8_t k = 0; k < u8ln/sizeof(uint16_t); k++) ((uint16_t*)vars[j])[k] = G_WORD(p);
 						break;
-					case 2:
+					case 2: // long
 						for (uint8_t k = 0; k < u8ln/sizeof(uint32_t); k++) ((uint32_t*)vars[j])[k] = G_DWORD(p);
 						break;
 					}
+
+					if (pu8exListReads) pu8exListReads[j] = u8ex;
 
 					u32store_mask |= (1 << j);
 					break;
@@ -629,19 +682,52 @@ uint32_t TwePacketPal::store_data (uint8_t u8listct, void** vars,
  *
  * @returns	The volt.
  */
-uint16_t TwePacketPal::query_volt () {
+std::pair<bool, uint16_t> TwePacketPal::query_volt () {
 	uint16_t u16volt = 0;
 
 	// find data
 	void* argList[] = { &u16volt };
-	const uint8_t au8argsiz[] = { 2    };
-	const uint8_t au8argctm[] = { 1    };
-	const uint8_t au8dsList[] = { 0x30 };
-	const uint8_t au8exList[] = { 0x08 };
+	const uint8_t  au8argsiz[] = { 2    };
+	const uint8_t  au8argctm[] = { 1    };
+	const uint16_t au8dsList[] = { 0x30 };
+	const uint16_t au8exList[] = { 0x08 };
 
 	uint32_t u32StoredMask = store_data(1, argList, au8argsiz, au8argctm, au8dsList, au8exList);
 
-	return u16volt;
+	return std::pair<bool, uint16_t>(u32StoredMask!=0, u16volt);
+}
+
+
+/**
+ * @fn	PalEvent TwePacketPal::query_event()
+ *
+ * @brief	Queries the event
+ *
+ * @returns	The event.
+ */
+std::pair<bool, PalEvent> TwePacketPal::query_event() {
+	uint32_t val;
+
+	void* argList[] = { &val };
+	const uint8_t  au8argsiz[] = { 4 };
+	const uint8_t  au8argctm[] = { 1 };
+	const uint16_t au8dsList[] = { 0x5 };
+	const uint16_t au8exList[] = { 0xFFFF };
+	uint8_t au8exListRead[1];
+
+	uint32_t u32StoredMask = store_data(1, argList, au8argsiz, au8argctm, au8dsList, au8exList, au8exListRead);
+
+	// prepare return value
+	PalEvent ret{};
+	if (u32StoredMask) {
+		ret.b_stored = true;
+		ret.u8event_id = val >> 24;
+		ret.u32event_param = val & 0x00FFFFFF;
+		ret.u8event_source = au8exListRead[0];
+	}
+
+	// returns
+	return std::pair<bool, PalEvent>(u32StoredMask != 0, ret);
 }
 
 /// <summary>
@@ -662,10 +748,10 @@ PalMag& TwePacketPal::operator >> (PalMag& out) {
 
 	// find data
 	void* argList[] = { &out.u16Volt, &out.u8MagStat };
-	const uint8_t au8argsiz[] = { 2,    1    };
-	const uint8_t au8argctm[] = { 1,    1,   };
-	const uint8_t au8dsList[] = { 0x30, 0x00 };
-	const uint8_t au8exList[] = { 0x08, 0x00 };
+	const uint8_t  au8argsiz[] = { 2,    1    };
+	const uint8_t  au8argctm[] = { 1,    1,   };
+	const uint16_t au8dsList[] = { 0x30, 0x00 };
+	const uint16_t au8exList[] = { 0x08, 0x00 };
 
 	out.u32StoredMask = store_data(out.U8VARS_CT, argList, au8argsiz, au8argctm, au8dsList, au8exList);
 
@@ -695,10 +781,10 @@ PalAmb& TwePacketPal::operator >> (PalAmb& out) {
 
 	// find data
 	void* argList[] = { &out.u16Volt, &out.i16Temp, &out.u16Humd, &out.u32Lumi };
-	const uint8_t au8argsiz[] = { 2,    2,    2,    4 };
-	const uint8_t au8argctm[] = { 1,    1,    1,    1 };
-	const uint8_t au8dsList[] = { 0x30, 0x01, 0x02, 0x03 };
-	const uint8_t au8exList[] = { 0x08, 0x00, 0x00, 0x00 };
+	const uint8_t  au8argsiz[] = { 2,    2,    2,    4 };
+	const uint8_t  au8argctm[] = { 1,    1,    1,    1 };
+	const uint16_t au8dsList[] = { 0x30, 0x01, 0x02, 0x03 };
+	const uint16_t au8exList[] = { 0x08, 0x00, 0x00, 0x00 };
 
 	out.u32StoredMask = store_data(out.U8VARS_CT, argList, au8argsiz, au8argctm, au8dsList, au8exList);
 
@@ -722,19 +808,21 @@ PalMot& TwePacketPal::operator >> (PalMot& out) {
 	out.u8samples = 0;
 
 	int16_t xyz[16][3];
-
+	
 	// find data (may get 16 samples)
-	void* argList[] = { &out.u16Volt, &xyz[0], &xyz[1], &xyz[2], &xyz[3], &xyz[4], &xyz[5], &xyz[6], &xyz[7], &xyz[8], &xyz[9], &xyz[10], &xyz[11],  &xyz[12],  &xyz[13],  &xyz[14],  &xyz[15] };
-	const uint8_t au8argsiz[] = { 2,    2,     2,       2,       2,       2,       2,       2,       2,       2,       2,       2,        2,         2,         2,         2,         2};
-	const uint8_t au8argctm[] = { 1,    3,     3,       3,       3,       3,       3,       3,       3,       3,       3,       3,        3,         3,         3,         3,         3};
-	const uint8_t au8dsList[] = { 0x30, 4,     4,       4,       4,       4,       4,       4,       4,       4,       4,       4,        4,         4,         4,         4,         4};
-	const uint8_t au8exList[] = { 0x08, 0,     1,       2,       3,       4,       5,       6,       7,       8,       9,      10,       11,        12,        13,        14,        15};
+	void* argList[] = { &out.u16Volt,    &xyz[0], &xyz[1], &xyz[2], &xyz[3], &xyz[4], &xyz[5], &xyz[6], &xyz[7], &xyz[8], &xyz[9], &xyz[10], &xyz[11],  &xyz[12],  &xyz[13],  &xyz[14],  &xyz[15] };
+	const uint8_t  au8argsiz[] = { 2,         2,        2,       2,       2,       2,       2,       2,       2,       2,       2,       2,        2,         2,         2,         2,         2};
+	const uint8_t  au8argctm[] = { 1,         3,        3,       3,       3,       3,       3,       3,       3,       3,       3,       3,        3,         3,         3,         3,         3};
+	const uint16_t au8dsList[] = { 0x30,      4,        4,       4,       4,       4,       4,       4,       4,       4,       4,       4,        4,         4,         4,         4,         4};
+	const uint16_t au8exList[] = { 0x08, 0x0F00,   0x0F01,  0x0F02,  0x0F03,  0x0F04,  0x0F05,  0x0F06,  0x0F07,  0x0F08,  0x0F09,  0x0F0A,   0x0F0B,    0x0F0C,    0x0F0D,    0x0F0E,    0x0F0F};
+	uint8_t au8exlist[sizeof(argList)/sizeof(void*)];
 
-	out.u32StoredMask = store_data(out.U8VARS_CT, argList, au8argsiz, au8argctm, au8dsList, au8exList);
+	out.u32StoredMask = store_data(out.U8VARS_CT, argList, au8argsiz, au8argctm, au8dsList, au8exList, au8exlist);
 
 	for (int i = 0; i < 16; i++) {
 		if (out.u32StoredMask & (1 << (i + 1))) {
 			out.u8samples = i + 1;
+			out.u8sample_rate_code = au8exlist[i + 1] >> 4; // sample rate code (0x4=100Hz), same code throu all samples.
 			out.i16X[i] = xyz[i][0];
 			out.i16Y[i] = xyz[i][1];
 			out.i16Z[i] = xyz[i][2];

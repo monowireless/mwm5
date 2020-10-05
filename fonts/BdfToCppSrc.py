@@ -83,14 +83,14 @@ def wrt_license(outfile):
 ##########################################################
 # output file name
 ##########################################################
-fd_cpp = open("%s/lcd_font_%s.cpp" % (ini_outdir, fbase), 'w', encoding='utf-8')
+fd_cpp = open("%s/font_%s.cpp" % (ini_outdir, fbase), 'w', encoding='utf-8')
 
 fd_cpp.write(monow_copyright)
 fd_cpp.write("""
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
 #include "twe_font.hpp"
-#include "lcd_font_%s.h"
+#include "font_%s.h"
 
 namespace TWEFONT {
 """ % fbase)
@@ -530,7 +530,7 @@ for l in lstsrc:
 fd_cpp.close()
 
 ### h file
-fd_h = open("%s/lcd_font_%s.h" % (ini_outdir, fbase), 'w', encoding='utf-8')
+fd_h = open("%s/font_%s.h" % (ini_outdir, fbase), 'w', encoding='utf-8')
 fd_h.write(monow_copyright)
 fd_h.write("""
 #pragma once 

@@ -8,6 +8,7 @@
 #include "App_Twelite.hpp"
 #include "App_PAL.hpp"
 #include "App_Glancer.hpp"
+#include "App_Commander.hpp"
 #include "App_FirmProg.hpp"
 #include "App_Interactive.hpp"
 #include "App_Console.hpp"
@@ -149,6 +150,10 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 		the_app.new_app<App_Glancer>();
 		break;
 
+	case App_Commander::APP_ID:
+		the_app.new_app<App_Commander>();
+		break;
+
 	case App_FirmProg::APP_ID:
 		the_app.new_app<App_FirmProg>(exit_id);
 		break;
@@ -199,6 +204,10 @@ const wchar_t* query_app_launch_message(int n_appsel) {
 
 	case App_Console::APP_ID:
 		return App_Console::LAUNCH_MSG;
+		break;
+
+	case App_Commander::APP_ID:
+		return App_Commander::LAUNCH_MSG;
 		break;
 
 	default:
@@ -279,11 +288,8 @@ static void s_check_clipboard() {
 
 	// check clip board copy request
 	if (the_clip.copy.available()) {
-		auto p = the_app.query_appobj();
-		if (p) {
-			ITerm* ptrm = reinterpret_cast<ITerm*>(p->get_appobj());
-
-			if (ptrm) {
+		if (auto&& p = the_app.query_appobj()) {
+			if (ITerm* ptrm = reinterpret_cast<ITerm*>(p->get_appobj())) {
 				ITerm& trm = *ptrm;
 
 				SmplBuf_ByteSL<3072> l_buff;

@@ -21,13 +21,51 @@ namespace TWEUTILS {
 	 *
 	 * @returns	true if doubled.
 	 */
-	inline bool Unicode_isSingleWidth(uint16_t c) {
+	inline constexpr bool Unicode_isSingleWidth(uint16_t c) {
 		return  (
 			(c < 0x0100)
 			|| (c >= 0xFF61 && c <= 0xFF9F) // hankaku kana
 			);
 	}
 
+
+	/**
+	 * @fn	inline int strlen_vis(const wchar_t* p)
+	 *
+	 * @brief	get visual length of string (count wide char as two)
+	 *
+	 * @param	p	A wchar_t to process.
+	 *
+	 * @returns	An int.
+	 */
+	inline int strlen_vis(const wchar_t* p) {
+		int len = 0;
+		while(*p != 0) {
+			len += Unicode_isSingleWidth(uint16_t(*p)) ? 1 : 2;
+			++p;
+		}
+
+		return len;
+	}
+
+
+	/**
+	 * @fn	inline int strlen_vis(const wchar_t* p)
+	 *
+	 * @brief	get visual length of string (count wide char as two)
+	 *
+	 * @param	p	A wchar_t to process.
+	 *
+	 * @returns	An int.
+	 */
+	inline int strlen_vis(const TWEUTILS::SmplBuf_WChar& str) {
+		int len = 0;
+		for (auto x : str) {
+			len += Unicode_isSingleWidth(uint16_t(x)) ? 1 : 2;
+		}
+
+		return len;
+	}
 
 	/**
 	 * @class	Unicode_UTF8Converter
@@ -256,6 +294,75 @@ namespace TWEUTILS {
 			return false;
 		}
 	}
+
+	/**
+	 * @fn	template <typename T> static inline bool beginsWith(const std::basic_string<T>& str, const T* suffix, unsigned suffixLen)
+	 *
+	 * @brief	string compare at the end with.
+	 *
+	 * @tparam	T	Generic type parameter.
+	 * @param	str		 	The string.
+	 * @param	prefix   	The prefix.
+	 * @param	prefixLen	Length of the prefix.
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	template <typename T>
+	static inline bool beginsWith(const std::basic_string<T>& str, const T* prefix, unsigned prefixLen)
+	{
+		return str.size() >= prefixLen && 0 == str.compare(0, prefixLen, prefix, prefixLen);
+	}
+
+
+	/**
+	 * @fn	static inline bool endsWith_NoCase(SmplBuf_Byte& str, const char_t* suffix, unsigned suffixlen)
+	 *
+	 * @brief	string compare at the end with. (case in-sensitive)
+	 *
+	 * @param [in,out]	str		 	The string.
+	 * @param 		  	prefix   	The prefix.
+	 * @param 		  	prefixlen	The suffixlen.
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	static inline bool beginsWith_NoCase(const SmplBuf_Byte& str, const char_t* prefix, unsigned prefixlen) {
+		if (str.size() > prefixlen) {
+			bool b = true;
+			for (unsigned i = 0, j = 0; j < prefixlen; i++, j++) {
+				b &= (towupper(str[i]) == towupper(prefix[j]));
+			}
+			return b;
+		}
+		else {
+			return false;
+		}
+	}
+
+
+	/**
+	 * @fn	static inline bool endsWith_NoCase(SmplBuf_WChar& str, const wchar_t* suffix, unsigned suffixlen)
+	 *
+	 * @brief	string compare at the end with. (case in-sensitive)
+	 *
+	 * @param [in,out]	str		 	The string.
+	 * @param 		  	prefix   	The prefix.
+	 * @param 		  	prefixlen	The prefixlen.
+	 *
+	 * @returns	True if it succeeds, false if it fails.
+	 */
+	static inline bool beginsWith_NoCase(const SmplBuf_WChar& str, const wchar_t* prefix, unsigned prefixlen) {
+		if (str.size() > prefixlen) {
+			bool b = true;
+			for (unsigned i = 0, j = 0; j < prefixlen; i++, j++) {
+				b &= (towupper(str[i]) == towupper(prefix[j]));
+			}
+			return b;
+		}
+		else {
+			return false;
+		}
+	}
+
 
 	/*******************************************************************************
 	 * HERE IS SORT ALGORITHM

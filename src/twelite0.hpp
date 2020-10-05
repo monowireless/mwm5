@@ -29,7 +29,10 @@
 
 // user interface
 #include "twe_cui_keyboard.hpp"
+#include "twe_cui_widget.hpp"
 #include "twe_cui_listview.hpp"
+#include "twe_cui_button.hpp"
+#include "twe_cui_tabs.hpp"
 
 // font defs
 #include "twe_font.hpp"
@@ -43,11 +46,11 @@
 #include "esp32/generic_lcd_screen.hpp"
 
 #include "font/lcd_font_8x6.h"
-#include "font/lcd_font_MP10.h"
-#include "font/lcd_font_MP12.h"
-#include "font/lcd_font_Shinonome16.h"
-#include "font/lcd_font_Shinonome14.h"
-#include "font/lcd_font_Shinonome12.h"
+#include "font/font_MP10.h"
+#include "font/font_MP12.h"
+#include "font/font_Shinonome16.h"
+#include "font/font_Shinonome14.h"
+#include "font/font_Shinonome12.h"
 
 // for PC/Win/Linux
 #include "gen/sdl2_clipboard.hpp"

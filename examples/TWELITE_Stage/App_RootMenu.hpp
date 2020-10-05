@@ -11,6 +11,8 @@
 class App_RootMenu : public TWE::APP_DEF {
 public:
 	static const int APP_ID = int(E_APP_ID::ROOT_MENU);
+	int get_APP_ID() { return APP_ID; }
+	const wchar_t* get_APP_INIT_MSG() { return L""; }
 
 private:
 	// top bar

@@ -378,9 +378,9 @@ struct app_core_sdl {
 				}
 
 				sub_screen_tr << printfmt("%s(%s)%c"
+					, SerialFtdi::ser_desc[i]
 					, SerialFtdi::ser_devname[i]
-					, SerialFtdi::ser_desc[i],
-					bOpened ? '*' : ' ');
+					, bOpened ? '*' : ' ');
 
 				if (bOpened) {
 					sub_screen_tr << "\033[0m";
@@ -702,6 +702,7 @@ struct app_core_sdl {
 					if (readstate == 1) M5.BtnA._press = true;
 					if (readstate == 2) M5.BtnA._lpress = true;
 				}
+				return; // event is handled
 			}
 
 			if (sp_btn_B->update(e)) {
@@ -710,6 +711,7 @@ struct app_core_sdl {
 					if (readstate == 1) M5.BtnB._press = true;
 					if (readstate == 2) M5.BtnB._lpress = true;
 				}
+				return; // event is handled
 			}
 
 			if (sp_btn_C->update(e)) {
@@ -718,6 +720,47 @@ struct app_core_sdl {
 					if (readstate == 1) M5.BtnC._press = true;
 					if (readstate == 2) M5.BtnC._lpress = true;
 				}
+				return; // event is handled
+			}
+
+			// main screen
+			//  push mouse event as KEY INPUT QUEUE
+			if (e.type == SDL_MOUSEBUTTONUP) {
+				if(e.button.button == SDL_BUTTON_RIGHT) {
+					// right click will pass ESC key press
+					the_keyboard_sdl2.push(KeyInput::KEY_ESC);
+					return;
+				} else {
+					int x = e.button.x * 640 / ::SCREEN_WIDTH / 2;
+					int y = e.button.y * 480 / ::SCREEN_HEIGHT / 2;
+					
+					// con_screen << printfmt("{MOUSE %d,%d}", x, y);
+					the_keyboard_sdl2.push(KeyInput::MOUSE_UP(x, y));
+				}
+			}
+
+			//  push mouse event as KEY INPUT QUEUE
+			if (e.type == SDL_MOUSEBUTTONDOWN) {
+				int x = e.button.x * 640 / ::SCREEN_WIDTH / 2;
+				int y = e.button.y * 480 / ::SCREEN_HEIGHT / 2;
+
+				// con_screen << printfmt("{MOUSE %d,%d}", x, y);
+				the_keyboard_sdl2.push(KeyInput::MOUSE_DOWN(x, y));
+			}
+
+			//  push mouse event as KEY INPUT QUEUE
+			if (e.type == SDL_MOUSEMOTION) {
+				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / 2;
+				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / 2;
+				
+				// con_screen << printfmt("{MOUSE %d,%d}", x, y);
+				the_keyboard_sdl2.push(KeyInput::MOUSE_MOVE(x, y));
+			}
+
+			// wheel event
+			if (e.type == SDL_MOUSEWHEEL) {
+				//con_screen << printfmt("{WHEEL %d,%d}", e.wheel.x, e.wheel.y);
+				the_keyboard_sdl2.push(KeyInput::MOUSE_WHEEL(e.wheel.x, e.wheel.y));				
 			}
 		}
 
@@ -1006,8 +1049,15 @@ struct app_core_sdl {
 					if (e.type == SDL_KEYDOWN) {
 						SmplBuf_ByteSL<1024> cmd;
 
+						auto dir_current = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"twesettings");
+						auto dir_dev = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"dev", L"src", L"twesettings");
+
 						cmd << "code ";
-						cmd << make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"twesettings");
+						if (TweDir::is_dir(dir_dev.c_str())) { // if existing dev dir, open there.
+							cmd << dir_dev;
+						} else {
+							cmd << dir_current;
+						}
 						system((const char*)cmd.c_str());
 					}
 				}
@@ -1021,8 +1071,17 @@ struct app_core_sdl {
 					if (e.type == SDL_KEYDOWN) {
 						SmplBuf_ByteSL<1024> cmd;
 
+						auto dir_current = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"mwx");
+						auto dir_dev = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"dev", L"src", L"mwx");
+
 						cmd << "code ";
-						cmd << make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"mwx");
+						if (TweDir::is_dir(dir_dev.c_str())) { // if existing dev dir, open there.
+							cmd << dir_dev;
+						}
+						else {
+							cmd << dir_current;
+						}
+
 						system((const char*)cmd.c_str());
 					}
 				}
@@ -1063,7 +1122,6 @@ struct app_core_sdl {
 							_file_fullpath.get().emptify(); // clear buffer
 							SmplBuf_ByteSL<64> _txt_date;   // date text "YYYYMMDD_hhmmss"
 							SmplBuf_WChar _file_name;       // "twestage_YYYYMMDD_hhmmss.log"
-
 
 							// create time text as "YYYYMMDD_hhmmss" format
 #if (defined(_MSC_VER) || defined(__MINGW32__))
@@ -1712,8 +1770,8 @@ static void s_sketch_loop() {
  */
 static void s_ser_hook_on_write(const uint8_t *p, int len) {
 #if defined(_MSC_VER) || defined(__MINGW32__)
-	const char_t cIn = 0xA2;  // ｢ (for Japanese windows, CP932 is mostly assumed)
-	const char_t cOut = 0xA3; // ｣
+	const char_t cIn = char_t(0xA2);  // ｢ (for Japanese windows, CP932 is mostly assumed)
+	const char_t cOut = char_t(0xA3); // ｣
 #elif defined(__APPLE__) || defined(__linux)
 	const char_t cIn = 0xAB;  // « (for others, chose quote char from latin1ex part)
 	const char_t cOut = 0xBB; // »

@@ -222,6 +222,21 @@ namespace TWEUTILS {
 		inline int read() {
 			return pop_front();
 		}
+
+		/**
+		 * @fn	inline int InputQueue::peek()
+		 *
+		 * @brief	Returns the top-of-stack object without removing it
+		 *
+		 * @returns	The current top-of-stack object.
+		 */
+		inline int peek() {
+			if (!_cue->empty()) {
+				return _cue->front();
+			}
+			else return -1;
+		}
+
 	};
 
 } // TWEUTILS

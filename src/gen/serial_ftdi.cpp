@@ -84,21 +84,33 @@ int SerialFtdi::_list_devices(tsAryChar32& devname, tsAryChar32& desc) {
 		for (i = 0, nStored = 0; i < (int)numDevs; i++) {
 			ftStatus = FT_GetDeviceInfoDetail(i, &Flags, &Type, &ID, &LocId, SerialNumber, Description, &ftHandleTemp);
 			if (ftStatus == FT_OK) {
-				if (!strncmp(Description, "MONOSTICK", 9)
-					|| !strncmp(Description, "TWE-Lite-R", 10)
-					|| !strncmp(Description, "TWE-Lite-USB", 12)
-					) {
+				const char* strdev = nullptr;
+
+				const char STR_DEV_MONOSTICK[] = "MONOSTICK";
+				const char STR_DEV_TWELITER1[] = "TWELITE R";
+				const char STR_DEV_TWELITER2[] = "TWELITE R2";
+				
+
+				if (!strncmp(Description, "MONOSTICK", 9)) strdev = STR_DEV_MONOSTICK;
+				else if (!strncmp(Description, "TWE-Lite-R", 10)) {
+					if (SerialNumber[0] == 'R' && SerialNumber[1] == '2') strdev = STR_DEV_TWELITER2;
+					else strdev = STR_DEV_TWELITER1;
+				}
+				else if (!strncmp(Description, "TWE-Lite-USB", 12)) {
+					strdev = STR_DEV_MONOSTICK;
+				}
+
+				if (strdev != nullptr) {
 					// check if MONOSTICK or TWELITER
 #if defined(_MSC_VER) || defined(__MINGW32__)
 					strncpy_s(devname[nStored], SerialNumber, 32);
-					strncpy_s(desc[nStored], Description, 32);
+					strncpy_s(desc[nStored], strdev, 32);
 #elif defined(__APPLE__) || defined(__linux)
 					strncpy(devname[nStored], SerialNumber, 32);
-					strncpy(desc[nStored], Description, 32);
+					strncpy(desc[nStored], strdev, 32);
 #endif
 					++nStored;
 				}
-
 			}
 		}
 

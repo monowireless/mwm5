@@ -3,7 +3,7 @@
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
 #include "twe_font.hpp"
-#include "lcd_font_MP10.h"
+#include "font_MP10.h"
 
 namespace TWEFONT {
 	extern const uint8_t font_MP10k_unsupported[10*2];
@@ -13,17 +13,17 @@ namespace TWEFONT {
 
 
 	/**********************************************************
-	 * createFontMP10_mini [chrs = 577]
+	 * createFontMP10_mini [chrs = 602]
 	 **********************************************************/
-	extern const uint16_t font_MP10k_mini_idx[577];
-	extern const uint8_t font_MP10k_mini_data[577*10*2];
+	extern const uint16_t font_MP10k_mini_idx[602];
+	extern const uint8_t font_MP10k_mini_data[602*10*2];
 
 	const FontDef& createFontMP10_mini(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
 		auto font = _queryFont(id);
 
 		if (font != nullptr) {
 			font->font_code = id;
-			font->font_name = "M+ BITMAP FONTS 10dot (MP10_mini, 577)";
+			font->font_name = "M+ BITMAP FONTS 10dot (MP10_mini, 602)";
 
 			font->width = 5;
 			font->height = 10;
@@ -42,7 +42,7 @@ namespace TWEFONT {
 			font->font_wide_idx = font_MP10k_mini_idx;	// UNICODE index 
 			font->font_wide_missing = font_MP10k_unsupported;
 
-			font->font_wide_count = 577;
+			font->font_wide_count = 602;
 
 			font->opt = opt;
 			return *font;

@@ -15,6 +15,7 @@ enum class E_APP_ID {
     TWELITE,
     PAL,
     GLANCE,
+    COMMANDER,
     _APPS_END_,
     FIRM_PROG,
     INTERACTIVE,

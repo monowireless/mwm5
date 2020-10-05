@@ -11,6 +11,10 @@ class App_Glancer : public TWE::APP_DEF {
 public:
 	static const int APP_ID = int(E_APP_ID::GLANCE);
 	static const wchar_t LAUNCH_MSG[];
+
+	int get_APP_ID() { return APP_ID; }
+	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
+
 	static const int _SORT_KEYS_COUNT = 5;
 
 public:

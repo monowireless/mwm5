@@ -152,6 +152,8 @@ ITerm& ITerm::write (wchar_t c) {
 				break;
 
 			case E_ESCSEQ_CURSOR_POSITION:
+				move_cursor(val2 ? val2 - 1 : 0, val1 ? val1 - 1 : 0);
+#if 0
 				cursor_l = val1 ? val1 - 1 : 0;
 				col_v = val2 ? val2 - 1 : 0;
 				if (cursor_l < 0) cursor_l = 0;
@@ -163,7 +165,7 @@ ITerm& ITerm::write (wchar_t c) {
 
 				u32Dirty |= (1UL << cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
-
+#endif
 				break;
 
 			case E_ESCSEQ_CURSOR_POSITION_COLUMN:
@@ -235,6 +237,21 @@ ITerm& ITerm::write (wchar_t c) {
 						}
 						else if (pVal[i] >= 40 && pVal[i] <= 47) {
 							escseq_attr = (escseq_attr & 0xFF0F) | ((8 + (pVal[i] - 40)) << 4); // set bg color
+						}
+						else if (pVal[i] == 101) { // not standard, disable bold attr
+							escseq_attr &= ~E_ESCSEQ_BOLD_MASK;
+						}
+						else if (pVal[i] == 104) { // not standard, disable underline attr
+							escseq_attr &= ~E_ESCSEQ_UNDERLINE_MASK;
+						}
+						else if (pVal[i] == 107) { // not standard, disable reverse attr
+							escseq_attr &= ~E_ESCSEQ_REVERSE_MASK;
+						}
+						else if (pVal[i] == 130) { // not standard, set fg as default
+							escseq_attr &= 0xFFF0;
+						}
+						else if (pVal[i] == 140) { // not standard, set bg as default
+							escseq_attr &= 0xFF0F;
 						}
 					}
 				}
@@ -317,6 +334,36 @@ ITerm& ITerm::write (wchar_t c) {
 
 		if (bSingleChar || (!bSingleChar && c_vis + 1 <= max_col)) {
 			if (cursor_c <= max_col) {
+				auto c0 = astr_screen[L][cursor_c];
+				bool bSingleChar0 = TWEUTILS::Unicode_isSingleWidth(wchar_t(c0.chr()));
+
+				// overwrite buffer
+				if (bSingleChar != bSingleChar0) {
+					if (bSingleChar) {
+						// wide char is present at original, overwrite single char -> so insert dummy space at the next
+						int i = astr_screen[L].length() - 1; // last index
+						astr_screen[L].append(astr_screen[L][i]); // append last
+						
+						if (cursor_c < i - 1) { // skip when cursor_c is at buffer end.
+							while (i >= cursor_c + 2) {
+								astr_screen[L][i] = astr_screen[L][i - 1];
+								--i;
+							}
+
+							// add dummy blank
+							astr_screen[L][cursor_c + 1] = GChar(' ', 0);
+						}
+					} else {
+						// single char is present at original, overwrite wide char -> erase the next char
+						if (cursor_c < int16_t(astr_screen[L].length() - 1)) {
+							for (i = cursor_c + 1; i <= int16_t(astr_screen[L].length() - 2); i++) {
+								astr_screen[L][i] = astr_screen[L][i + 1]; 
+							}
+							astr_screen[L].pop_back();
+						}
+					}
+				}
+
 				// put a char at the cursor position
 				astr_screen[L][cursor_c] = GChar(c, escseq_attr);
 				cursor_c = cursor_c + 1;
@@ -510,4 +557,33 @@ void ITerm::set_screen_buf(GChar* ptr, uint8_t oldcols, uint8_t oldlines) {
 			}
 		}
 	}
+}
+
+
+// clear the line
+void ITerm::clear_line(uint8_t line, bool fill_blank) {
+	int L = calc_line_index(line);
+
+	u32Dirty |= (1UL << line);
+	for (int j = 0; j <= cursor_c; j++) astr_screen[L][j] = GChar(' ', escseq_attr);
+
+	if (fill_blank) {
+		astr_screen[L].redim(max_col + 1);
+	}
+}
+
+// move cursor
+void ITerm::move_cursor(uint8_t cols, uint8_t lines) {
+	cursor_l = lines;
+	int16_t col_v = cols;
+
+	if (cursor_l < 0) cursor_l = 0;
+	if (col_v < 0) col_v = 0;
+
+	if (cursor_l > max_line) cursor_l = max_line;
+	if (col_v > max_col) col_v = max_col;
+	cursor_c = column_vis_to_idx(col_v, calc_line_index(cursor_l));
+
+	u32Dirty |= (1UL << cursor_l);
+	u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 }

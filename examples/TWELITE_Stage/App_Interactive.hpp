@@ -11,6 +11,9 @@
 class App_Interactive : public APP_DEF, public APP_HNDLR<App_Interactive> {
 public:
 	static const int APP_ID = int(E_APP_ID::INTERACTIVE);
+	int get_APP_ID() { return APP_ID; }
+	const wchar_t* get_APP_INIT_MSG() { return L""; }
+
 	
 private:
 	// top bar
@@ -94,7 +97,9 @@ public:
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 	}
 
-	~App_Interactive() {}
+	~App_Interactive() {
+		APP_HNDLR::on_close();
+	}
 
 	void setup();
 

@@ -262,7 +262,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\gen\oss_regex.h" />
     <ClInclude Include="msc_defs.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">true</ExcludedFromBuild>

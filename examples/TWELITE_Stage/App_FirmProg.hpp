@@ -19,6 +19,9 @@ public:
 	static const int APP_ID = int(E_APP_ID::FIRM_PROG);
 	typedef App_FirmProg self_type;
 
+	int get_APP_ID() { return APP_ID; }
+	const wchar_t* get_APP_INIT_MSG() { return L""; }
+	
 private:
 	void idenfify_module();
 
@@ -257,6 +260,7 @@ private: // SUBSCREEN
 	public:
 		static const int SCR_ID = (int)E_SUBSCREEN::FILE_PROG;
 		Screen_FileProg() : SubScreen(), _error_status(0), _timer_null(), _timer_exit(), _siz_file(0), _b_protocol(false), _u32_tickstart(0), _file() {}
+		~Screen_FileProg() { APP_HNDLR::on_close(); }
 		void setup();
 		void loop();
 	
@@ -285,18 +289,22 @@ private: // SUBSCREEN
 		TweCmdPipe _pipe;
 		std::regex _re_gcc, _re_link, _re_cfile, _re_target;
 		uint32_t _opt;
+
+		TweDesc _desc; // description loaded form 000desc.txt.
 	public:
 		static const int SCR_ID = (int)E_SUBSCREEN::ACT_BUILD;
-		Screen_ActBuild(uint32_t opt = OPT_START_DIR_LIST_ACT) : SubScreen(), _act_dir(), _pipe(), _opt(opt) {
+		Screen_ActBuild(uint32_t opt = OPT_START_DIR_LIST_ACT) : SubScreen(), _act_dir(), _pipe(), _opt(opt), _desc() {
 			the_sys_console.visible(false); // set system console as shell_mode (stop ITerm display)
 		}
 		~Screen_ActBuild(){
 			the_sys_console.visible(true); // set system console under ITerm control.
+			APP_HNDLR::on_close();
 		}
 		void setup();
 		void loop();
 
 		void hndlr_actdir(event_type ev, arg_type arg = 0);
+		void actdir_update_bottom();
 		void hndlr_build(event_type ev, arg_type arg = 0);
 		void hndlr_error(event_type ev, arg_type arg = 0);
 	

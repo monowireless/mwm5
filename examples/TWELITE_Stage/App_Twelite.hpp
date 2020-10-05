@@ -12,6 +12,10 @@ class App_TweLite : public TWE::APP_DEF {
 public:
 	static const int APP_ID = int(E_APP_ID::TWELITE);
 	static const wchar_t LAUNCH_MSG[];
+	
+	int get_APP_ID() { return APP_ID; }
+	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
+
 
 private:
 	// Serial Parser

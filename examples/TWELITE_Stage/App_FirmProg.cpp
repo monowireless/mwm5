@@ -223,7 +223,7 @@ void App_FirmProg::setup() {
 	
 	setup_screen();
 	_subscr.setup(change_app);
-	_subscr.set_nextapp(Screen_ModIdentify::SCR_ID);
+	_subscr.exit(-1, Screen_ModIdentify::SCR_ID);
 
 #ifndef ESP32
 	// store dir drop dir into internal dirs
@@ -259,8 +259,15 @@ void App_FirmProg::setup_screen() {
 
 	TWEFONT::createFontShinonome16_mini(10, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // shinonome 16 font (TATE BAIKAKU)
 	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
-	TWEFONT::createFontMP12_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
+
+#ifndef ESP32
+	// load fullset
+	TWEFONT::createFontMP12(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP12 font
+	TWEFONT::createFontMP12(13, 0, 0); // MP10 font
+#else
+	TWEFONT::createFontMP12_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP12 font
 	TWEFONT::createFontMP12_mini(13, 0, 0); // MP10 font
+#endif
 
 	// main screen area
 	the_screen.set_font(13);
@@ -354,13 +361,10 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 	_listMenu.push_back(L"BINから選択", uint16_t(MENU_REGULAR_APP));
 	
 	_listMenu.push_back(L"Actビルド&書換", uint16_t(MENU_ACT));
-	_listMenu.attach_term(the_screen);
-
+	
 	_listMenu.push_back(L"TWELITE APPSビルド&書換", uint16_t(MENU_TWEAPPS));
-	_listMenu.attach_term(the_screen);
-
+	
 	_listMenu.push_back(L"Actエクストラ", uint16_t(MENU_ACT_EXTRA));
-	_listMenu.attach_term(the_screen);
 
 	_listMenu.push_back(L"指定", uint16_t(MENU_DROP_DIR));
 	update_dropmenu();
@@ -374,6 +378,8 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 		_i_selected = MENU_LAST;
 		// the_keyboard.push(TWECUI::KeyInput::KEY_ENTER);
 	}
+
+	_listMenu.attach_term(the_screen);
 
 	_listMenu.set_view(0, _i_selected >= 0 && _i_selected < _listMenu.size() ? _i_selected : -1);
 	_listMenu.update_view(true);
@@ -710,6 +716,7 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 #endif
 
 	// test for list files
+	_listFiles.set_info_area(nullptr);
 	_listFiles.clear();
 
 	// list files
@@ -734,7 +741,7 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	}
 	else {
 		_listFiles.sort_items(true);
-		_listFiles.attach_term(the_screen);
+		_listFiles.attach_term(the_screen, true);
 		_listFiles.set_view();
 		if (!_parent->_firmfile_name.empty()) {
 			for(int i = 0; i < _listFiles.size(); i++) {
@@ -838,6 +845,7 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 }
 
 void App_FirmProg::Screen_FatalError::setup() {
+	the_screen_t.clear();
 	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - エラー";
 	
 	the_screen.clear_screen();
@@ -848,8 +856,10 @@ void App_FirmProg::Screen_FatalError::setup() {
 		<< L"" << crlf
 		// L"....+....1a...+....2....+....3.b..+....4....+....5..3"
 		<< L"同じエラーが続く場合は、TWELITE STAGEを終了し、USBデ" L"\r\n"
-		   L"バイス(MONOSITCK,TWELITE R)を再接続し、改めてSTAGEを" L"\r\n"
-		   L"起動してください。";
+		   L"バイス(MONOSITCK,TWELITE R)を切断し、TWELITEの配線を" L"\r\n"
+		   L"再確認します。改めてUSBデバイスの接続とSTAGEアプリを" L"\r\n"
+		   L"起動してください。"  L"\r\n"
+		;
 			
 	// button navigation
 	the_screen_c.clear_screen();
@@ -891,6 +901,15 @@ void App_FirmProg::Screen_FatalError::loop() {
 
 		case KeyInput::KEY_BUTTON_C_LONG:
 			break;
+
+		default:
+			if (TWECUI::KeyInput::MOUSE_UP::is_type(c)) {
+				// press LEFT mouse button to proceed.
+				TWECUI::KeyInput::MOUSE_UP ev(c);
+				if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {				
+					the_keyboard.push(KeyInput::KEY_ENTER);
+				}
+			}
 		}
 	}
 
@@ -1079,6 +1098,7 @@ void App_FirmProg::Screen_FileProg::setup() {
 	the_screen << "\033[2J";
 
 	// put a init message
+	the_screen_t.clear_screen();
 	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - 書換中";
 
 	// button navigation
@@ -1221,6 +1241,15 @@ void App_FirmProg::Screen_FileProg::hndlr_success(event_type ev, arg_type arg) {
 		case KeyInput::KEY_BUTTON_C:
 		case KeyInput::KEY_BUTTON_C_LONG:
 			break;
+
+		default:
+			if (TWECUI::KeyInput::MOUSE_UP::is_type(c)) {
+				// press LEFT mouse button to proceed.
+				TWECUI::KeyInput::MOUSE_UP ev(c);
+				if (auto && coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {				
+					the_keyboard.push(KeyInput::KEY_ENTER);
+				}
+			}
 		}
 		break;
 
@@ -1260,6 +1289,15 @@ void App_FirmProg::Screen_FileProg::hndlr_error(event_type ev, arg_type arg) {
 		case KeyInput::KEY_BUTTON_C:
 		case KeyInput::KEY_BUTTON_C_LONG:
 			break;
+		
+		default:
+			if (TWECUI::KeyInput::MOUSE_UP::is_type(c)) {
+				// press LEFT mouse button to proceed.
+				TWECUI::KeyInput::MOUSE_UP ev(c);
+				if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {				
+					the_keyboard.push(KeyInput::KEY_ENTER);
+				}
+			}
 		}
 		break;
 
@@ -1411,7 +1449,7 @@ void App_FirmProg::Screen_ActBuild::setup() {
 		if (std::filesystem::is_directory(make_full_path(_parent->_build_workspace, _parent->_build_project).c_str())) {
 			APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_actdir);
 		} else {
-			the_screen << L"MWSDK が見つかりません。" << crlf;
+			the_screen << _parent->_build_workspace << '/' << _parent->_build_project << L"が見つかりません。" << crlf;
 			screen_refresh();
 
 			// exiting
@@ -1428,18 +1466,31 @@ void App_FirmProg::Screen_ActBuild::loop() {
 	screen_refresh();
 }
 
+void App_FirmProg::Screen_ActBuild::actdir_update_bottom() {
+	the_screen_c.clear_screen();
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
+	if (_desc.get_url().length()) {
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+ 		the_screen_c << "     ↑/長押:MENU          選択/\033[32m"
+			                                            "ｳｪﾌﾞｻｲﾄ"
+			                                             "\033[0m           ↓/";
+	}
+	else {
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+	 	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
+	}
+
+	the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+#else
+	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#endif
+	the_screen_c.force_refresh();
+}
+
 void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 	switch (ev) {
 	case EV_SETUP: {
-		the_screen_c.clear_screen();
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
-		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
-		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
-#else
-		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
-#endif
-		the_screen_c.force_refresh();
+		actdir_update_bottom();
 
 		TweDir dir;
 		int idx = 0, idx_sel = -1;
@@ -1485,7 +1536,8 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 		}
 
 		if (_listFiles.size() == 0) {
-			the_screen << L"Act/ｱﾌﾟﾘｿｰｽが見つかりません。";
+			the_screen.clear_screen();
+			the_screen << crlf  << L" Act/ｱﾌﾟﾘｿｰｽが見つかりません。";
 			screen_refresh();
 
 			// exiting
@@ -1493,7 +1545,8 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 		}
 		else {
 			_listFiles.sort_items(true); // sort without case
-			_listFiles.attach_term(the_screen);
+			_listFiles.attach_term(the_screen, true);
+			_listFiles.set_info_area(sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
 			_listFiles.set_view();
 
 			// select last build item.
@@ -1528,7 +1581,33 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 		do {
 			int c = the_keyboard.read();
 
-			if (_listFiles.key_event(c)) {
+			if (_listFiles.key_event(c)) {				
+				int isel = _listFiles.get_selected_index();
+				if (isel >= 0) {
+					// try to open the desc file
+					_desc.load(make_full_path(
+						_parent->_build_workspace, _parent->_build_project,
+						_listFiles.get_selected().first, L"000desc.txt").c_str());
+
+					// clear desc area
+					the_screen_b.clear_screen();
+					the_screen_l << "\033[2;1H\033[K";
+
+					if (_desc) {
+						the_screen_l << "\033[2;1H\033[30;42m\033[K " << _desc.get_title() << "\033[0m";
+						the_screen_b << "\033[32m" << _desc.get_desc() << "\033[0m";
+					}
+				}
+
+				// update bottom bar.
+				actdir_update_bottom();
+
+				// selection completed
+				if (auto x = _listFiles.is_info_selected()) {
+					if (x & 0x01) the_keyboard.push(TWECUI::KeyInput::KEY_BUTTON_C_LONG);
+					if (x & 0x02) the_keyboard.push(TWECUI::KeyInput::KEY_BUTTON_B_LONG);
+					continue;
+				} else
 				if (_listFiles.is_selection_completed()) {
 					if (TweDir::is_dir(make_full_path(
 								  _parent->_build_workspace, _parent->_build_project
@@ -1567,6 +1646,17 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 					break;
 
 				case KeyInput::KEY_BUTTON_B_LONG:
+					if (_desc.get_url().length() > 0) {
+						SmplBuf_ByteSL<1024> url;
+					
+#if defined(_MSC_VER) || defined(__MINGW32__)
+						url << _desc.get_url();
+						ShellExecute(NULL, "open", (LPCSTR)url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+						url << "open " << _desc.get_url();;
+						system(url.c_str());
+#endif
+					}
 					break;
 
 				case KeyInput::KEY_BUTTON_C:

@@ -1,0 +1,14 @@
+{
+    "C_Cpp.errorSquiggles": "Enabled",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/../../src/**"
+    ],
+    "C_Cpp.default.browse.path": [
+        "${workspaceFolder}/../../src/**"
+    ],
+    "C_Cpp.default.defines": [
+        "__DUMMY__=0",
+        "TWE_STDINOUT_ONLY",
+        "TWE_HAS_MILLIS"
+    ]
+}

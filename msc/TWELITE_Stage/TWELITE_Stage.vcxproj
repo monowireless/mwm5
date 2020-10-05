@@ -294,6 +294,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_TWELITE80.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_NOTICE_0x01.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_Opening.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\menu_info.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\_AppVer.cpp" />
@@ -312,6 +316,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\examples\TWELITE_Stage\AppIDs.h" />
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Commander.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Console.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Glancer.hpp" />
@@ -325,6 +330,7 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu_defs.h" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu_info.h" />
+    <ClInclude Include="App_Commander.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="version_msc.h" />
   </ItemGroup>

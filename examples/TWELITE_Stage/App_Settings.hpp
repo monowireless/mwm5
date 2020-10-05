@@ -13,6 +13,9 @@
 class App_Settings : public TWE::APP_DEF {
 public:
 	static const int APP_ID = int(E_APP_ID::SETTINGS);
+	int get_APP_ID() { return APP_ID; }
+	const wchar_t* get_APP_INIT_MSG() { return L""; }
+
 	
 private:
 	// top bar

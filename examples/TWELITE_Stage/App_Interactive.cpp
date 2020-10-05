@@ -30,7 +30,6 @@ void App_Interactive::loop() {
 	// run loop of the handler
 	APP_HNDLR::loop();
 
-
 	// LCD update
 	screen_refresh();
 }
@@ -104,7 +103,13 @@ void App_Interactive::hndlr_init_screen(event_type ev, arg_type arg) {
 				break;
 
 			default:
-
+				if (TWECUI::KeyInput::MOUSE_UP::is_type(c)) {
+					// press LEFT mouse button to proceed.
+					TWECUI::KeyInput::MOUSE_UP ev(c);
+					if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
+						APP_HNDLR::new_hndlr(&App_Interactive::hndlr_main_screen);
+					}
+				}
 				break;
 			}
 		}
@@ -129,7 +134,7 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 		// button navigation
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "        --/長押:MENU     ズーム/--          ﾌｧｰﾑ書換/-- ";
+		the_screen_c << "   +++入力/長押:MENU     ズーム/--          ﾌｧｰﾑ書換/-- ";
 		the_screen_c.force_refresh();
 
 		// reserve struct
@@ -161,6 +166,14 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 			c = virt_scrctl(c);
 
 			switch (c) {
+			case KeyInput::KEY_BUTTON_A: // might be confusing???
+				WrtTWE << '+';
+				delay(400);
+				WrtTWE << '+';
+				delay(400);
+				WrtTWE << '+';
+				break;
+
 			case KeyInput::KEY_BUTTON_A_LONG:
 			case KeyInput::KEY_ESC:
 				if (!(_sp_intr && _sp_intr->b_now_input)) {
@@ -181,7 +194,6 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 				the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
 				break;
 
-			case KeyInput::KEY_BUTTON_A:
 			case KeyInput::KEY_BUTTON_B_LONG:
 			case KeyInput::KEY_BUTTON_C_LONG:
 				break;
@@ -352,11 +364,10 @@ void App_Interactive::monitor_uart(KeyInput::keyinput_type c) {
 		if (c >= 0x00 && c <= 0xFF) {
 			// timer set
 			intr.timeout_uart.start(100);
-			
 			intr.que_uart.push(c & 0xFF);
 		}
 		
-		if (bBreak || (intr.stat == E_STAT::NONE && c == KeyInput::KEY_VOID)) {
+		if (bBreak || c == KeyInput::KEY_VOID) {
 			bool b_next = false;
 
 			SmplBuf_ByteL<INTR::UART_LINE_CHAR_MAX + 1> l_buff; // string type, with buffer space for NUL char.
@@ -384,7 +395,6 @@ void App_Interactive::monitor_uart(KeyInput::keyinput_type c) {
 				// set new state
 				intr.stat = E_STAT::RESET_WITH_SET; // next
 				intr.re.comp("ENTERING.CONFIG.MODE"); // expected pattern (for App_Tag/PAL end device)
-				//intr.re.comp("ENTERING.CONFIG.MODE"); // expected pattern (for App_Tag/PAL end device)
 				twe_prog.reset_module(); // module reset				
 				break;
 

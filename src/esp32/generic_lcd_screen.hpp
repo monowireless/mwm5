@@ -35,7 +35,7 @@ namespace TWEARD {
 		LcdScreen(int w, int h) :
 			_w(w),
 			_h(h),
-			_fb(new RGBA[_w * _h]),
+			_fb(new RGBA[int(_w * _h)]),
 			_y_upd(_h, false),
 			_window{},
 			_window_x(0),

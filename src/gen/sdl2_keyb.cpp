@@ -28,6 +28,8 @@ bool KeyInput_SDL2::handle_event(SDL_Event& e) {
 			if (!key && e.key.keysym.sym == SDLK_RIGHT) key = KeyInput::KEY_RIGHT;
 			if (!key && e.key.keysym.sym == SDLK_ESCAPE) key = KeyInput::KEY_ESC;
 			if (!key && e.key.keysym.sym == SDLK_BACKSPACE) key = KeyInput::KEY_BS;
+			if (!key && e.key.keysym.sym == SDLK_PAGEUP) key = KeyInput::KEY_PAGEUP;
+			if (!key && e.key.keysym.sym == SDLK_PAGEDOWN) key = KeyInput::KEY_PAGEDN;
 
 			if (key) {
 				KeyInput::push(key);

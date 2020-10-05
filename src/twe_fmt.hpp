@@ -23,13 +23,13 @@ namespace TWEFMT {
 		PKT_APPIO,   // for APP IO
 		PKT_APPUART, // for APP UART
 		PKT_APPTAG,  // for APP UART
+		PKT_ACT_STD  // for Act Standard packet structure
 	};
 
 	class TwePacket {
 	protected:
 		const E_PKT _type;
-
-
+		
 	public:
 		TwePacket(E_PKT ptyp = E_PKT::PKT_ERROR) : _type(ptyp), common{} {}
 		virtual E_PKT parse(uint8_t* p, uint16_t len) { return E_PKT::PKT_ERROR; }
@@ -60,7 +60,8 @@ namespace TWEFMT {
 		NOPCB = 0x0,
 		MAG = 0x01,
 		AMB = 0x02,
-		MOT = 0x03
+		MOT = 0x03,
+		NOTICE = 0x04
 	};
 
 	enum class E_SNSCD : uint8_t {
@@ -69,6 +70,7 @@ namespace TWEFMT {
 		HUMD = 0x2,
 		LUMI = 0x3,
 		ACCEL = 0x4,
+		EVENT = 0x5,
 		ACCEL_XYZ = 0x24,
 		VOLT = 0x30,
 		DIO = 0x31,
@@ -100,9 +102,17 @@ namespace TWEFMT {
 		std::unique_ptr<uint8_t[]> uptr_snsdata;
 	};
 
+	// PAL event
+	struct PalEvent {
+		uint8_t b_stored;
+		uint8_t u8event_source;
+		uint8_t u8event_id;       // Event code
+		uint32_t u32event_param;   // 24bit length
+	};
+
 	struct PalBase {
-		uint32_t u32StoredMask;
-		uint16_t u16Volt;
+		uint32_t u32StoredMask; // bit0...: bit mask to store sensor data
+		uint16_t u16Volt;       // module voltage
 	};
 
 	struct PalMag : public PalBase {
@@ -126,15 +136,18 @@ namespace TWEFMT {
 		const uint8_t U8VARS_CT = 17; // Volt + 3 AXIS*16samples
 		const uint32_t STORE_COMP_MASK = 3; // Volt & 1sample
 
-		uint8_t u8samples;
-		int16_t i16X[16];
-		int16_t i16Y[16];
-		int16_t i16Z[16];
+		uint8_t u8samples; // num of sample stored.
+		uint8_t u8sample_rate_code; // sample rate (0: 25Hz, 4:100Hz)
+		int16_t i16X[16]; // X axis samples
+		int16_t i16Y[16]; // Y axis samples
+		int16_t i16Z[16]; // Z axis samples
 	};
 
-	class TwePacketPal : public TwePacket, public DataPal {
+	class TwePacketPal : public TwePacket, public DataPal, public PalEvent {
 		// parse each sensor data and convert into variables.
-		uint32_t store_data(uint8_t u8listct, void** vars, const uint8_t* pu8argsize, const uint8_t* pu8argcount_max, const uint8_t* pu8dsList, const uint8_t* pu8exList);
+		uint32_t store_data(uint8_t u8listct, void** vars, const uint8_t* pu8argsize, const uint8_t* pu8argcount_max, const uint16_t* pu8dsList, const uint16_t* pu8exList, uint8_t* pu8exListReads = nullptr);
+		std::pair<bool, uint16_t> query_volt();
+		std::pair<bool, PalEvent> query_event();
 
 	public:
 		static const E_PKT _pkt_id = E_PKT::PKT_PAL;
@@ -143,8 +156,15 @@ namespace TWEFMT {
 		~TwePacketPal() { }
 		E_PKT parse(uint8_t* p, uint16_t len);
 
-		uint16_t query_volt();
+		// query Pal Event Data
+		bool is_PalEvent() { return PalEvent::b_stored; }
+		PalEvent& get_PalEvent() { return *static_cast<PalEvent*>(this); }
+		PalEvent& operator >> (PalEvent& out) {
+			out = get_PalEvent();
+			return out;
+		}
 
+		// query PalMag data structure
 		PalMag& operator >> (PalMag& out);
 		PalMag get_PalMag() {
 			PalMag out;
@@ -152,6 +172,7 @@ namespace TWEFMT {
 			return out;
 		}
 
+		// query PalMag data structure
 		PalAmb& operator >> (PalAmb& out);
 		PalAmb get_PalAmb() {
 			PalAmb out;
@@ -159,6 +180,7 @@ namespace TWEFMT {
 			return out;
 		}
 
+		// query PalMag data structure
 		PalMot& operator >> (PalMot& out);
 		PalMot get_PalMot() {
 			PalMot out;
@@ -423,9 +445,20 @@ namespace TWEFMT {
 	public:
 		static const E_PKT _pkt_id = E_PKT::PKT_APPUART;
 
-		TwePacketAppUART() : TwePacket(_pkt_id), DataAppUART({ 0 }) { }
+		TwePacketAppUART(E_PKT pktid = E_PKT::PKT_APPUART) : TwePacket(pktid), DataAppUART({ 0 }) { }
 		~TwePacketAppUART() { }
 		E_PKT parse(uint8_t* p, uint16_t len);
+	};
+
+	/*****************************************************
+	 * Act standard packet structure
+	 *****************************************************/
+	class TwePacketActStd : public TwePacketAppUART {
+	public:
+		static const E_PKT _pkt_id = E_PKT::PKT_ACT_STD;
+
+		TwePacketActStd() : TwePacketAppUART(this->_pkt_id) { }
+		~TwePacketActStd() { }
 	};
 
 	/*****************************************************
@@ -545,6 +578,9 @@ namespace TWEFMT {
 	}
 	static inline TwePacketAppUART& refTwePacketAppUART(spTwePacket& p) {
 		return refTwePacketGen<TwePacketAppUART>(p);
+	}
+	static inline TwePacketActStd& refTwePacketActStd(spTwePacket& p) {
+		return refTwePacketGen<TwePacketActStd>(p);
 	}
 	static inline TwePacketAppTAG& refTwePacketAppTAG(spTwePacket& p) {
 		return refTwePacketGen<TwePacketAppTAG>(p);

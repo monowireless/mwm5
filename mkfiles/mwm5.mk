@@ -60,6 +60,8 @@ APPSRC_CXX+=twe_firmprog.cpp
 APPSRC_CXX+=twe_fmt.cpp
 APPSRC_CXX+=twe_sercmd_binary.cpp
 APPSRC_CXX+=twe_cui_listview.cpp
+APPSRC_CXX+=twe_cui_button.cpp
+APPSRC_CXX+=twe_cui_widget.cpp
 APPSRC_CXX+=twe_printf.cpp
 APPSRC_CXX+=twe_appdefs.cpp
 APPSRC_CXX+=twe_sercmd_ascii.cpp
@@ -79,11 +81,11 @@ APPSRC_CXX+=esp32/esp32_modctrl.cpp
 APPSRC_CXX+=esp32/esp32_lcdconsole.cpp
 APPSRC_CXX+=esp32/esp32_keyb.cpp
 
-APPSRC_CXX+=font/lcd_font_Shinonome12.cpp
-APPSRC_CXX+=font/lcd_font_Shinonome14.cpp
-APPSRC_CXX+=font/lcd_font_Shinonome16.cpp
-APPSRC_CXX+=font/lcd_font_MP10.cpp
-APPSRC_CXX+=font/lcd_font_MP12.cpp
+APPSRC_CXX+=font/font_Shinonome12.cpp
+APPSRC_CXX+=font/font_Shinonome14.cpp
+APPSRC_CXX+=font/font_Shinonome16.cpp
+APPSRC_CXX+=font/font_MP10.cpp
+APPSRC_CXX+=font/font_MP12.cpp
 APPSRC_CXX+=font/lcd_font_8x6.cpp
 
 APPSRC_CXX+=twesettings/esp32_eep.cpp

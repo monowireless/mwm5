@@ -226,7 +226,7 @@ void App_Glancer::change_screen_font() {
 	the_screen.clear_screen();
 	the_screen.force_refresh();
 
-	auto font = TWEFONT::queryFont(the_screen.font_id());
+	const auto& font = TWEFONT::queryFont(the_screen.font_id());
 	the_screen_b.clear_screen();
 	TWE::fPrintf(the_screen_b, "\nFont: %s\n      ID=%d H:%d W:%d W_CHRs:%d",
 		font.font_name, font.get_font_code(), font.height, font.width, font.font_wide_count);
@@ -356,18 +356,37 @@ void App_Glancer::pkt_data_and_view::update_term_full(spTwePacket pal_upd, bool 
 
 void App_Glancer::pkt_data_and_view::print_obj(spTwePacket& spobj) {
 	// display sensor data
-	if (identify_packet_type(spobj) != E_PKT::PKT_ERROR) {
-		auto&& pal = refTwePacketPal(spobj);
-
+	E_PKT pkt_type = identify_packet_type(spobj);
+	if (pkt_type != E_PKT::PKT_ERROR) {
+		
 		const wchar_t* pAppName = nullptr;
+		bool b_pal_event = false;
+		uint8_t u8event_id = 0;
+
 		for (auto& x : asPktIdToName3) {
 			if (x.id == spobj->get_type()) {
 				pAppName = x.name;
 				break;
 			}
 		}
-		if (pAppName == nullptr) pAppName = L"N/A";
-		else _trm << pAppName;
+
+		if (pkt_type == E_PKT::PKT_PAL) {
+			// PAL Packet
+			auto&& pal = refTwePacketPal(spobj);
+			if (pal.is_PalEvent()) {
+				u8event_id = pal.get_PalEvent().u8event_id;
+			}
+		}
+
+		// display packet type
+		if (b_pal_event) {
+			// PAL event
+			_trm << printfmt("!%02X", u8event_id);
+		} else {
+			// others
+			if (pAppName == nullptr) pAppName = L"N/A";
+			else _trm << pAppName;
+		}
 
 		_trm << printfmt("%3d/x%08X %3dLq %4dmV"
 			, spobj->common.src_lid

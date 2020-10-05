@@ -545,6 +545,48 @@ namespace TWE {
 	};
 
 	extern TweCwd the_cwd;
+
+
+    // lang table
+    struct E_TWE_LANG {
+        typedef const uint8_t value_type;
+        static value_type ENGLISH = 0;
+        static value_type JAPANESE = 1;
+        static value_type _COUNT_ = 2;
+    };
+
+    extern const wchar_t WSTR_LANG_NAMES[E_TWE_LANG::_COUNT_][16];
+
+    // load description file
+    class TweDesc {
+                                        // Simple format    / Complex, begin with [LANG=...] section line.
+        TWEUTILS::SmplBuf_WChar _title; //    1st line      /    starts with TITLE=
+        TWEUTILS::SmplBuf_WChar _desc;  //    2nd line      /    starts with DESC=
+        TWEUTILS::SmplBuf_WChar _url;   //    none          /    starts with URL=
+
+        E_TWE_LANG::value_type _lang;   // lang id
+        bool _bloaded;                  // loading is success, true
+
+    public:
+        TweDesc() : _title(), _desc(), _url(), _lang(0), _bloaded(false) {}
+        TweDesc(const wchar_t* descfile, E_TWE_LANG::value_type lang = E_TWE_LANG::JAPANESE) : _title(), _desc(), _url(), _lang(0), _bloaded(false) {
+            load(descfile, lang);
+        }
+
+        // load description file and parse content.
+        bool load(const wchar_t* descfile, E_TWE_LANG::value_type lang = E_TWE_LANG::JAPANESE);
+
+        // if load is success, return true
+        operator bool() { return _bloaded;  }
+
+        // getting methods
+        TWEUTILS::SmplBuf_WChar& get_title() { return _title; }
+        TWEUTILS::SmplBuf_WChar& get_desc() { return _desc; }
+        TWEUTILS::SmplBuf_WChar& get_url() { return _url; }
+        E_TWE_LANG::value_type get_lang() { return _lang; }
+        const wchar_t* get_lang_text_wchar_t() { return WSTR_LANG_NAMES[_lang]; }
+        TWEUTILS::SmplBuf_WChar get_lang_text() { return TWEUTILS::SmplBuf_WChar((const wchar_t*)WSTR_LANG_NAMES[_lang]); }
+    };
 #endif
     extern const wchar_t* get_dir_tweapps();
 }

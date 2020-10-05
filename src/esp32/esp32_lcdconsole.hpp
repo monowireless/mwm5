@@ -87,6 +87,24 @@ namespace TWEARD {
 			_init();
 		}
 
+		// report (column, line) from absolute position
+		_coord_cols_lines get_term_coord_from_screen(int16_t x, int16_t y) {
+			int16_t c, l;
+			uint8_t brange = false;
+
+			c = (x + _rect_view.x - (_off_x + _rect.x)) / font_width();
+			l = (y + _rect_view.y - (_off_y + _rect.y)) / font_height();
+
+
+			if ((x >= _rect.x && x <= _rect.x + _rect.w)
+				&& (y >= _rect.y && y <= _rect.y + _rect.h))
+			{
+				brange = true;
+			}
+
+			return { c, l, brange };
+		}
+
 		// report absolute coordinates from character position (c, l)
 		inline bool get_cursor_pos(int16_t& x, int16_t& y, int16_t c, int16_t l) {
 			x = (int16_t)font_width() * c + _off_x + _rect.x - _rect_view.x;
@@ -95,6 +113,7 @@ namespace TWEARD {
 			return true;
 		}
 
+		// report absolute coordinates of current cursor position
 		inline bool get_cursor_pos(int16_t& x, int16_t& y) {
 			return get_cursor_pos(x, y, cursor_c, cursor_l);
 		}
@@ -107,6 +126,7 @@ namespace TWEARD {
 			return true;
 		}
 
+		// report relative coordinates of current cursor position
 		inline bool get_cursor_pos_relative(int16_t& x, int16_t& y) {
 			return get_cursor_pos_relative(x, y, cursor_c, cursor_l);
 		}

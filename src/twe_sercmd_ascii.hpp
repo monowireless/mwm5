@@ -6,7 +6,25 @@
 #include "twe_common.hpp"
 #include "twe_stream.hpp"
 #include "twe_sercmd.hpp"
+
+#if defined(TWE_STDINOUT_ONLY)
+# ifdef TWE_HAS_MILLIS
+extern uint32_t millis();
+# else
+#define millis() (0)
+# endif
+namespace TWESYS {
+	// Dummy TimeOut class
+	struct TimeOut {
+		void start() {}
+		void stop() {}
+		bool is_timeout() { return false; }
+		bool is_enabled() { return false; }
+	};
+}
+#else
 #include "twe_sys.hpp"
+#endif
 
 namespace TWESERCMD {
 	/// <summary>

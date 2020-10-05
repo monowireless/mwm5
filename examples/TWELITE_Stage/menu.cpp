@@ -59,6 +59,7 @@ const char str_appnames[int(E_APP_ID::_END_)][STR_APPNAMES_STRLEN] = {
 	"標準アプリ ビューア",
 	"ＰＡＬ ビューア",
 	"グランサー(簡易モニタ)",
+	"コマンダー",
 	"", // _APP_END_
 	"アプリ書換",
 	"インタラクティブモード",
