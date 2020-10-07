@@ -355,7 +355,7 @@ int App_FirmProg::Screen_OpenMenu::_i_selected = -1; // the last selected item
 void App_FirmProg::Screen_OpenMenu::setup() {
 
 	the_screen_t.clear_screen();
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - 書換ﾒﾆｭｰ";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m アプリ書換";
 
 	// NOTE: MUST ADD ORDER OF ID NUMBER OF MENU_??? 
 	_listMenu.push_back(L"BINから選択", uint16_t(MENU_REGULAR_APP));
@@ -704,7 +704,7 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	the_screen << "\033[2J";
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - ﾌｧｰﾑｳｪｱ選択";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - ﾌｧｰﾑｳｪｱ選択";
 
 	// button navigation
 	the_screen_c.clear_screen();
@@ -846,7 +846,7 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 
 void App_FirmProg::Screen_FatalError::setup() {
 	the_screen_t.clear();
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - エラー";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - エラー";
 	
 	the_screen.clear_screen();
 
@@ -970,7 +970,7 @@ void App_FirmProg::Screen_ModIdentify::cb_protocol(
 
 
 void App_FirmProg::Screen_ModIdentify::setup() {
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - ﾓｼﾞｭｰﾙ認識";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - ﾓｼﾞｭｰﾙ認識";
 	the_screen.clear_screen();
 
 	twe_prog.add_cb(cb_protocol, (void*)this);
@@ -1099,7 +1099,7 @@ void App_FirmProg::Screen_FileProg::setup() {
 
 	// put a init message
 	the_screen_t.clear_screen();
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾌﾟﾛｸﾞﾗﾏ - 書換中";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - 書換中";
 
 	// button navigation
 	the_screen_c.clear_screen();

@@ -277,6 +277,18 @@ void App_Commander::SCR_TWELITE80::update_screen() {
 			else {
 				char buff[16];
 				TWE_snprintf(buff, 16, "   %3d%%      ", _pwm[i] * 10);
+#if 1
+				// bar starts from the left
+				for (int j = 0; j < 10; j++) {
+					if (_pwm[i] <= j) {
+						t << char_t(buff[j]);
+					}
+					else {
+						t << "\033[33;7m" << char_t(buff[j]) << "\033[0m";
+					}
+				}
+#else
+				// bar starts from the right
 				for (int j = 10; j > 0; j--) {
 					if (_pwm[i] >= j) {
 						t << "\033[33;7m" << char_t(buff[10 - j]) << "\033[0m";
@@ -285,6 +297,7 @@ void App_Commander::SCR_TWELITE80::update_screen() {
 						t << char_t(buff[10 - j]);
 					}
 				}
+#endif
 			}
 		}
 		
