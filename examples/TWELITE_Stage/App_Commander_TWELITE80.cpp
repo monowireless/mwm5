@@ -15,7 +15,7 @@ struct  App_Commander::SCR_TWELITE80 : public APP_HANDLR_DC {
 		, _b_dirty(1), _id(-1)
 		, _di_state{ 1,1,0,0 }
 		, _di_sel{ 1,1,0,0 }
-		, _pwm{ 4,4,11,11 }
+		, _pwm{ 8,11,11,11 }
 		, APP_HANDLR_DC(CLS_ID) {}
 
 private:
@@ -265,8 +265,14 @@ void App_Commander::SCR_TWELITE80::update_screen() {
 
 		for (int i = 0; i < 4; i++) {
 			t.move_cursor(11 + i * 12, 5);
-			t << (_di_state[i] ? "\033[33m■\033[0m" : "□");
 
+			if (_di_state[i]) {
+				t << printfmt("\033[%dm■\033[0m", 31 + i);
+			}
+			else {
+				t << "□";
+			}
+			
 			t.move_cursor(11 + i * 12, 6);
 			t << (_di_sel[i] ? "１" : "０");
 
