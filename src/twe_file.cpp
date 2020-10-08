@@ -971,8 +971,8 @@ void TWE::shell_open_url(const wchar_t* wstr) {
 		strbuff << wstr;
 		ShellExecuteA(NULL, "open", (LPCSTR)strbuff.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(__APPLE__)
-		url << "open " << _desc.get_url();;
-		system(url.c_str());
+		strbuff << "open " << wstr;
+		system(strbuff.c_str());
 #endif
 	}
 }
