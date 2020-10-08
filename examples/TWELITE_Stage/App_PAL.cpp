@@ -302,7 +302,7 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 			_trm << TermAttr(TERM_ATTR_OFF) << ':';
 			
 			if (pal.is_PalEvent()) { // If includes event data.
-				_trm << " イベント=" << int(pal.get_PalEvent().u8event_id);
+				_trm << "イベント=" << int(pal.get_PalEvent().u8event_id);
 			} else switch (pal.u8palpcb) { // Not including event data, display PAL PCB specific data.
 			case E_PAL_PCB::MAG:
 			{

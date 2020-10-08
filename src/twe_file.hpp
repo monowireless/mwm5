@@ -587,6 +587,14 @@ namespace TWE {
         const wchar_t* get_lang_text_wchar_t() { return WSTR_LANG_NAMES[_lang]; }
         TWEUTILS::SmplBuf_WChar get_lang_text() { return TWEUTILS::SmplBuf_WChar((const wchar_t*)WSTR_LANG_NAMES[_lang]); }
     };
+
+    extern void shell_open_url(const wchar_t* wstr_url);
+    extern void shell_open_url(TWEUTILS::SmplBuf_WChar& url);
+    extern void shell_open_folder(const wchar_t* wstr_url);
+    extern void shell_open_folder(TWEUTILS::SmplBuf_WChar& url);
+    extern void shell_open_by_command(const wchar_t* wstr_url, const wchar_t* wstr_cmd);
+    extern void shell_open_by_command(TWEUTILS::SmplBuf_WChar& url, const wchar_t* wstr_cmd);
+
 #endif
     extern const wchar_t* get_dir_tweapps();
 }

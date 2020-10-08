@@ -80,6 +80,13 @@ public:
 		generate_command();
 	}
 
+	// open web site
+#ifndef ESP32
+	void web(int id, uint32_t opt = 0) {
+		shell_open_url(L"https://mono-wireless.com/jp/products/TWE-APPS/App_Twelite/step3-80.html");
+	}
+#endif
+
 	// screen updator
 	void update_screen();
 
@@ -155,7 +162,11 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 			idx = dc._btns.add(28, 9, L"PWM4(f)", &SCR_TWELITE80::pwm, 3);
 			dc._btns[idx].set_additional_hot_area({ 28, 9, 19, 1 });
 
-			idx = dc._btns.add(40,11, L"送信(SPACE)", &SCR_TWELITE80::fire, 3);
+			idx = dc._btns.add(40,11, L"送信(SPACE)", &SCR_TWELITE80::fire, 0);
+
+#ifndef ESP32
+			idx = dc._btns.add(45, 0, L"ｳｪﾌﾞ(h)", &SCR_TWELITE80::web, 0);
+#endif
 
 			dc._btns.update_view();
 		}
@@ -184,11 +195,13 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 			case 's': dc.pwm(0, 1); break;
 			case 'd': dc.pwm(0, 2); break;
 			case 'f': dc.pwm(0, 3); break;
-
 			case ' ':
 			case KeyInput::KEY_BUTTON_B:
 				dc.fire(0);
 				break;
+#ifndef ESP32
+			case 'h': dc.web(0, 0); break;
+#endif
 
 			default: break;
 			}

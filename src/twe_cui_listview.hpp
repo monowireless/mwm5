@@ -182,7 +182,7 @@ namespace TWECUI {
 		 */
 		void set_info_area(const wchar_t *pstr1, const wchar_t *pstr2 = nullptr) {
 			// create bitmap if each button is enabled.
-			_b_rspot_show = ((pstr1 == nullptr) ? 0 : 1) | ((pstr1 == nullptr) ? 0 : 2);
+			_b_rspot_show = ((pstr1 == nullptr) ? 0 : 1) | ((pstr2 == nullptr) ? 0 : 2);
 			
 			// clear the buffer
 			_btn_r1_label.clear();

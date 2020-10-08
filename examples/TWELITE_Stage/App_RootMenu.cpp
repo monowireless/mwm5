@@ -47,12 +47,19 @@ void App_RootMenu::set_listview() {
 	appid.resize(1);
 
 	if (_b_appmenu) { // アプリ一覧
+#ifndef ESP32
+		_listMenu.set_info_area(L"ｳｪﾌﾞ");
+#endif
 		for (int menu_id = 1; menu_id < (int)E_APP_ID::_APPS_END_; menu_id++) {
 			appid[0] = menu_id;
 			_listMenu.push_back(str_appnames[menu_id], appid);
 		}
 	}
 	else {
+#ifndef ESP32
+		_listMenu.set_info_area(nullptr);
+#endif
+
 		appid[0] = 0;
 		_listMenu.push_back(str_appnames[0], appid);
 
@@ -123,45 +130,59 @@ void App_RootMenu::loop() {
 			continue;
 		}
 
-		if (_listMenu.key_event(key) && _listMenu.is_selection_completed()) {
-			if (!_b_appmenu && _listMenu.get_selected_index() == 0) {
-				// move to appmenu
-				_b_appmenu = true;
-				set_listview();
-				set_title_status();
-			} else  {
-				uint16_t sel_app_id = (uint16_t)_listMenu.get(_listMenu.get_selected_index()).second[0];
-
+		if (_listMenu.key_event(key)) {
+			if (_listMenu.is_info_selected()) {
+#ifndef ESP32
+				// open info url
 				if (_b_appmenu) {
-					// auto-launch at booting.
-					if (s_bstarted == 2) {
-						s_bstarted = 3;
-						the_app.exit(-1, sel_app_id);
-						return;
+					int i = _listMenu.get_selected_index() + 1;
+					if (i > 0 && i < int(E_APP_ID::_APPS_END_)) {
+						shell_open_url(str_appurls[i]);
 					}
-
-					// show init message.
-					_i_selected_viewer_app = int(sel_app_id);
-					
-					// show help screen
-					the_screen.clear_screen();
-					the_screen << query_app_launch_message(sel_app_id);
-
-					the_screen_c.clear_screen();
-					//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-					the_screen_c << "     --/長押:戻る          進む/--                --/--";
-
-					the_screen << crlf
-						<< printfmt("\033[%d;1H", the_screen.get_rows())
-						//  "....+....1....+....2....+....3....+....4"
-						//         中ボタンまたは[Enter]で進む
-						<< L"      \033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で進む";
-
-					continue;
 				}
-				else the_app.exit(-1, sel_app_id); // switch to the app.
+#endif
+			} else
+			if (_listMenu.is_selection_completed()) {
+				if (!_b_appmenu && _listMenu.get_selected_index() == 0) {
+					// move to appmenu
+					_b_appmenu = true;
+					set_listview();
+					set_title_status();
+				}
+				else {
+					uint16_t sel_app_id = (uint16_t)_listMenu.get(_listMenu.get_selected_index()).second[0];
+
+					if (_b_appmenu) {
+						// auto-launch at booting.
+						if (s_bstarted == 2) {
+							s_bstarted = 3;
+							the_app.exit(-1, sel_app_id);
+							return;
+						}
+
+						// show init message.
+						_i_selected_viewer_app = int(sel_app_id);
+
+						// show help screen
+						the_screen.clear_screen();
+						the_screen << query_app_launch_message(sel_app_id);
+
+						the_screen_c.clear_screen();
+						//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+						the_screen_c << "     --/長押:戻る          進む/--                --/--";
+
+						the_screen << crlf
+							<< printfmt("\033[%d;1H", the_screen.get_rows())
+							//  "....+....1....+....2....+....3....+....4"
+							//         中ボタンまたは[Enter]で進む
+							<< L"      \033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で進む";
+
+						continue;
+					}
+					else the_app.exit(-1, sel_app_id); // switch to the app.
+				}
+				return;
 			}
-			return;
 		}
 		else switch (key) {
 		case KeyInput::KEY_ESC:

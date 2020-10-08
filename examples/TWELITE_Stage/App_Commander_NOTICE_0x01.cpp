@@ -72,6 +72,11 @@ public:
 	void turn_on(int id, uint32_t opt = 0) { generate_command(); }
 	void turn_off(int id, uint32_t opt = 0) { generate_command(false); }
 
+#ifndef ESP32
+	void web(int id, uint32_t opt = 0) {
+		shell_open_url(L"https://wings.twelite.info/how-to-use/parent-mode/transemit-command/0x90-command");
+	}
+#endif
 	// screen updator
 	void update_screen();
 
@@ -134,7 +139,9 @@ void App_Commander::hndr_notice_pal_0x01(event_type ev, arg_type arg) {
 
 			dc._btns.add(20, 13, L"消灯(x)", &SCR_NOTICE1::turn_off);
 			dc._btns.add(30, 13, L"点灯(SPACE)", &SCR_NOTICE1::turn_on);
-			
+#ifndef ESP32
+			dc._btns.add(45, 0, L"ｳｪﾌﾞ(h)", &SCR_NOTICE1::web, 0);
+#endif
 			dc._btns.update_view();
 		}
 		break;
@@ -160,7 +167,9 @@ void App_Commander::hndr_notice_pal_0x01(event_type ev, arg_type arg) {
 			case 'P': dc.pat_dn(0); break;
 			case 'd': dc.dur_up(0); break;
 			case 'D': dc.dur_dn(0); break;
-
+#ifndef ESP32
+			case 'h': dc.web(0, 0); break;
+#endif
 			case KeyInput::KEY_BUTTON_B:
 				dc.turn_on(0);
 				break;
