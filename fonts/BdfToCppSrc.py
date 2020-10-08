@@ -484,7 +484,7 @@ def process_double_body(fnameFont, fnameJoyo, outfile, name, w_, h_, excl_range=
 					if not c.isprintable(): c = chr(0x303F)
 					code_euc = 0
 					if v[0] in unitoecuDict: code_euc =  unitoecuDict[v[0]] - 0x8080
-					outfile[0].write(" 0x%02x, 0x%02x, //%c %04X/U+%04X #%d\n" % (w >> 8, w & 0xff, c, code_euc, v[0], iv))
+					outfile[0].write(" 0x%02x, 0x%02x, //%c %04X/U+%04X\n" % (w >> 8, w & 0xff, c, code_euc, v[0]))
 				else:
 					outfile[0].write(" 0x%02x, 0x%02x," % (w >> 8, w & 0xff))
 				iw = iw + 1

@@ -13,17 +13,17 @@ namespace TWEFONT {
 
 
 	/**********************************************************
-	 * createFontShinonome14_mini [chrs = 601]
+	 * createFontShinonome14_mini [chrs = 602]
 	 **********************************************************/
-	extern const uint16_t font_Shinonome14k_mini_idx[601];
-	extern const uint8_t font_Shinonome14k_mini_data[601*14*2];
+	extern const uint16_t font_Shinonome14k_mini_idx[602];
+	extern const uint8_t font_Shinonome14k_mini_data[602*14*2];
 
 	const FontDef& createFontShinonome14_mini(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
 		auto font = _queryFont(id);
 
 		if (font != nullptr) {
 			font->font_code = id;
-			font->font_name = "Shinonome font 14dot (Shinonome14_mini, 601)";
+			font->font_name = "Shinonome font 14dot (Shinonome14_mini, 602)";
 
 			font->width = 7;
 			font->height = 14;
@@ -42,7 +42,7 @@ namespace TWEFONT {
 			font->font_wide_idx = font_Shinonome14k_mini_idx;	// UNICODE index 
 			font->font_wide_missing = font_Shinonome14k_unsupported;
 
-			font->font_wide_count = 601;
+			font->font_wide_count = 602;
 
 			font->opt = opt;
 			return *font;

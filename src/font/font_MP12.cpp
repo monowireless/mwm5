@@ -13,17 +13,17 @@ namespace TWEFONT {
 
 
 	/**********************************************************
-	 * createFontMP12_mini [chrs = 602]
+	 * createFontMP12_mini [chrs = 603]
 	 **********************************************************/
-	extern const uint16_t font_MP12k_mini_idx[602];
-	extern const uint8_t font_MP12k_mini_data[602*12*2];
+	extern const uint16_t font_MP12k_mini_idx[603];
+	extern const uint8_t font_MP12k_mini_data[603*12*2];
 
 	const FontDef& createFontMP12_mini(uint8_t id, uint8_t line_space, uint8_t char_space, uint32_t opt) {
 		auto font = _queryFont(id);
 
 		if (font != nullptr) {
 			font->font_code = id;
-			font->font_name = "M+ BITMAP FONTS 12dot (MP12_mini, 602)";
+			font->font_name = "M+ BITMAP FONTS 12dot (MP12_mini, 603)";
 
 			font->width = 6;
 			font->height = 12;
@@ -42,7 +42,7 @@ namespace TWEFONT {
 			font->font_wide_idx = font_MP12k_mini_idx;	// UNICODE index 
 			font->font_wide_missing = font_MP12k_unsupported;
 
-			font->font_wide_count = 602;
+			font->font_wide_count = 603;
 
 			font->opt = opt;
 			return *font;

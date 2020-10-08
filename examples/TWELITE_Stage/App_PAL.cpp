@@ -291,17 +291,23 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 		if (identify_packet_type(spobj) == E_PKT::PKT_PAL) {
 			auto&& pal = refTwePacketPal(spobj);
 
-			switch (pal.u8palpcb) {
+			// display a kind of PAL PCB.
+			switch(pal.u8palpcb) {
+				case E_PAL_PCB::MAG: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_CYAN) << "開閉"; break;
+				case E_PAL_PCB::AMB: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "環境"; break;
+				case E_PAL_PCB::MOT: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "加速"; break;
+				case E_PAL_PCB::NOTICE: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_RED) << "通知"; break;
+				default: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_WHITE) << "不明";
+			}
+			_trm << TermAttr(TERM_ATTR_OFF) << ':';
+			
+			if (pal.is_PalEvent()) { // If includes event data.
+				_trm << " イベント=" << int(pal.get_PalEvent().u8event_id);
+			} else switch (pal.u8palpcb) { // Not including event data, display PAL PCB specific data.
 			case E_PAL_PCB::MAG:
 			{
 				// generate pal board specific data structure.
 				PalMag mag = pal.get_PalMag();
-
-				_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_CYAN);
-				_trm << "開閉";
-				_trm << TermAttr(TERM_ATTR_OFF);
-
-				_trm << ':';
 
 				if (mag.u8MagStat == 0) {
 					_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
@@ -317,11 +323,6 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 			{
 				// generate pal board specific data structure.
 				PalAmb amb = pal.get_PalAmb();
-
-				_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN);
-				_trm << printfmt("環境", pal.u8addr_src);
-				_trm << TermAttr(TERM_ATTR_OFF);
-				_trm << ":";
 
 				_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
 				_trm << printfmt(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)amb.i16Temp / 100.0);
@@ -344,11 +345,6 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 			{
 				// generate pal board specific data structure.
 				PalMot mot = pal.get_PalMot();
-
-				_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN);
-				_trm << printfmt("加速", pal.u8addr_src);
-				_trm << TermAttr(TERM_ATTR_OFF);
-				_trm << ":";
 
 				if (mot.u8samples > 0) {
 					_trm << printfmt(_bwide ? "X=%5d Y=%5d Z=%5d" : "%5d,%5d,%5d", mot.i16X[0], mot.i16Y[0], mot.i16Z[0]);
