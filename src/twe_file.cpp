@@ -963,67 +963,79 @@ bool TweDesc::load(const wchar_t* descfile, E_TWE_LANG::value_type lang) {
 	return this->_bloaded;
 }
 
-void TWE::shell_open_url(const wchar_t* wstr) {
-	if (wstr) {
-		SmplBuf_ByteSL<1024> strbuff;
+template <typename T, typename S=const wchar_t*, bool HAS_CMD=false>
+void _shell_open_default(T obj, S cmd) {
+	SmplBuf_ByteSL<1024> strbuff;
+	SmplBuf_ByteSL<128> cmdbuff;
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-		strbuff << wstr;
-		ShellExecuteA(NULL, "open", (LPCSTR)strbuff.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-		strbuff << "open " << wstr;
-		system(strbuff.c_str());
-#endif
-	}
-}
-
-void TWE::shell_open_url(TWEUTILS::SmplBuf_WChar& url) {
-	if (url.length() > 0) {
-		TWE::shell_open_url(url.c_str());
-	}
-}
-
-void TWE::shell_open_folder(const wchar_t* wstr_name) {
-	SmplBuf_ByteSL<1024> lb;
-	
-#if defined(_MSC_VER) || defined(__MINGW32__)
-	lb << wstr_name;
-	ShellExecuteA(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-	lb << "open " << wstr_name;
-	system((const char*)lb.c_str());
-#endif
-}
-
-void TWE::shell_open_folder(TWEUTILS::SmplBuf_WChar& name) {
-	if (name.length() > 0) {
-		TWE::shell_open_folder(name.c_str());
-	}
-}
-
-void TWE::shell_open_by_command(const wchar_t* wstr_name, const wchar_t* wstr_cmd) {
-	SmplBuf_ByteSL<1024> lb;
-
+	if (HAS_CMD) {
+		cmdbuff << cmd;
+	} else {
 #if defined(__APPLE__)
-	lb << wstr_cmd << ' '; // add command name
-#endif
+		cmdbuff << "open";
+#elif defined(__linux)
+		cmdbuff << "xdg-open";
+#endif		
+	}
 
-	lb << wstr_name;
-
-	// open project dir.
 #if defined(_MSC_VER) || defined(__MINGW32__)
-	SmplBuf_ByteSL<1024> cmd;
-	cmd << wstr_cmd;
-
-	ShellExecuteA(NULL, "open", cmd.c_str(), (LPCSTR)lb.c_str(), NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-	system((const char*)lb.c_str());
+	strbuff << obj;
+	if (HAS_CMD) {
+		ShellExecuteA(NULL, "open", cmdbuff.c_str(), (LPCSTR)strbuff.c_str(), NULL, SW_SHOWNORMAL);
+	} else {
+		ShellExecuteA(NULL, "open", (LPCSTR)strbuff.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	}
+#elif defined(__APPLE__) || defined(__linux)
+	strbuff << cmdbuff << ' ' << obj;
+	int apiret = system(strbuff.c_str()); (void)apiret;
 #endif
 }
 
-void TWE::shell_open_by_command(TWEUTILS::SmplBuf_WChar& name, const wchar_t* wstr_cmd) {
-	if (name.length() > 0) {
-		TWE::shell_open_by_command(name.c_str(), wstr_cmd);
+void TWE::shell_open_default(const wchar_t* wstr) {
+	if (wstr) {
+		_shell_open_default<const wchar_t *>(wstr, nullptr);
+	}
+}
+
+void TWE::shell_open_default(const char_t* str) {
+	if (str) {
+		_shell_open_default<const char_t*>(str, nullptr);
+	}
+}
+
+void TWE::shell_open_default(TWEUTILS::SmplBuf_WChar& str) {
+	if (str.length() > 0) {
+		TWE::shell_open_url(str.c_str());
+	}
+}
+
+void TWE::shell_open_default(TWEUTILS::SmplBuf_WChar&& str) {
+	if (str.length() > 0) {
+		TWE::shell_open_url(str.c_str());
+	}
+}
+
+void TWE::shell_open_by_command(const wchar_t* wstr_obj, const wchar_t* wstr_cmd) {
+	if (wstr_obj && wstr_cmd) {
+		_shell_open_default<const wchar_t*, const wchar_t *, true>(wstr_obj, wstr_cmd);
+	}
+}
+
+void TWE::shell_open_by_command(const char_t* str_obj, const char_t* str_cmd) {
+	if (str_obj && str_cmd) {
+		_shell_open_default<const char_t*, const char_t *, true>(str_obj, str_cmd);
+	}
+}
+
+void TWE::shell_open_by_command(TWEUTILS::SmplBuf_WChar& str, const wchar_t* str_cmd) {
+	if (str.length() > 0 && str_cmd) {
+		_shell_open_default<const wchar_t*, const wchar_t *, true>(str.c_str(), str_cmd);
+	}
+}
+
+void TWE::shell_open_by_command(TWEUTILS::SmplBuf_WChar&& str, const wchar_t* str_cmd) {
+	if (str.length() > 0 && str_cmd) {
+		_shell_open_default<const wchar_t*, const wchar_t *, true>(str.c_str(), str_cmd);
 	}
 }
 

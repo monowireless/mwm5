@@ -18,7 +18,7 @@ public:
 	
 	void setup() {}
 
-	bool reset();
+	bool reset(bool bHold=false);
 
 	bool setpin(bool);
 

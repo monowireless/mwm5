@@ -24,7 +24,7 @@ public:
 	 *
 	 * @returns	True if it succeeds, false if it fails.
 	 */
-	bool reset();
+	bool reset(bool bHold=false);
 
 
 

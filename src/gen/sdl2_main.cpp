@@ -1052,13 +1052,13 @@ struct app_core_sdl {
 						auto dir_current = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"twesettings");
 						auto dir_dev = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"dev", L"src", L"twesettings");
 
-						cmd << "code ";
 						if (TweDir::is_dir(dir_dev.c_str())) { // if existing dev dir, open there.
 							cmd << dir_dev;
 						} else {
 							cmd << dir_current;
 						}
-						system((const char*)cmd.c_str());
+
+						shell_open_by_command(cmd.c_str(), "code");
 					}
 				}
 				break;
@@ -1074,7 +1074,6 @@ struct app_core_sdl {
 						auto dir_current = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"mwx");
 						auto dir_dev = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"dev", L"src", L"mwx");
 
-						cmd << "code ";
 						if (TweDir::is_dir(dir_dev.c_str())) { // if existing dev dir, open there.
 							cmd << dir_dev;
 						}
@@ -1082,7 +1081,7 @@ struct app_core_sdl {
 							cmd << dir_current;
 						}
 
-						system((const char*)cmd.c_str());
+						shell_open_by_command(cmd.c_str(), "code");
 					}
 				}
 				break;
@@ -1094,18 +1093,8 @@ struct app_core_sdl {
 					} else
 					if (e.key.keysym.mod & (KMOD_SHIFT)) { // KEY UP WITH SHIFT
 						// opens log storing dir
-						SmplBuf_ByteSL<1024> dir_log;
-						dir_log << make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME);
-						
 						if (TweDir::create_dir(make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME).c_str())) {
-#if defined(_MSC_VER) || defined(__MINGW32__)
-							ShellExecute(NULL, "open", (LPCSTR)dir_log.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
-#elif defined(__APPLE__)
-							SmplBuf_ByteSL<1024> cmd;
-							cmd << "open ";
-							cmd << dir_log;
-							system((const char*)cmd.c_str());
-#endif
+							shell_open_default(make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME));
 						}
 						else {
 							SDL_ShowSimpleMessageBox(
@@ -1186,15 +1175,9 @@ struct app_core_sdl {
 
 							// open a log file
 							SDL_Delay(100);
-#if defined(_MSC_VER) || defined(__MINGW32__)
-							ShellExecute(NULL, "open", (LPCSTR)_file_fullpath.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
-#elif defined(__APPLE__)
-							SmplBuf_ByteSL<1024> cmd;
-							cmd << "open ";
-							cmd << _file_fullpath;
 
-							system((const char*)cmd.c_str());
-#endif
+							// open log file
+							shell_open_default(_file_fullpath.c_str());
 						}
 
 						update_help_screen();

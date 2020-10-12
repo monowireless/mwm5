@@ -72,12 +72,17 @@ const char str_appnames[int(E_APP_ID::_END_)][STR_APPNAMES_STRLEN] = {
 
 #ifndef ESP32
 const wchar_t str_appurls[int(E_APP_ID::_END_)][256] = {
-	L"",
+	L"https://stage.twelite.info/usage/screens/main_menu/viewer",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/terminal",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/twelite81",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/pal_viewer",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/glancer",
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer/commander"
+	L"https://stage.twelite.info/usage/screens/main_menu/viewer/commander",
+	L"", // _APP_END_
+	L"https://stage.twelite.info/usage/screens/main_menu/firm_prog",
+	L"https://stage.twelite.info/usage/screens/main_menu/interactive",
+	L"https://stage.twelite.info/usage/screens/main_menu/settings",
+	L"https://stage.twelite.info/usage/screens/main_menu/select_serial_port"
 };
 #endif
 

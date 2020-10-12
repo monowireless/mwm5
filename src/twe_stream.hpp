@@ -43,6 +43,7 @@ namespace TWE {
 			while (*s != 0) write_w(*s++);
 			return *this;
 		}
+		inline IStreamOut& operator << (std::nullptr_t ptr) { return *this; }
 #if 0 // move to twe_utils_simplebuffer.hpp
 		inline IStreamOut& operator << (TWEUTILS::SmplBuf_Byte& s) {
 			for (auto x : s) { operator ()((char_t)x); }

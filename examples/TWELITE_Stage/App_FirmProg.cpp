@@ -17,8 +17,12 @@
 namespace fs = std::filesystem;
 #endif
 
+// updates Serial/keyboard input queue
+extern void update_serial_keyb_input(bool);
+
 #ifndef ESP32
 static const char STR_BUILD_ERROR_LOG[] = "builderr.log";
+static const wchar_t WSTR_BUILD_ERROR_LOG[] = L"builderr.log";
 
 static wchar_t STR_SDK_ACT_DEV[] = L"Act_samples";
 static wchar_t STR_SDK_TWEAPPS_DEV[] = L"Wks_TweApps";
@@ -379,6 +383,7 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 		// the_keyboard.push(TWECUI::KeyInput::KEY_ENTER);
 	}
 
+	_listMenu.set_info_area(L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
 	_listMenu.attach_term(the_screen);
 
 	_listMenu.set_view(0, _i_selected >= 0 && _i_selected < _listMenu.size() ? _i_selected : -1);
@@ -392,7 +397,6 @@ void App_FirmProg::Screen_OpenMenu::update_navigation() {
 	int isel = _listMenu.get_selected_index();
 	int iext = isel >= 0 ? _listMenu.get_selected().second[0] : -1;
 
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
 	switch (iext) {
 	case MENU_REGULAR_APP:
 	case MENU_ACT:
@@ -411,9 +415,6 @@ void App_FirmProg::Screen_OpenMenu::update_navigation() {
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 		break;
 	}
-#else
-	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
-#endif
 }
 
 void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
@@ -497,6 +498,34 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 		if (_listMenu.size() > 0 && _listMenu.key_event(c)) {
 			update_navigation();
 
+			if (auto ibtn = _listMenu.is_info_selected()) {
+				int iext = _listMenu.get_selected().second[0];
+
+				if (ibtn & 2) {
+					// open info
+					switch(iext) {
+					case MENU_REGULAR_APP: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/bin"); break;
+					case MENU_ACT: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/act_build"); break;
+					case MENU_ACT_EXTRA: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/act_extras_build"); break;
+					case MENU_TWEAPPS: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/tweapps_build"); break;
+					case MENU_DROP_DIR: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/zhi-ding"); break;
+					case MENU_LAST: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/zai-shu-huan"); break;
+					}
+				} else if (ibtn & 1) {
+					bool bErrMsg = false;
+					// open folder
+					switch(iext) {
+					case MENU_REGULAR_APP: shell_open_folder(get_dir_tweapps()); break;
+					case MENU_ACT: shell_open_folder(the_cwd.get_dir_wks_acts()); break;
+					case MENU_ACT_EXTRA: shell_open_folder(the_cwd.get_dir_wks_act_extras()); break;
+					case MENU_TWEAPPS: shell_open_folder(the_cwd.get_dir_wks_tweapps()); break;
+					case MENU_DROP_DIR: if(_parent->_dirname_drop.length() > 0) shell_open_folder(_parent->_dirname_drop); else bErrMsg = true; break;
+					case MENU_LAST: bErrMsg = true; break;
+					}
+
+					if (bErrMsg) the_screen_b << crlf << "\033[31mFolder cannot be opened.\033[0m";
+				}
+			} else
 			if (_listMenu.is_selection_completed()) {
 				auto& l = _listMenu.get_selected().first;
 				int isel = _listMenu.get_selected_index();
@@ -642,52 +671,38 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 		case KeyInput::KEY_BUTTON_C_LONG:
 			// open last or drop dir, if selected the menu
 			{
-				SmplBuf_ByteSL<1024> lb;
-				auto&& dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _parent->_build_name);
-
 				switch (_listMenu.get_selected().second[0]) {
 				case MENU_REGULAR_APP:
-#if defined(_MSC_VER) || defined(__MINGW32__)
-					lb << the_cwd.get_dir_tweapps();
-					ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-					lb << "open " << the_cwd.get_dir_tweapps();
-					system((const char*)lb.c_str());
-#endif
+					shell_open_folder(the_cwd.get_dir_tweapps());
 					break;
 
 				case MENU_ACT_EXTRA:
 				case MENU_ACT:
-#if defined(_MSC_VER) || defined(__MINGW32__)
-					lb << the_cwd.get_dir_wks_acts();
-					ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-					lb << "open " << the_cwd.get_dir_wks_acts();
-					system((const char*)lb.c_str());
-#endif
+					shell_open_folder(the_cwd.get_dir_wks_acts());
 					break;
 
 				case MENU_TWEAPPS:
-#if defined(_MSC_VER) || defined(__MINGW32__)
-					lb << the_cwd.get_dir_wks_tweapps();
-					ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-					lb << "open " << the_cwd.get_dir_wks_tweapps();
-					system((const char*)lb.c_str());
-#endif
+					shell_open_folder(the_cwd.get_dir_wks_tweapps());
+					break;
 
 				case MENU_DROP_DIR:
 					if (TweDir::is_dir(_parent->_dirname_drop.c_str())) {
-						lb << "code " << _parent->_dirname_drop;
-						system((const char*)lb.c_str());
+						shell_open_folder(_parent->_dirname_drop);
 					}
 				break;
 
-				default:
-					if (TweDir::is_dir(dir.c_str())) {
-						lb << "code " << dir;
-						system((const char*)lb.c_str());
+				case MENU_LAST:
+				{
+					auto&& dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _parent->_build_name);
+					if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+						shell_open_by_command(dir.c_str(), L"code");
+					} else {
+						shell_open_folder(dir.c_str());
 					}
+				}
+				break;
+
+				default:
 				break;
 				}
 			}
@@ -709,11 +724,7 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
 	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
-#else
-	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
-#endif
 
 	// test for list files
 	_listFiles.set_info_area(nullptr);
@@ -825,17 +836,7 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 			break;
 
 		case KeyInput::KEY_BUTTON_C_LONG:
-			{
-				// open dir firmware
-				SmplBuf_ByteSL<1024> lb;
-#if defined(_MSC_VER) || defined(__MINGW32__)
-				lb << _parent->_firmfile_dir;
-				ShellExecute(NULL, "open", (LPCSTR)lb.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-				lb << "open " << _parent->_firmfile_dir;
-				system((const char*)lb.c_str());
-#endif
-			}
+			shell_open_folder(_parent->_firmfile_dir);
 			break;
 		}
 	} while (the_keyboard.available());
@@ -1075,11 +1076,14 @@ void App_FirmProg::Screen_ModIdentify::loop() {
 	screen_refresh();
 }
 
+
 void App_FirmProg::Screen_ModIdentify::start_protocol() {
 	// if the protocol is still on going, don't proceed it.
 	if (_b_protocol) return;
 	
 	// flush rx buffer at first.
+	twe_prog.reset_hold_module(); // hold module (to stop serial message)
+	update_serial_keyb_input(true); // update input queue (grab remaining buffer data into the_uart_queue)
 	while (the_uart_queue.available()) (void)the_uart_queue.read();
 	while (the_keyboard.available()) (void)the_keyboard.read();
 
@@ -1468,7 +1472,6 @@ void App_FirmProg::Screen_ActBuild::loop() {
 
 void App_FirmProg::Screen_ActBuild::actdir_update_bottom() {
 	the_screen_c.clear_screen();
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
 	if (_desc.get_url().length()) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
  		the_screen_c << "     ↑/長押:MENU          選択/\033[32m"
@@ -1481,9 +1484,6 @@ void App_FirmProg::Screen_ActBuild::actdir_update_bottom() {
 	}
 
 	the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
-#else
-	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
-#endif
 	the_screen_c.force_refresh();
 }
 
@@ -1647,15 +1647,8 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 
 				case KeyInput::KEY_BUTTON_B_LONG:
 					if (_desc.get_url().length() > 0) {
+						shell_open_url(_desc.get_url());
 						SmplBuf_ByteSL<1024> url;
-					
-#if defined(_MSC_VER) || defined(__MINGW32__)
-						url << _desc.get_url();
-						ShellExecute(NULL, "open", (LPCSTR)url.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-						url << "open " << _desc.get_url();;
-						system(url.c_str());
-#endif
 					}
 					break;
 
@@ -1665,30 +1658,12 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 
 				case KeyInput::KEY_BUTTON_C_LONG:
 					if (_listFiles.get_selected_index() >= 0) {
-						SmplBuf_ByteSL<1024> dir_a;
-
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#elif defined(__APPLE__)
+						auto&& dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _listFiles.get_selected().first).c_str();
 						if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
-							dir_a << "code "; // open with VSCode (code command shall be installed)
+							shell_open_by_command(dir, L"code");
+						} else {
+							shell_open_folder(dir);
 						}
-						else {
-							dir_a << "open ";
-						}
-#endif
-						dir_a << make_full_path(_parent->_build_workspace, _parent->_build_project, _listFiles.get_selected().first).c_str();
-
-						// open project dir.
-#if defined(_MSC_VER) || defined(__MINGW32__)
-						if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
-							ShellExecute(NULL, "open", "code", (LPCSTR)dir_a.c_str(), NULL, SW_SHOWNORMAL); // open builderr.log as shell function
-						}
-						else {
-							ShellExecute(NULL, "open", (LPCSTR)dir_a.c_str(), NULL, NULL, SW_SHOWNORMAL); // open builderr.log as shell function
-						}
-#elif defined(__APPLE__)
-						system((const char*)dir_a.c_str());
-#endif
 					}
 					break;
 
@@ -1710,15 +1685,12 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 	// - sdk dir is confirmed.
 	// - _parent->_build_name is set.
 	case EV_SETUP: {
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__APPLE__)
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
 		
 		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/";
 		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
-#else
-		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--                --/--";
-#endif
+
 		the_screen_c.force_refresh();
 
 		_act_dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _parent->_build_name, L"build");
@@ -1759,7 +1731,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 		}
 
 		// add redirect
-		cmdstr << " 2>" << STR_BUILD_ERROR_LOG <<  MAKE_CMD_TERM;
+		cmdstr << " 2>" << WSTR_BUILD_ERROR_LOG <<  MAKE_CMD_TERM;
 		_pipe = TweCmdPipe((const char*)cmdstr.c_str());
 
 		if(_pipe) {
@@ -1804,33 +1776,15 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 
 				case KeyInput::KEY_BUTTON_C:
 					// open builderr.log as shell function
-#if defined(_MSC_VER) || defined(__MINGW32__)
-					ShellExecute(NULL, "open", STR_BUILD_ERROR_LOG, NULL, NULL, SW_SHOWNORMAL); 
-#elif defined(__APPLE__)
-					{
-						SmplBuf_ByteSL<1024> buf;
-						buf << "open " << STR_BUILD_ERROR_LOG;
-						system((const char*)buf.c_str());
-					}
-#endif
+					shell_open_default(WSTR_BUILD_ERROR_LOG);
 					return;
 				case KeyInput::KEY_BUTTON_C_LONG:
 					// open source dir.
-#if defined(_MSC_VER) || defined(__MINGW32__)
 					if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
-						ShellExecute(NULL, "open", "code", "..", NULL, SW_SHOWNORMAL);
+						shell_open_by_command(L"..", L"code");
+					} else {
+						shell_open_folder(L"..");
 					}
-					else {
-						ShellExecute(NULL, "open", "..", NULL, NULL, SW_SHOWNORMAL);
-					}
-#elif defined(__APPLE__)
-					if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
-						system("code ..");
-					}
-					else {
-						system("open ..");
-					}
-#endif
 					return;
 				}
 			}

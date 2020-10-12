@@ -26,7 +26,7 @@
 #include "common.h"
 
 static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int exit_id);
-static void s_check_serial();
+void update_serial_keyb_input(bool);
 static void s_check_other_input();
 
 #ifndef ESP32
@@ -107,7 +107,7 @@ void loop() {
 	M5.update();
 
 	// update serial queue
-	s_check_serial();
+	update_serial_keyb_input(false);
 
 	// update hardware button
 	s_check_other_input();
@@ -215,7 +215,7 @@ const wchar_t* query_app_launch_message(int n_appsel) {
 	}
 }
 
-static void s_check_serial() {
+void update_serial_keyb_input(bool force_update = false) {
 	while(the_sys_keyboard.available()) {
 		int c = the_sys_keyboard.get_a_byte();
 		if (c >= 0) {
@@ -242,6 +242,17 @@ static void s_check_serial() {
 		if (c >= 0) the_uart_queue.push(c);
 	}
 #else
+# ifndef ESP32
+	if (force_update) { // grab actual serial data here
+		while (Serial2.update()) {
+			// UART2 : connected to TWE
+			while (Serial2.available()) {
+				int c = Serial2.read();
+				if (c >= 0) the_uart_queue.push(c);
+			}
+		}
+	}
+# endif
 	// UART2 : connected to TWE
 	while (Serial2.available()) {
 		int c = Serial2.read();

@@ -19,12 +19,14 @@ void TweModCtlESP32::setup() {
 	//dacWrite(25, 0);
 }
 
-bool TweModCtlESP32::reset() {
+bool TweModCtlESP32::reset(bool bHold) {
 	digitalWrite(PIN_RST, LOW);
 
-	delay(20);
+	if (!bHold) {
+		delay(20);
 
-	digitalWrite(PIN_RST, HIGH);
+		digitalWrite(PIN_RST, HIGH);
+	}
 
 	return true;
 }

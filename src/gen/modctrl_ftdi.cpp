@@ -38,15 +38,17 @@ void TweModCtlFTDI::setpins(int rst, int pgm, int set) {
 	}
 }
 
-bool TweModCtlFTDI::reset() {
+bool TweModCtlFTDI::reset(bool bHold) {
 	if (_ser_ftdi.is_opened()) {
 		// _ser_ftdi.set_bitbang(0xFB, 0x20);
 		setpins(1, 0, -1);
 
-		delay(20);
-		
-		//_ser_ftdi.set_bitbang(0xFF, 0x20);
-		setpins(0, 0, -1);
+		if (!bHold) {
+			delay(20);
+
+			//_ser_ftdi.set_bitbang(0xFF, 0x20);
+			setpins(0, 0, -1);
+		}
 
 		return true;
 	}

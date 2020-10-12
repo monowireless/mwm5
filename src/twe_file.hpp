@@ -588,12 +588,22 @@ namespace TWE {
         TWEUTILS::SmplBuf_WChar get_lang_text() { return TWEUTILS::SmplBuf_WChar((const wchar_t*)WSTR_LANG_NAMES[_lang]); }
     };
 
-    extern void shell_open_url(const wchar_t* wstr_url);
-    extern void shell_open_url(TWEUTILS::SmplBuf_WChar& url);
-    extern void shell_open_folder(const wchar_t* wstr_url);
-    extern void shell_open_folder(TWEUTILS::SmplBuf_WChar& url);
+    extern void shell_open_default(const wchar_t* wstr);
+    extern void shell_open_default(const char_t* str);
+    extern void shell_open_default(TWEUTILS::SmplBuf_WChar& str);
+    extern void shell_open_default(TWEUTILS::SmplBuf_WChar&& str);
+    inline void shell_open_url(const wchar_t* wstr) { shell_open_default(wstr); }
+    inline void shell_open_url(const char_t* str) { shell_open_default(str); }
+    inline void shell_open_url(TWEUTILS::SmplBuf_WChar& str) { shell_open_default(str); };
+    inline void shell_open_url(TWEUTILS::SmplBuf_WChar&& str) { shell_open_default(str); };
+    inline void shell_open_folder(const wchar_t* wstr) { shell_open_default(wstr); }
+    inline void shell_open_folder(const char_t* str) { shell_open_default(str); }
+    inline void shell_open_folder(TWEUTILS::SmplBuf_WChar& str) { shell_open_default(str); };
+    inline void shell_open_folder(TWEUTILS::SmplBuf_WChar&& str) { shell_open_default(str); };
     extern void shell_open_by_command(const wchar_t* wstr_url, const wchar_t* wstr_cmd);
+    extern void shell_open_by_command(const char_t* wstr_url, const char_t* wstr_cmd);
     extern void shell_open_by_command(TWEUTILS::SmplBuf_WChar& url, const wchar_t* wstr_cmd);
+    extern void shell_open_by_command(TWEUTILS::SmplBuf_WChar&& url, const wchar_t* wstr_cmd);
 
 #endif
     extern const wchar_t* get_dir_tweapps();

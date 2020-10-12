@@ -57,7 +57,7 @@ void App_RootMenu::set_listview() {
 	}
 	else {
 #ifndef ESP32
-		_listMenu.set_info_area(nullptr);
+		_listMenu.set_info_area(L"ｳｪﾌﾞ");
 #endif
 
 		appid[0] = 0;
@@ -138,6 +138,15 @@ void App_RootMenu::loop() {
 					int i = _listMenu.get_selected_index() + 1;
 					if (i > 0 && i < int(E_APP_ID::_APPS_END_)) {
 						shell_open_url(str_appurls[i]);
+					}
+				} else {
+					unsigned i = _listMenu.get_selected_index();
+					auto wstr = str_appurls[0]; // Viewer
+					if (i > 0 && i < int(E_APP_ID::_END_)) {
+						wstr = str_appurls[i + int(E_APP_ID::_APPS_END_)];
+					}
+					if (i < int(E_APP_ID::_END_)) {
+						shell_open_url(wstr);
 					}
 				}
 #endif

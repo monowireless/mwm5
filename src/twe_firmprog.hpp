@@ -37,6 +37,7 @@ namespace TWE {
 		virtual bool connect() = 0;
 		virtual bool change_baud(int i) = 0;
 		virtual bool reset_module() = 0;
+		virtual bool hold_reset_pin() = 0;
 		virtual bool setpin(bool bSet) = 0;
 
 	protected:
@@ -168,6 +169,10 @@ namespace TWE {
 			delay(50);
 
 			return _modc.reset();
+		}
+
+		bool hold_reset_pin() {
+			return _modc.reset(true);
 		}
 
 		bool setpin(bool bSet) {
@@ -388,6 +393,14 @@ namespace TWE {
 			_bl->reset_module();
 		}
 
+		/**
+		 * @fn	void TweProg::reset_hold_module()
+		 *
+		 * @brief	hold reset pin.
+		 */
+		void reset_hold_module() {
+			_bl->hold_reset_pin();
+		}
 
 		/**
 		 * @fn	void TweProg::setpin(bool bSet)
