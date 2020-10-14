@@ -37,6 +37,7 @@ using namespace TWEUTILS;
 #define STR_ACTEXTRAS L"Act_extras"
 #define STR_MWSDK_TWENET L"TWENET"
 #define STR_MWSDK L"MWSDK"
+#define STR_MWSDK_SEL_FILE "MWSDK.ini"
 
 #define STR_WKS_ACTS L"Wks_Acts"
 #define STR_WKS_TWEAPPS L"Wks_TweApps"
@@ -543,19 +544,50 @@ void TweCwd::change_dir(SmplBuf_WChar& dir) {
 
 void TweCwd::_get_sdk_dir() {
 	_dir_sdk.clear();
+
+	// get SDK name from {exe dir}/MWSDK.ini 
+	SmplBuf_ByteSL<1024> sdk_name;
+	// open TWENET/usever.mk
+	try {
+		auto reg_twenet_dir = std::regex(R"(^MWSDK[ \t]*=[ \t]*([a-zA-Z0-9_\-]+))");
+
+		SmplBuf_ByteSL<1024> fname_usever;
+		fname_usever << make_full_path(get_dir_exe(), STR_MWSDK_SEL_FILE);
+
+		std::ifstream ifs(fname_usever.c_str());
+		std::string buff;
+
+		while (getline(ifs, buff)) {
+			// chop it.
+			remove_endl(buff);
+
+			// match object
+			std::smatch m_pat;
+
+			// parse lines
+			if (std::regex_search(buff, m_pat, reg_twenet_dir)) {
+				if (m_pat.size() >= 2) {
+					sdk_name << m_pat[1].str().c_str();
+					break;
+				}
+			}
+		}
+	} catch (...) {}
+	// if not found.
+	if (sdk_name.size() == 0) sdk_name << STR_MWSDK;
 	
 	// 0. {cur dir} has MWSDK dir
-	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_cur(), STR_MWSDK, STR_MWSDK_TWENET).c_str())) {
-		if (TweDir::is_dir(make_full_path(get_dir_cur(), STR_MWSDK, STR_MWSDK_CHIPLIB).c_str())) {
-			_dir_sdk = make_full_path(get_dir_cur(), STR_MWSDK);
+	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_cur(), sdk_name.c_str(), STR_MWSDK_TWENET).c_str())) {
+		if (TweDir::is_dir(make_full_path(get_dir_cur(), sdk_name.c_str(), STR_MWSDK_CHIPLIB).c_str())) {
+			_dir_sdk = make_full_path(get_dir_cur(), sdk_name.c_str());
 			return;
 		}
 	}
 
 	// 1. {exe dir} has MWSDK dir
-	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK, STR_MWSDK_TWENET).c_str())) {
-		if (TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK, STR_MWSDK_CHIPLIB).c_str())) {
-			_dir_sdk = make_full_path(get_dir_exe(), STR_MWSDK);
+	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_exe(), sdk_name.c_str(), STR_MWSDK_TWENET).c_str())) {
+		if (TweDir::is_dir(make_full_path(get_dir_exe(), sdk_name.c_str(), STR_MWSDK_CHIPLIB).c_str())) {
+			_dir_sdk = make_full_path(get_dir_exe(), sdk_name.c_str());
 			return;
 		}
 	}
