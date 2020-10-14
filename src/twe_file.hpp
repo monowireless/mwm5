@@ -133,12 +133,15 @@ namespace TWE {
     template <typename T, int N
         , typename = typename std::enable_if<
         	std::is_integral<typename std::remove_reference<T>::type>::value &&
-		    std::is_same<
-				wchar_t,
-			    typename std::remove_const<
-					typename std::remove_reference<T>::type
-			    >::type
-		    >::value // is_same
+            (  std::is_same<
+                wchar_t,
+                typename std::remove_const<typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::type
+                >::value // is_same
+            || std::is_same<
+                char,
+                typename std::remove_const<typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::type
+                >::value // is_same
+            )
         >::type // enable_if
     > // template 
     int _make_full_path_is_empty(T(&fname)[N]) {
@@ -155,14 +158,15 @@ namespace TWE {
     template <typename T
         , typename = typename std::enable_if<
             std::is_pointer<typename std::remove_reference<T>::type>::value &&
-            std::is_same<
+            ( std::is_same<
 				wchar_t,
-	            typename std::remove_const<
-		            typename std::remove_pointer<
-			            typename std::remove_reference<T>::type
-		            >::type
-	            >::type
-            >::value // is_same
+	            typename std::remove_const<typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::type
+              >::value // is_same
+            || std::is_same<
+                char,
+                typename std::remove_const<typename std::remove_pointer<typename std::remove_reference<T>::type>::type>::type
+               >::value // is_same
+            )
         >::type // enable_if
     > // template
     int _make_full_path_is_empty(T fname) {
@@ -523,6 +527,8 @@ namespace TWE {
         TWEUTILS::SmplBuf_WChar _dir_wks_act_extras;
         TWEUTILS::SmplBuf_WChar _dir_wks_tweapps;
 
+        TWEUTILS::SmplBuf_WChar _dir_twenet_lib; // from setver.mk
+
 		TWEUTILS::SmplBuf_ByteS _save_profile_name;
 
 		void _get_exe_dir();
@@ -530,6 +536,7 @@ namespace TWE {
 		void _get_sdk_dir();
 		void _set_sdk_env();
         void _get_wks_dir();
+        void _get_sdk_twenet_lib();
 	public:
 		void begin();
 		void change_dir(TWEUTILS::SmplBuf_WChar& dir);
@@ -542,6 +549,7 @@ namespace TWE {
         TWEUTILS::SmplBuf_WChar& get_dir_wks_act_extras() { return _dir_wks_act_extras; }
         TWEUTILS::SmplBuf_WChar& get_dir_wks_tweapps() { return _dir_wks_tweapps; }
 		TWEUTILS::SmplBuf_WChar& get_dir_launch() { return _dir_launch; }
+        TWEUTILS::SmplBuf_WChar& get_dir_sdk_twenet_lib() { return _dir_twenet_lib; }
 	};
 
 	extern TweCwd the_cwd;

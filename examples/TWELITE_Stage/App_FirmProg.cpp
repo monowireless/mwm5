@@ -1706,9 +1706,16 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 
 #if defined(_MSC_VER) || defined(__MINGW32__) 
 		#define MAKE_CMD_TERM "\""
-		cmdstr << the_cwd.get_dir_sdk() << char(WCHR_PATH_SEP)
-			// << "Tools\\MinGW\\msys\\1.0\\bin\\make.exe -j" << printfmt("%d", ct_cpu);
-			<< "Tools\\MinGW\\msys\\1.0\\bin\\bash -c \"/usr/bin/make";
+		if (TweDir::is_dir(make_full_path(the_cwd.get_dir_sdk(), L"..\\Tools").c_str())) {
+			// Tools dir is located ../{MWSDK_DIR}
+			cmdstr << the_cwd.get_dir_sdk() << char(WCHR_PATH_SEP)
+				<< "..\\Tools\\MinGW\\msys\\1.0\\bin\\bash -c \"/usr/bin/make";
+		}
+		else {
+			// Tools dir is located {MWSDK_DIR}/Tools
+			cmdstr << the_cwd.get_dir_sdk() << char(WCHR_PATH_SEP)
+				<< "Tools\\MinGW\\msys\\1.0\\bin\\bash -c \"/usr/bin/make";
+		}
 #else
 		#define MAKE_CMD_TERM ""
 		cmdstr << "make";

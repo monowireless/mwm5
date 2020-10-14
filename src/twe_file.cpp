@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_file.hpp"
@@ -24,6 +24,7 @@ namespace fs = std::filesystem;
 #include <limits.h>
 #endif
 
+#include <regex>
 #endif
 
 using namespace TWE;
@@ -31,9 +32,10 @@ using namespace TWEUTILS;
 
 // defs
 #define STR_FIRM_BIN L"BIN"
+#define STR_MWSDK_CHIPLIB L"ChipLib"
 #define STR_ACTSAMPLES L"Act_samples"
 #define STR_ACTEXTRAS L"Act_extras"
-#define STR_TWENET L"TWENET"
+#define STR_MWSDK_TWENET L"TWENET"
 #define STR_MWSDK L"MWSDK"
 
 #define STR_WKS_ACTS L"Wks_Acts"
@@ -493,6 +495,7 @@ TweFileDropped TWE::the_file_drop; // the instance
 #ifndef ESP32 // IMPLEMENTATION OF TweCwd
 extern "C" const char* twesettings_save_filepath;
 static const char STR_MWSDK_ROOT[] = "MWSDK_ROOT";
+static const char STR_MWSDK_TWENET_LIBSRC[] = "MWSDK_TWENET_LIBSRC";
 
 void TweCwd::begin() {
 	// get launch dirs
@@ -518,6 +521,7 @@ void TweCwd::begin() {
 
 	// SDK dir
 	_get_sdk_dir();
+	_get_sdk_twenet_lib();
 	_set_sdk_env();
 
 	_dir_sdk.c_str();
@@ -541,16 +545,16 @@ void TweCwd::_get_sdk_dir() {
 	_dir_sdk.clear();
 	
 	// 0. {cur dir} has MWSDK dir
-	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_cur(), STR_MWSDK, STR_TWENET).c_str())) {
-		if (TweDir::is_dir(make_full_path(get_dir_cur(), STR_MWSDK, STR_ACTSAMPLES).c_str())) {
+	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_cur(), STR_MWSDK, STR_MWSDK_TWENET).c_str())) {
+		if (TweDir::is_dir(make_full_path(get_dir_cur(), STR_MWSDK, STR_MWSDK_CHIPLIB).c_str())) {
 			_dir_sdk = make_full_path(get_dir_cur(), STR_MWSDK);
 			return;
 		}
 	}
 
 	// 1. {exe dir} has MWSDK dir
-	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK, STR_TWENET).c_str())) {
-		if (TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK, STR_ACTSAMPLES).c_str())) {
+	if (_dir_sdk.empty() && TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK, STR_MWSDK_TWENET).c_str())) {
+		if (TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK, STR_MWSDK_CHIPLIB).c_str())) {
 			_dir_sdk = make_full_path(get_dir_exe(), STR_MWSDK);
 			return;
 		}
@@ -558,7 +562,7 @@ void TweCwd::_get_sdk_dir() {
 
 	// 2.1 {exe dir} IS MWSDK dir
 	if (_dir_sdk.empty()) {
-		if (TweDir::is_dir(make_full_path(get_dir_exe(), STR_ACTSAMPLES).c_str())) {
+		if (TweDir::is_dir(make_full_path(get_dir_exe(), STR_MWSDK_CHIPLIB).c_str())) {
 			_dir_sdk = make_full_path(get_dir_exe());
 			return;
 		}
@@ -566,7 +570,7 @@ void TweCwd::_get_sdk_dir() {
 
 	// 2.2 {exe dir}/.. IS MWSDK dir
 	if (_dir_sdk.empty()) {
-		if (TweDir::is_dir(make_full_path(get_dir_exe(), L"..", STR_ACTSAMPLES).c_str())) {
+		if (TweDir::is_dir(make_full_path(get_dir_exe(), L"..", STR_MWSDK_CHIPLIB).c_str())) {
 			_dir_sdk = make_full_path(get_dir_exe(), L"..");
 			return;
 		}
@@ -604,8 +608,8 @@ void TweCwd::_get_sdk_dir() {
 		}
 
 		bool bCheck = false;
-		if (TweDir::is_dir(make_full_path(_dir_sdk, STR_TWENET).c_str())) {
-			if (TweDir::is_dir(make_full_path(_dir_sdk, STR_ACTSAMPLES).c_str())) {
+		if (TweDir::is_dir(make_full_path(_dir_sdk, STR_MWSDK_TWENET).c_str())) {
+			if (TweDir::is_dir(make_full_path(_dir_sdk, STR_MWSDK_CHIPLIB).c_str())) {
 				bCheck = true;
 			}
 		}
@@ -613,72 +617,139 @@ void TweCwd::_get_sdk_dir() {
 	}
 }
 
+/**
+ * @fn	void TweCwd::_get_sdk_twenet_lib()
+ *
+ * @brief	Gets TWENET library source directory 
+ * 			   {MWSDK_ROOT}/TWENET/current or others.
+ * 			   
+ */
+void TweCwd::_get_sdk_twenet_lib() {
+	SmplBuf_ByteSL<1024> dir_lib;
 
+	auto reg_twenet_dir = std::regex(R"(^TWENET_DIR[ \t]*=[ \t]*([a-zA-Z0-9_\-]+))");
+	bool b_find_ver = false;
+
+	// open TWENET/usever.mk
+	try {
+		SmplBuf_ByteSL<1024> fname_usever;
+		fname_usever << make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"usever.mk");
+
+		std::ifstream ifs(fname_usever.c_str());
+		std::string buff;
+
+		while (getline(ifs, buff)) {
+			// chop it.
+			remove_endl(buff);
+
+			// match object
+			std::smatch m_pat;
+
+			// parse lines
+			if (std::regex_search(buff, m_pat, reg_twenet_dir)) {
+				if (m_pat.size() >= 2) {
+					_dir_twenet_lib = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", m_pat[1].str().c_str());
+					if (TweDir::is_dir(_dir_twenet_lib.c_str())) {
+						break;
+					}
+					else {
+						_dir_twenet_lib.clear();
+					}
+				}
+			}
+		}
+	}
+	catch (...) {}
+
+	if (_dir_twenet_lib.size() == 0) {
+		_dir_twenet_lib << make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current"); // force default!
+	}
+}
+
+/**
+ * @fn	void TweCwd::_set_sdk_env()
+ *
+ * @brief	Sets sdk environment for building or other apps launching from TWELITE STAGE APP.
+ * 			  MWSDK_ROOT: points SDK library directory mandate for `make'
+ * 			  MWSDK_TWENET_LIBSRC: points TWENET library source directory switching by TWENET/usever.mk.
+ * 			  LANG: set "C" assuring all message outputs in English.
+ */
 void TweCwd::_set_sdk_env() {
 	SmplBuf_ByteSL<TWE::TWE_FILE_NAME_MAX> val;
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
-	val << _dir_sdk;
-
-	// replace \ to /
-	for (auto& x : val) {
-		if (x == '\\') x = '/';
-	}
+	/// MWSDK_ROOT=...
+	val.clear(); val << _dir_sdk;
+	for (auto& x : val) { if (x == '\\') x = '/';  }	// replace \ to /
 	val.push_back('/'); // last should be /
-
-	// put it!
 	_putenv_s(STR_MWSDK_ROOT, (const char*)val.c_str());
+
+	/// MWSDK_TWENET_LIBSRC=...
+	val.clear(); val << _dir_twenet_lib;
+	for (auto& x : val) { if (x == '\\') x = '/'; }
+	val.push_back('/'); // last should be /
+	_putenv_s(STR_MWSDK_TWENET_LIBSRC, (const char*)val.c_str());
+
+	// LANG 
 	_putenv_s("LANG", "C");
+
+# ifdef _DEBUG
+	system("cmd /c set"); // check env values output to console
+# endif
 #else
-	val << _dir_sdk;
+	val.clear(); val << _dir_sdk;
 	val.push_back('/'); // last should be /
 	setenv(STR_MWSDK_ROOT, (const char*)val.c_str(), 1); // MWSDK_ROOT=...
+	val.clear(); val << _dir_twenet_lib;
+	val.push_back('/'); // last should be /
+	setenv(STR_MWSDK_TWENET_LIBSRC, (const char*)val.c_str(), 1); // MWSDK_TWENET_LIBSRC=...
 	setenv("LANG", "C", 1); // LANG=C (to assure english error message.)
 # ifdef _DEBUG
-	system("env");
+	system("env"); // check env values output to console
 # endif
 #endif
 }
 
 void TweCwd::_get_wks_dir() {
-	// TWEAPPS
-	_dir_tweapps = make_full_path(get_dir_launch(), STR_FIRM_BIN);
-	if (!TweDir::is_dir(_dir_tweapps.c_str())) {
-		_dir_tweapps = make_full_path(get_dir_exe(), STR_FIRM_BIN);
-		if (!TweDir::is_dir(_dir_tweapps.c_str())) {
-			_dir_tweapps = make_full_path(get_dir_sdk(), STR_FIRM_BIN);
-		}
-	}
+	// finding source/bin dir for firm programming.
 
+	// general search order is:
+	//  1. current dir when launched
+	//  2. exe located dir
+	//  3. ../{MWSDK_ROOT}
+	//  4. {MWSDK_ROOT}
+
+	// [BINから選択] as "BIN"
+	_dir_tweapps = make_full_path(get_dir_launch(), STR_FIRM_BIN);
+	if (!TweDir::is_dir(_dir_tweapps.c_str())) _dir_tweapps = make_full_path(get_dir_exe(), STR_FIRM_BIN);
+	if (!TweDir::is_dir(_dir_tweapps.c_str())) _dir_tweapps = make_full_path(get_dir_sdk(), L"..", STR_FIRM_BIN);
+	if (!TweDir::is_dir(_dir_tweapps.c_str())) _dir_tweapps = make_full_path(get_dir_sdk(), STR_FIRM_BIN);
 	_dir_tweapps.c_str();
 
-	// Wks Acts or Act_samples (0. cur dir, 1. exe dir, 2. sdk dir, 3. Act_samples at sdk dir)
+	// [Actビルド＆書換] firstly searches `Wks_Acts'
 	_dir_wks_acts = make_full_path(get_dir_launch(), STR_WKS_ACTS);
-	if (!TweDir::is_dir(_dir_wks_acts.c_str())) {
-		_dir_wks_acts = make_full_path(get_dir_exe(), STR_WKS_ACTS);
-		if (!TweDir::is_dir(_dir_wks_acts.c_str())) {
-			_dir_wks_acts = make_full_path(get_dir_sdk(), STR_WKS_ACTS);
-			if (!TweDir::is_dir(_dir_wks_acts.c_str())) {
-				_dir_wks_acts = make_full_path(get_dir_sdk(), STR_ACTSAMPLES);
-			}
-		}
-	}
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_exe(), STR_WKS_ACTS);
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_sdk(), L"..", STR_WKS_ACTS);
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_sdk(), STR_WKS_ACTS);
+	// then `Act_samples'
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_launch(), STR_ACTSAMPLES);
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_exe(), STR_ACTSAMPLES);
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_sdk(), L"..", STR_ACTSAMPLES);
+	if (!TweDir::is_dir(_dir_wks_acts.c_str())) _dir_wks_acts = make_full_path(get_dir_sdk(), STR_ACTSAMPLES);
 	_dir_wks_acts.c_str();
 
-	// Act_extras (at sdk dir)
-	if (!TweDir::is_dir(_dir_wks_act_extras.c_str())) {
-		_dir_wks_act_extras = make_full_path(get_dir_sdk(), STR_ACTEXTRAS);
-	}
+	// [Actエクストラ] as `Act_extras'
+	_dir_wks_act_extras = make_full_path(get_dir_launch(), STR_ACTEXTRAS);
+	if (!TweDir::is_dir(_dir_wks_act_extras.c_str())) _dir_wks_act_extras = make_full_path(get_dir_exe(), STR_ACTEXTRAS);
+	if (!TweDir::is_dir(_dir_wks_act_extras.c_str())) _dir_wks_act_extras = make_full_path(get_dir_sdk(), L"..", STR_ACTEXTRAS);
+	if (!TweDir::is_dir(_dir_wks_act_extras.c_str())) _dir_wks_act_extras = make_full_path(get_dir_sdk(), STR_ACTEXTRAS);
 	_dir_wks_act_extras.c_str();
 
-	// TweApps Acts (0. cur dir, 1. exe dir, 2. sdk dir, 3. sdk dir sample)
+	// [TWE Apps] as `Wks_TweApps'
 	_dir_wks_tweapps = make_full_path(get_dir_launch(), STR_WKS_TWEAPPS);
-	if (!TweDir::is_dir(_dir_wks_tweapps.c_str())) {
-		_dir_wks_tweapps = make_full_path(get_dir_exe(), STR_WKS_TWEAPPS);
-		if (!TweDir::is_dir(_dir_wks_tweapps.c_str())) {
-			_dir_wks_tweapps = make_full_path(get_dir_sdk(), STR_WKS_TWEAPPS);
-		}
-	}
+	if (!TweDir::is_dir(_dir_wks_tweapps.c_str())) _dir_wks_tweapps = make_full_path(get_dir_exe(), STR_WKS_TWEAPPS);
+	if (!TweDir::is_dir(_dir_wks_tweapps.c_str())) _dir_wks_tweapps = make_full_path(get_dir_sdk(), L"..", STR_WKS_TWEAPPS);
+	if (!TweDir::is_dir(_dir_wks_tweapps.c_str())) _dir_wks_tweapps = make_full_path(get_dir_sdk(), STR_WKS_TWEAPPS);
 	_dir_wks_tweapps.c_str();
 }
 

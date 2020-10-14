@@ -34,6 +34,9 @@
 # endif
 #endif
 
+// for check file content
+#include <regex>
+
 // for logging
 #include <iostream>
 #include <fstream>
@@ -182,6 +185,17 @@ struct app_core_generic_procs {
 
 	void clip_paste() {
 		the_clip.paste.past_from_clip();
+	}
+
+	void open_lib_dir(const wchar_t *projname, const wchar_t *app_open = nullptr) {
+		auto&& dir_project = make_full_path(the_cwd.get_dir_sdk_twenet_lib(), "src", projname);
+		
+		if (app_open != nullptr) {
+			shell_open_by_command(dir_project.c_str(), app_open);
+		}
+		else {
+			shell_open_folder(dir_project.c_str());
+		}
 	}
 
 } the_generic_ops;
@@ -1047,18 +1061,7 @@ struct app_core_sdl {
 					&& (e.key.keysym.mod & KMOD_CTRL)
 					) {
 					if (e.type == SDL_KEYDOWN) {
-						SmplBuf_ByteSL<1024> cmd;
-
-						auto dir_current = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"twesettings");
-						auto dir_dev = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"dev", L"src", L"twesettings");
-
-						if (TweDir::is_dir(dir_dev.c_str())) { // if existing dev dir, open there.
-							cmd << dir_dev;
-						} else {
-							cmd << dir_current;
-						}
-
-						shell_open_by_command(cmd.c_str(), "code");
+						the_generic_ops.open_lib_dir(L"twesettings", L"code");
 					}
 				}
 				break;
@@ -1069,19 +1072,7 @@ struct app_core_sdl {
 					&& (e.key.keysym.mod & KMOD_CTRL)
 				) {
 					if (e.type == SDL_KEYDOWN) {
-						SmplBuf_ByteSL<1024> cmd;
-
-						auto dir_current = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"current", L"src", L"mwx");
-						auto dir_dev = make_full_path(the_cwd.get_dir_sdk(), L"TWENET", L"dev", L"src", L"mwx");
-
-						if (TweDir::is_dir(dir_dev.c_str())) { // if existing dev dir, open there.
-							cmd << dir_dev;
-						}
-						else {
-							cmd << dir_current;
-						}
-
-						shell_open_by_command(cmd.c_str(), "code");
+						the_generic_ops.open_lib_dir(L"mwx", L"code");
 					}
 				}
 				break;
