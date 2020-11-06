@@ -42,6 +42,9 @@ void MyTweMenu::vQueryAppData() {
 			break;
 		case E_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS:
 			sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS = TWESTG_ITER_tsFinal_G_U8(sp); break;
+		case E_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO:
+			sAppData.u8_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO = TWESTG_ITER_tsFinal_G_U8(sp); break;
+			break;
 #else
 		case E_TWESTG_STAGE_KEYBOARD_LAYOUT:
 			sAppData.u8_TWESTG_STAGE_KEYBOARD_LAYOUT = TWESTG_ITER_tsFinal_G_U8(sp); break;

@@ -21,7 +21,8 @@
 x64/
 x86/
 [Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
+[Aa][Rr][Mm]64/Release
+[Aa][Rr][Mm]64/Debug
 bld/
 [Bb]in/
 [Oo]bj/

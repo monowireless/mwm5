@@ -1720,10 +1720,14 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 		#define MAKE_CMD_TERM ""
 		cmdstr << "make";
 #endif
+
+		// set cpu count for parallel building
 		if (ct_cpu > 1) cmdstr << " -j" << printfmt("%d", ct_cpu); // parallel jobs
 
-		cmdstr << " USE_APPDEPS=0"; // don't use APPDEP (shall ALWAYS do full build.)
+		// don't use APPDEP (ALWAYS do full build.)
+		cmdstr << " USE_APPDEPS=0"; 
 
+		// set MODULE type (BLUE/RED)
 		switch (_parent->_firmfile_modtype) {
 		case TweProg::E_MOD_TYPE::TWELITE_BLUE: cmdstr << " TWELITE=BLUE"; break;
 		case TweProg::E_MOD_TYPE::TWELITE_RED: cmdstr << " TWELITE=RED"; break;
@@ -1735,6 +1739,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 			cleancmd = as_copying(cmdstr);
 			cleancmd << " USE_APPDEPS=0 clean" MAKE_CMD_TERM;
 			int i = system((const char*)cleancmd.c_str()); (void)i;// echo cmd string
+		}
+
+		// if LTO is disabled, set DISABLE_LTO=1 (affective only on Windows, others cannot set LTO by default)
+		if (sAppData.u8_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO) {
+			cmdstr << " DISABLE_LTO=1"; // disabling LTO
 		}
 
 		// add redirect

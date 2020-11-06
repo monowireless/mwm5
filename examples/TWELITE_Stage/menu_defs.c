@@ -72,17 +72,6 @@ const TWESTG_tsElement TWESTG_STAGE_BASE[] = {
 static const uint8 DEF_TWESTG_DATATYPE_STRING[32] = ""; 
 const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 #ifndef ESP32
-# if 0
-	{ E_TWESTG_STAGE_APPWRT_BUILD_SDKROOT,
-		{ TWESTG_DATATYPE_STRING,  32, 0, 0, { .pu8 = (uint8*)DEF_TWESTG_DATATYPE_STRING }}, 
-		{ "SDKR", "SDKのルートフォルダ",
-		  "指定フォルダをMWSDKとして使用します。\r\n"
-		  "３１文字以内で指定します。\r\n"
-		  "指定しない場合は空白にします。" }, 
-		{ E_TWEINPUTSTRING_DATATYPE_STRING, 32, 'r' },
-		{ {.u32 = 0}, {.u32 = 0}, TWESTGS_VLD_u32String, NULL },
-	},
-# endif
 	{ E_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS,
 		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
 		{ "JOBS", "ビルド時のmakeジョブ数",
@@ -101,6 +90,17 @@ const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 		  "   VSCodeのｲﾝｽﾄｰﾙや設定が必要になります。"},
 		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'v' },
 		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
+# if defined(_MSC_VER) || defined(__MINGW32__)
+	{ E_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "LTO", "LTOを行わない",
+		  "LTOを行うとBINサイズが5%前後小さくなります。\r\n"
+		  "行わないを選択するとリンク時間が短くなります。\r\n"
+		  "0: LTOを行う。\r\n"
+		  "1: LTOを行わない。" },
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'l' },
+		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
+# endif
 #endif
 	{ E_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN,
 		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},

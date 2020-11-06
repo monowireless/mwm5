@@ -97,7 +97,11 @@ void App_Settings::setup_screen() {
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
+#ifdef ESP32
 	TWEFONT::createFontMP12_mini(10, 0, 0); // MP12 font
+#else
+	TWEFONT::createFontMP12_std(10, 0, 0); // MP12 font
+#endif
 	TWEFONT::createFontShinonome16_mini(11, 0, 0); // shinonome 16 font
 
 	// main screen area

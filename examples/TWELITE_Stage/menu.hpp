@@ -22,6 +22,7 @@ struct _sAppData {
 #endif
 	uint8_t u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN;
 	uint8_t u8_TWESTG_STAGE_OPEN_CODE; // if set, open dir with "code" command.
+	uint8_t u8_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO;
 };
 
 extern struct _sAppData sAppData;

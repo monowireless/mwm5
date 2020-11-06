@@ -5,4 +5,4 @@ for d in *; do
 	fi
 done
 
-rm -rfv Debug Release x86 x64 'ESP32(coding only)'
+rm -rfv Debug Release x86 x64 'ESP32(coding only)' ARM64
