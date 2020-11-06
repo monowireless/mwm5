@@ -122,6 +122,11 @@ APPSRC_CXX+=gen/sdl2_button.cpp
 APPSRC_CXX+=gen/sdl2_icon.cpp
 APPSRC_CXX+=gen/serial_ftdi.cpp
 APPSRC_CXX+=gen/modctrl_ftdi.cpp
+ifeq ($(OSNAME),raspi)
+APPSRC_CXX+=gen/serial_common.cpp
+APPSRC_CXX+=gen/serial_termios.cpp
+APPSRC_CXX+=gen/modctrl_raspi.cpp
+endif
 
 # thanks to open source contributions!
 APPSRC+=printf/printf.c
@@ -139,7 +144,9 @@ APP_MWM5_SRC_DIR=$(root_dir)/src
 INCFLAGS += -I$(APP_MWM5_SRC_DIR)/gen
 INCFLAGS += -I$(APP_MWM5_SRC_DIR)/twesettings
 
-OBJDIR_SUB = esp32 font twesettings gen oss printf $(OSNAME)
+CFLAGS += -DMWM5_BUILD_$(shell echo $(OSNAME) | tr '[:lower:]' '[:upper:]')
+
+OBJDIR_SUB += esp32 font twesettings gen oss printf $(OSNAME)
 ##########################################################################
 # LOAD others
 include $(mkfile_dir)/rules.mk

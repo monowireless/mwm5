@@ -83,7 +83,6 @@
             ],
             "defines": [
                 "__linux=1",
-                "USE_CURSES",
                 "${default}"
             ],
             "browse": {
@@ -95,6 +94,32 @@
                 "databaseFilename": ""
             },
             "compilerPath": "/usr/bin/g++-9",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Raspi(g++)",
+            "intelliSenseMode": "gcc-arm",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/linux/**",
+                "${workspaceFolder}/src/**",
+                "${default}"
+            ],
+            "defines": [
+                "__linux=1",
+                "MWM5_BUILD_RASPI=1",
+                "${default}"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${default}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
             "cppStandard": "c++17"
         },

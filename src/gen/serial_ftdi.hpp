@@ -7,30 +7,20 @@
 
 #include "twe_common.hpp"
 #include "twe_serial.hpp"
+#include "serial_common.hpp"
 
 #include <ftd2xx.h>
 
 namespace TWE {
-	class SerialFtdi : public ISerial {
+	class SerialFtdi : public ISerial, public SerialCommon<SerialFtdi> {
+		friend class SerialCommon<SerialFtdi>;
+		template <class C, class D> friend class SerialDuo;
+
 		FT_STATUS _ftStatus;
 		FT_HANDLE _ftHandle;
 		FT_DEVICE _ftDevice;
 
-		TWEUTILS::FixedQueue<uint8_t> _que;
-
-		int _buf_len;
-		char _buf[512];
-
-		char _devname[32];
-
-		void (*_hook_on_write)(const uint8_t* p, int len);
-
 	public:
-		// Serial Devices, global information
-		static ISerial::tsAryChar32 ser_devname;
-		static ISerial::tsAryChar32 ser_desc;
-		static int ser_count;
-
 		static const uint8_t BITBANG_MASK_PGM = 8;
 		static const uint8_t BITBANG_MASK_RST = 4;
 		static const uint8_t BITBANG_MASK_SET = 2;
@@ -45,49 +35,9 @@ namespace TWE {
 		 *
 		 * @param	bufsize	(Optional) The bufsize of internal queue.
 		 */
-		SerialFtdi(size_t bufsize = 2048) : _ftStatus{}, _ftHandle{}, _ftDevice{}, _hook_on_write(nullptr)
-			, _que(TWEUTILS::FixedQueue<uint8_t>::size_type(bufsize))
-			, _buf_len(0)
-			, _buf{}
-			, _devname{} {}
+		SerialFtdi(size_t bufsize = 2048) : SerialCommon(bufsize), _ftStatus{}, _ftHandle{}, _ftDevice{} {}
 
-
-		/**
-		 * @fn	bool SerialFtdi::is_opened()
-		 *
-		 * @brief	Query if this object is opened
-		 *
-		 * @returns	True if opened, false if not.
-		 */
-		bool is_opened() {
-			return _ftHandle != NULL;
-		}
-
-
-		/**
-		 * @fn	const char* SerialFtdi::get_devname()
-		 *
-		 * @brief	Gets the devname currently opened.
-		 *
-		 * @returns	Null if it fails, else the devname.
-		 */
-		const char* get_devname() {
-			return _devname;
-		}
-
-
-		/**
-		 * @fn	FT_HANDLE SerialFtdi::get_handle()
-		 *
-		 * @brief	Gets the handle
-		 *
-		 * @returns	The handle.
-		 */
-		FT_HANDLE get_handle() {
-			return _ftHandle;
-		}
-
-
+	public: //TODO shou;ld be PRIVATE
 		/**
 		 * @fn	bool SerialFtdi::set_baudrate(int baud);
 		 *
@@ -97,7 +47,7 @@ namespace TWE {
 		 *
 		 * @returns	True if it succeeds, false if it fails.
 		 */
-		bool set_baudrate(int baud);
+		bool _set_baudrate(int baud);
 
 
 		/**
@@ -107,55 +57,66 @@ namespace TWE {
 		 *
 		 * @returns	An int.
 		 */
-		int update();
+		int _update();
 
 
 		/**
-		 * @fn	static int SerialFtdi::_list_devices(tsAryChar32& devname, tsAryChar32& desc);
+		 * @fn	int SerialFtdi::write(const uint8_t* p, int len)
 		 *
-		 * @brief	List FTDI devices and storing name and descriptions.
+		 * @brief	Writes bytes
 		 *
-		 * @param [in,out]	devname	The devname list
-		 * @param [in,out]	desc   	The description list
+		 * @param	p  	An uint8_t to process.
+		 * @param	len	The length.
 		 *
 		 * @returns	An int.
 		 */
-		static int _list_devices(tsAryChar32& devname, tsAryChar32& desc);
-
-
-		/**
-		 * @fn	static int SerialFtdi::list_devices()
-		 *
-		 * @brief	List devices, stores list to internal static array.
-		 *
-		 * @returns	An int.
-		 */
-		static int list_devices() {
-			ser_count = _list_devices(ser_devname, ser_desc);
-			return ser_count;
-		}
-
-
-		/**
-		 * @fn	int SerialFtdi::_get_last_buf(int i)
-		 *
-		 * @brief	Gets the buffer at index i. 
-		 * 			This operation does not change the queue, but to look the queue content.
-		 * 			
-		 *
-		 * @param	i	Zero-based index of the.
-		 *
-		 * @returns	The last buffer.
-		 */
-		int _get_last_buf(int i) {
-			if (i >= 0 && i < _buf_len) {
-				return _buf[i];
+		int _write(const uint8_t* p, int len) {
+			DWORD len_written = 0;
+			if (_ftHandle != NULL) {
+				FT_Write(_ftHandle, (LPVOID)p, (DWORD)len, &len_written);
 			}
 
-			return -1;
+			return len_written;
 		}
 
+		/**
+		 * @fn	bool SerialFtdi::open(const char* devname);
+		 *
+		 * @brief	Opens the given devname
+		 *
+		 * @param	devname	The devname.
+		 *
+		 * @returns	True if it succeeds, false if it fails.
+		 */
+		bool _open(const char* devname);
 
+
+		/**
+		 * @fn	void SerialFtdi::close()
+		 *
+		 * @brief	Closes the device
+		 */
+		void _close() {
+			if (_ftHandle != NULL) {
+				FT_Close(_ftHandle);
+
+				_ftHandle = NULL;
+				_devname[0] = 0;
+			}
+		}
+
+		/**
+		 * @fn	void SerialFtdi::flush()
+		 *
+		 * @brief	Flushes this object
+		 */
+		void _flush() {
+			if (_ftHandle != NULL) {
+				delay(32); // TODO: it's not concrete way...
+			}
+		}
+
+	public:		
 		/**
 		 * @fn	void SerialFtdi::set_bitbang(uint8_t ucmask, uint8_t ucenable)
 		 *
@@ -171,7 +132,6 @@ namespace TWE {
 		}
 
 
-
 		/**
 		 * @fn	void SerialFtdi::get_bitbang(uint8_t& mode)
 		 *
@@ -185,71 +145,8 @@ namespace TWE {
 			}
 		}
 
-
-		/**
-		 * @fn	int SerialFtdi::read()
-		 *
-		 * @brief	read one byte
-		 *
-		 * @returns	An int. -1:error
-		 */
-		int read() {
-			if (!_que.empty()) {
-				uint8_t c = _que.front();
-				_que.pop();
-
-				return c;
-			}
-
-			return -1;
-		}
-
-
-		/**
-		 * @fn	int SerialFtdi::write(const uint8_t* p, int len)
-		 *
-		 * @brief	Writes bytes
-		 *
-		 * @param	p  	An uint8_t to process.
-		 * @param	len	The length.
-		 *
-		 * @returns	An int.
-		 */
-		int write(const uint8_t* p, int len) {
-			DWORD len_written = 0;
-			if (_ftHandle != NULL) {
-				FT_Write(_ftHandle, (LPVOID)p, (DWORD)len, &len_written);
-				if (_hook_on_write) _hook_on_write(p, len);
-			}
-
-			return len_written;
-		}
-
-
-		/**
-		 * @fn	bool SerialFtdi::open(const char* devname);
-		 *
-		 * @brief	Opens the given devname
-		 *
-		 * @param	devname	The devname.
-		 *
-		 * @returns	True if it succeeds, false if it fails.
-		 */
-		bool open(const char* devname);
-
-
-		/**
-		 * @fn	operator SerialFtdi::bool()
-		 *
-		 * @brief	True if it's opened.
-		 *
-		 * @returns	The result of the operation.
-		 */
-		operator bool() {
-			return is_opened();
-		}
-
-
+#if 0
+	public:
 		/**
 		 * @fn	void SerialFtdi::setTimeout(int time_ms = 1000)
 		 *
@@ -262,78 +159,17 @@ namespace TWE {
 				FT_SetTimeouts(_ftHandle, time_ms, 0);
 			}
 		}
+#endif
 
-
+	private:
 		/**
-		 * @fn	void SerialFtdi::close()
+		 * @fn	static int SerialFtdi::_list_devices(bool append_entry=false);
 		 *
-		 * @brief	Closes the device
+		 * @brief	List FTDI devices and storing name and descriptions.
+		 *
+		 * @returns	An int.
 		 */
-		void close() {
-			if (_ftHandle != NULL) {
-				FT_Close(_ftHandle);
-
-				_ftHandle = NULL;
-				_devname[0] = 0;
-			}
-		}
-
-
-
-		/**
-		 * @fn	void SerialFtdi::flush()
-		 *
-		 * @brief	Flushes this object
-		 */
-		void flush() {
-			if (_ftHandle != NULL) {
-				delay(32);
-			}
-		}
-
-
-
-		/**
-		 * @fn	bool SerialFtdi::available()
-		 *
-		 * @brief	if data is in the internal queue, returns true.
-		 *
-		 * @returns	True if the queue has some data, false if it's empty.
-		 */
-		bool available() {
-			return !_que.empty();
-		}
-
-
-		/**
-		 * @fn	void SerialFtdi::begin(uint32_t baud)
-		 *
-		 * @brief	begins the device with baud rate passed as an argument.
-		 *
-		 * @param	baud	The baud.
-		 */
-		void begin(uint32_t baud) {
-			if (_ftHandle != NULL) {
-				flush();
-				FT_SetBaudRate(_ftHandle, baud);
-			}
-		}
-
-		/**
-		 * @fn	void SerialFtdi::set_hook_on_write(void (*ptr)(char_t))
-		 *
-		 * @brief	Sets hook on write
-		 *
-		 * @param [in,out]	ptr	If non-null, the pointer.
-		 */
-		void set_hook_on_write(void (*ptr)(const uint8_t* p, int len)) {
-			_hook_on_write = ptr;
-		}
-
-		// do nothing
-		void begin(int, int, int, int) {}
-		void setRxBufferSize(int i) {} 
-		void printf(const char *fmt, ...) {}
+		static int _list_devices(bool append_entry=false);
 	};
 }
 

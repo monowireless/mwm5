@@ -86,7 +86,7 @@ endif
  
 ##############################################################################
 # Application dynamic dependencies
-USE_APPDEPS=1
+USE_APPDEPS?=1
 ifeq ($(USE_APPDEPS),1)
   APPDEPS = $(APPOBJS:.o=.d) $(APPOBJS_CXX:.o=.d)
   DEPFLAGS = -MT $@ -MMD -MP -MF $(OBJDIR)/$*.d
@@ -155,12 +155,20 @@ $(APPDEPS):
 include $(wildcard $(APPDEPS))
 
 # build rules
+ifeq ($(USE_APPDEPS),1)
 $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
+else
+$(OBJDIR)/%.o: %.c
+endif
 	$(info Compiling $< ...)
 	$(CC) $(CSTD) -c -o $(subst Source,Build,$@) $(DEPFLAGS) $(CFLAGS) $(INCFLAGS) $(realpath $<)
 	@echo
 
+ifeq ($(USE_APPDEPS),1)
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/%.d
+else
+$(OBJDIR)/%.o: %.cpp
+endif
 	$(info Compiling $< ...)	
 	$(CXX) $(CXXSTD) -c -o $(subst Source,Build,$@) $(DEPFLAGS) $(CXXFLAGS) $(CFLAGS) $(INCFLAGS) $(realpath $<)
 	@echo
@@ -173,7 +181,7 @@ $(OBJDIR)/$(TARGET_BIN): $(APPOBJS) $(APPOBJS_CXX)
 
 # generate bin file
 $(TARGET_BIN).$(TARGET_TYPE): $(OBJDIR)/$(TARGET_BIN)
-	@mv -v $< $@
+	@cp -pv $< $@
 	@chmod +x $@
 	
 # generate .a file

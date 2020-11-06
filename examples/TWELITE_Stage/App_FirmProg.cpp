@@ -383,7 +383,9 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 		// the_keyboard.push(TWECUI::KeyInput::KEY_ENTER);
 	}
 
+#if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
 	_listMenu.set_info_area(L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
+#endif
 	_listMenu.attach_term(the_screen);
 
 	_listMenu.set_view(0, _i_selected >= 0 && _i_selected < _listMenu.size() ? _i_selected : -1);
@@ -403,15 +405,24 @@ void App_FirmProg::Screen_OpenMenu::update_navigation() {
 	case MENU_ACT_EXTRA:
 	case MENU_TWEAPPS:
 		the_screen_c.clear_screen();
+#if defined(ESP32) || defined(MWM5_BUILD_RASPI)
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#else
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+#endif
 		break;
 	case MENU_DROP_DIR:
 	case MENU_LAST:
 		the_screen_c.clear_screen();
+#if defined(ESP32) || defined(MWM5_BUILD_RASPI)
+		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#else
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
 		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+#endif
 		break;
 	default:
+		the_screen_c.clear_screen();
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 		break;
 	}
@@ -424,6 +435,9 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 		auto& dirdrop = _parent->_dirname_drop;
 		int dirdrop_len = dirdrop.size();
 
+#if defined(ESP32) || defined(MWM5_BUILD_RASPI)
+		l = L"---";
+#else
 		if (dirdrop_len == 0) {
 			l = L"指定 [ﾌｫﾙﾀﾞをﾄﾞﾛｯﾌﾟ]";
 		}
@@ -440,6 +454,7 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 				l << dirdrop << ']';
 			}
 		}
+#endif
 	}
 
 	{
@@ -723,8 +738,13 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 
 	// button navigation
 	the_screen_c.clear_screen();
+	
+#if defined(ESP32) || defined(MWM5_BUILD_RASPI)
+	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#else
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
 	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+#endif
 
 	// test for list files
 	_listFiles.set_info_area(nullptr);
@@ -1472,6 +1492,10 @@ void App_FirmProg::Screen_ActBuild::loop() {
 
 void App_FirmProg::Screen_ActBuild::actdir_update_bottom() {
 	the_screen_c.clear_screen();
+
+#if (defined(ESP32) || defined(MWM5_BUILD_RASPI))
+	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+#else
 	if (_desc.get_url().length()) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
  		the_screen_c << "     ↑/長押:MENU          選択/\033[32m"
@@ -1484,6 +1508,7 @@ void App_FirmProg::Screen_ActBuild::actdir_update_bottom() {
 	}
 
 	the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+#endif
 	the_screen_c.force_refresh();
 }
 
@@ -1546,7 +1571,9 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 		else {
 			_listFiles.sort_items(true); // sort without case
 			_listFiles.attach_term(the_screen, true);
+#if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))			
 			_listFiles.set_info_area(sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
+#endif
 			_listFiles.set_view();
 
 			// select last build item.
@@ -1687,9 +1714,12 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 	case EV_SETUP: {
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		
+#if (defined(ESP32) || defined(MWM5_BUILD_RASPI))
+		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--                --/--";
+#else
 		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/";
 		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+#endif
 
 		the_screen_c.force_refresh();
 
@@ -1699,7 +1729,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 		int ct_cpu = sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS;
 		if (ct_cpu == 0) {
 			ct_cpu = TWESYS::Get_Logical_CPU_COUNT();
+#if defined(MWM5_BUILD_RASPI)
+			if (ct_cpu >= 4) ct_cpu--; // raspi3B, limit to 3core use.
+#else
 			ct_cpu /= 2; // use half count (mostly run in HyperThreading or SMT)
+#endif
 		}
 
 		SmplBuf_ByteSL<1024> cmdstr;

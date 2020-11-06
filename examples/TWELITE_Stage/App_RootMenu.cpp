@@ -47,7 +47,7 @@ void App_RootMenu::set_listview() {
 	appid.resize(1);
 
 	if (_b_appmenu) { // アプリ一覧
-#ifndef ESP32
+#if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
 		_listMenu.set_info_area(L"ｳｪﾌﾞ");
 #endif
 		for (int menu_id = 1; menu_id < (int)E_APP_ID::_APPS_END_; menu_id++) {
@@ -56,7 +56,7 @@ void App_RootMenu::set_listview() {
 		}
 	}
 	else {
-#ifndef ESP32
+#if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
 		_listMenu.set_info_area(L"ｳｪﾌﾞ");
 #endif
 

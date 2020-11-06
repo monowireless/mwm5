@@ -42,8 +42,10 @@ void twe_wid_button::redraw() {
 		"\033[35;7m" // button up w/ long hold
 	};
 
-	if (_nButtonState < 0 || _nButtonState >= (int)E_BTN_STATE::NO_MORE_ENTRY)
+	if (_nButtonState < 0 || _nButtonState >= (int)E_BTN_STATE::NO_MORE_ENTRY) {
 		_nButtonState = 0;
+		_b_render_texture = true;
+	}
 
 	if (_pScr) {
 		auto& t = *_pScr;
@@ -61,6 +63,54 @@ void twe_wid_button::redraw() {
 }
 
 bool twe_wid_button::update(SDL_Event& e) {
+	int prevbtn = _nButtonState;
+	bool b;
+
+	if (e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP || e.type == SDL_FINGERMOTION) {
+		int x_s = (::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x; // - ::SCREEN_POS_X;
+		int y_s = (::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y; // - ::SCREEN_POS_Y;
+
+		SDL_Event em;
+		memset(&em, 0, sizeof(SDL_Event));
+
+		switch(e.type) {
+		case SDL_FINGERDOWN: 
+			em.type = SDL_MOUSEBUTTONDOWN;
+			em.button.button = SDL_BUTTON_LEFT;
+			em.button.timestamp = e.button.timestamp;
+			em.button.clicks = 1;
+			em.button.x = x_s;
+			em.button.y = y_s;
+			break;
+		case SDL_FINGERUP:
+			em.type = SDL_MOUSEBUTTONUP;
+			em.button.button = SDL_BUTTON_LEFT;
+			em.button.timestamp = e.button.timestamp;
+			em.button.clicks = 1;
+			em.button.x = x_s;
+			em.button.y = y_s;
+			break;
+		case SDL_FINGERMOTION:
+			em.type = SDL_MOUSEMOTION;
+			em.motion.timestamp = e.motion.timestamp;
+			em.motion.x = x_s;
+			em.motion.x = y_s;
+			break;
+		}
+
+		b = update_core(em);
+	} else {
+		b = update_core(e);
+	}
+	
+	if (_nButtonState != prevbtn) {
+		_b_render_texture = true;
+	}
+
+	return b;
+}
+
+bool twe_wid_button::update_core(SDL_Event& e) {
 	if (!_nHoldScreen && (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN)) {
 		if (is_in_hotspot(e)) {
 			if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -145,17 +195,19 @@ void twe_wid_button::render_sdl(SDL_Renderer* renderer) {
 				_screen_weight_h(_location.h),
 			};
 
-			SDL_SetRenderTarget(renderer, _mTexture);
+			if (_b_render_texture) {
+				SDL_SetRenderTarget(renderer, _mTexture);
+				for (int y = 0; y < _location.h; y++) {
+					if (lcd.update_line(y)) {
+						for (int x = 0; x < _location.w; x++) {
+							auto c = lcd.get_pt(x, y);
 
-			for (int y = 0; y < _location.h; y++) {
-				if (lcd.update_line(y)) {
-					for (int x = 0; x < _location.w; x++) {
-						auto c = lcd.get_pt(x, y);
-
-						SDL_SetRenderDrawColor(renderer, c.u8col[0], c.u8col[1], c.u8col[2], 0xFF);
-						SDL_RenderDrawPoint(renderer, x, y);
+							SDL_SetRenderDrawColor(renderer, c.u8col[0], c.u8col[1], c.u8col[2], 0xFF);
+							SDL_RenderDrawPoint(renderer, x, y);
+						}
 					}
 				}
+				_b_render_texture = false;
 			}
 
 			int mdiv, alpha;

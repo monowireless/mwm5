@@ -53,8 +53,16 @@
 #include "../linux/linux_term.hpp"
 #endif
 
+#if defined(MWM5_BUILD_RASPI)
+#include "serial_common.hpp"
+#include "serial_duo.hpp"
+#include "modctrl_duo.hpp"
+#include "modctrl_raspi.hpp"
+#include "serial_termios.hpp"
+#endif
 #include "modctrl_ftdi.hpp"
 #include "serial_ftdi.hpp"
+
 #include "esp32/esp32_lcd_color.h"
 
 #include "twe_sys.hpp"
@@ -134,12 +142,26 @@ TWE_PutChar_CONIO TWE::WrtCon;
 
 // The Serial Device
 SerialFtdi Serial;
+
+#if defined(MWM5_BUILD_RASPI)  && defined(MWM5_SERIAL_DUO)
+// Serial2 is supporting both UART(SerialTermios) and FTDI(SerialFTDI).
+SerialDuoRaspi Serial2;
+TWE_PutChar_Serial<SerialDuoRaspi> TWE::WrtTWE(Serial2);
+
+// TWE BOOTLOADER PROTOCOL
+using TweModCtlDuoRaspi = TweModCtlDuo<SerialDuoRaspi, TweModCtlRaspi, TweModCtlFTDI>;
+TweModCtlRaspi objModC_RaspiGPIO; // GPIO
+TweModCtlFTDI objModC_FTDI(Serial2._objD); // FTDI Bitbang
+TweModCtlDuoRaspi objModC_raspi(Serial2, objModC_RaspiGPIO, objModC_FTDI); // combined object
+TweProg TWE::twe_prog(new TweBlProtocol<SerialDuoRaspi, TweModCtlDuoRaspi>(Serial2, objModC_raspi));
+#else
 SerialFtdi Serial2;
 TWE_PutChar_Serial<SerialFtdi> TWE::WrtTWE(Serial2);
 
 // TWE BOOTLOADER PROTOCOL
 TweModCtlFTDI obj_ftdi(Serial2);
 TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialFtdi, TweModCtlFTDI>(Serial2, obj_ftdi));
+#endif
 
 // the M5 stack instance
 static const int M5_LCD_WIDTH = 320;
@@ -359,6 +381,12 @@ struct app_core_sdl {
 		// set candidate window position other than (0,0)
 		const SDL_Rect rctIME = { 100, 100, 100, 100 };
 		SDL_SetTextInputRect((SDL_Rect*)&rctIME); 
+
+		// set fullscreen as default (for some platform)
+#if defined(MWM5_BUILD_RASPI)
+		_bfullscr = true;
+		SDL_SetWindowFullscreen(gWindow, SDL_WINDOW_FULLSCREEN);
+#endif
 	}
 
 	// calculate screen position from 640,480 based screen to actual screen coordinates.
@@ -378,12 +406,12 @@ struct app_core_sdl {
 		
 		if (!Serial2.is_opened()) sub_screen_tr << " - ｵﾌﾗｲﾝ";
 
-		if (SerialFtdi::ser_count > 0) {
-			for (int i = 0; i < SerialFtdi::ser_count; i++) {
+		if (Serial2.ser_count > 0) {
+			for (int i = 0; i < Serial2.ser_count; i++) {
 				sub_screen_tr << crlf << printfmt(STR_ALT "+%d ", i + 1); // ALT+1 .. 3
 
 				bool bOpened = false;
-				if (!strncmp(SerialFtdi::ser_devname[i], Serial2.get_devname(), sizeof(SerialFtdi::ser_devname[i]))) {
+				if (!strncmp(Serial2.ser_devname[i], Serial2.get_devname(), sizeof(Serial2.ser_devname[i]))) {
 					bOpened = true;
 				}
 
@@ -392,8 +420,8 @@ struct app_core_sdl {
 				}
 
 				sub_screen_tr << printfmt("%s(%s)%c"
-					, SerialFtdi::ser_desc[i]
-					, SerialFtdi::ser_devname[i]
+					, Serial2.ser_desc[i]
+					, Serial2.ser_devname[i]
 					, bOpened ? '*' : ' ');
 
 				if (bOpened) {
@@ -745,8 +773,8 @@ struct app_core_sdl {
 					the_keyboard_sdl2.push(KeyInput::KEY_ESC);
 					return;
 				} else {
-					int x = e.button.x * 640 / ::SCREEN_WIDTH / 2;
-					int y = e.button.y * 480 / ::SCREEN_HEIGHT / 2;
+					int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / 2;
+					int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / 2;
 					
 					// con_screen << printfmt("{MOUSE %d,%d}", x, y);
 					the_keyboard_sdl2.push(KeyInput::MOUSE_UP(x, y));
@@ -755,8 +783,8 @@ struct app_core_sdl {
 
 			//  push mouse event as KEY INPUT QUEUE
 			if (e.type == SDL_MOUSEBUTTONDOWN) {
-				int x = e.button.x * 640 / ::SCREEN_WIDTH / 2;
-				int y = e.button.y * 480 / ::SCREEN_HEIGHT / 2;
+				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / 2;
+				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / 2;
 
 				// con_screen << printfmt("{MOUSE %d,%d}", x, y);
 				the_keyboard_sdl2.push(KeyInput::MOUSE_DOWN(x, y));
@@ -775,6 +803,25 @@ struct app_core_sdl {
 			if (e.type == SDL_MOUSEWHEEL) {
 				//con_screen << printfmt("{WHEEL %d,%d}", e.wheel.x, e.wheel.y);
 				the_keyboard_sdl2.push(KeyInput::MOUSE_WHEEL(e.wheel.x, e.wheel.y));				
+			}
+
+			// finger
+			if (e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP || e.type == SDL_FINGERMOTION) {
+				int x_s = (::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x - ::SCREEN_POS_X;
+				int y_s = (::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y - ::SCREEN_POS_Y;
+
+				int x = x_s * 640 / ::SCREEN_WIDTH / 2;
+				int y = y_s * 480 / ::SCREEN_HEIGHT / 2;
+				
+				switch(e.type) {
+				case SDL_FINGERDOWN:
+					the_keyboard_sdl2.push(KeyInput::MOUSE_MOVE(x, y));
+					the_keyboard_sdl2.push(KeyInput::MOUSE_DOWN(x, y)); break;
+				case SDL_FINGERUP: the_keyboard_sdl2.push(KeyInput::MOUSE_UP(x, y)); break;
+				case SDL_FINGERMOTION: the_keyboard_sdl2.push(KeyInput::MOUSE_MOVE(x, y)); break;
+				}
+
+				//printf("{TF:%f,%f->%d,%d}", e.tfinger.x, e.tfinger.y, x, y);
 			}
 		}
 
@@ -876,9 +923,9 @@ struct app_core_sdl {
 						update_help_desc(L"シリアルポートをオープンします");
 					} else {
 						int n = e.key.keysym.scancode - SDL_SCANCODE_1;
-						if (n >= 0 && n < SerialFtdi::ser_count) {
+						if (n >= 0 && n < Serial2.ser_count) {
 							Serial2.close();
-							Serial2.open(SerialFtdi::ser_devname[n]);
+							Serial2.open(Serial2.ser_devname[n]);
 						}
 						
 						bhandled = true;
@@ -892,7 +939,7 @@ struct app_core_sdl {
 					} else {
 						Serial2.close();
 						
-						SerialFtdi::list_devices();
+						Serial2.list_devices();
 						update_help_screen();
 						
 						bhandled = false;
@@ -1428,7 +1475,7 @@ struct app_core_sdl {
 			}
 			if (render) {
 				// Update Alt Screen	
-				static FT_HANDLE ser2handle = (FT_HANDLE)(-1);
+				static int ser2handle = -1;
 				if (Serial2.get_handle() != ser2handle) {
 					ser2handle = Serial2.get_handle();
 					update_help_screen();
@@ -1559,7 +1606,7 @@ static void s_init() {
 	TWESYS::SysInit();
 	
 	// prepare serial port
-	SerialFtdi::list_devices();
+	Serial2.list_devices();
 	Serial2.set_hook_on_write(s_ser_hook_on_write);
 }
 
@@ -1602,10 +1649,11 @@ static void s_init_sdl() {
 
 	// Create Main window.
 	gWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-										SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN); // | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+										SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN
+										); // | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (gWindow == NULL)
 		exit_err("SDL_CreateWindow()");
-
+	
 	// system icon
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	// for Windows, choose 32x32 for Window ICON

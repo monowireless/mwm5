@@ -42,6 +42,7 @@ private:
 	std::unique_ptr< TWETerm_M5_Console> _pScr;
 	SDL_Rect _location;
 	SDL_Texture* _mTexture;
+	bool _b_render_texture;
 
 private:
 	void _setup_dafault_vars() {
@@ -84,6 +85,7 @@ public:
 		, _pScr()
 		, _location(loc)
 		, _mTexture(nullptr)
+		, _b_render_texture(true)
 	{
 		_pM5.reset(new M5Stack(loc.w, loc.h));
 		_pScr.reset(new TWETerm_M5_Console(32, 1, { 0, 0, uint16_t(loc.w), uint16_t(loc.h) }, * _pM5));
@@ -102,6 +104,7 @@ public:
 
 	// called every SDL events
 	bool update(SDL_Event& e);
+	bool update_core(SDL_Event& e);
 
 private:
 	static uint32_t callbackTimer1(uint32_t interval, void* param);

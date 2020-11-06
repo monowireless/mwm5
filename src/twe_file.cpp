@@ -1027,7 +1027,7 @@ bool TweDesc::load(const wchar_t* descfile, E_TWE_LANG::value_type lang) {
 					// check format of this line
 					SmplBuf_WChar l;
 					l << buff.c_str(); // with UTF-8 convert.
-					(void*)l.c_str(); // terminate internal buffer
+					(void)l.c_str(); // terminate internal buffer
 
 					// found next section "[...]", finish here
 					if (l.length() > 2 && l[0] == L'[' && l[-1] == L']') {

@@ -5,15 +5,12 @@
 
 #include "serial_ftdi.hpp"
 
+extern "C" int printf_(const char* format, ...);
+
 using namespace TWE;
 
-// Serial Devices
-TWE::ISerial::tsAryChar32 TWE::SerialFtdi::ser_devname(8);
-TWE::ISerial::tsAryChar32 TWE::SerialFtdi::ser_desc(8);
-int TWE::SerialFtdi::ser_count = 0;
-
 // implementation
-bool SerialFtdi::set_baudrate(int baud) {
+bool SerialFtdi::_set_baudrate(int baud) {
 	if (_ftHandle != NULL) {
 		FT_SetBaudRate(_ftHandle, ULONG(baud));
 		FT_SetDataCharacteristics(_ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
@@ -24,9 +21,8 @@ bool SerialFtdi::set_baudrate(int baud) {
 	return false;
 }
 
-extern "C" int printf_(const char* format, ...);
 
-int SerialFtdi::update() {
+int SerialFtdi::_update() {
 	if (_ftHandle != NULL) {
 		DWORD rxBytes = 0, rxBytesReceived = 0;
 
@@ -57,7 +53,7 @@ int SerialFtdi::update() {
 }
 
 
-int SerialFtdi::_list_devices(tsAryChar32& devname, tsAryChar32& desc) {
+int SerialFtdi::_list_devices(bool append_entry) {
 	FT_STATUS ftStatus;
 	FT_HANDLE ftHandleTemp;
 	DWORD numDevs = 0;
@@ -68,20 +64,23 @@ int SerialFtdi::_list_devices(tsAryChar32& devname, tsAryChar32& desc) {
 	char SerialNumber[16] = {};
 	char Description[64] = {};
 
+	// if true, append items
+	if (!append_entry) ser_count = 0;
+
 	//
 	// create the device information list
 	//
 	ftStatus = FT_CreateDeviceInfoList(&numDevs);
-	if (numDevs > (DWORD)desc.capacity()) {
-		numDevs = (DWORD)desc.capacity();
+	if (numDevs > (DWORD)ser_desc.capacity() - ser_count) {
+		numDevs = (DWORD)ser_desc.capacity() - ser_count;
 	}
 
 	if (ftStatus == FT_OK) {
 		//
 		// get information for device 0
 		//
-		int i, nStored;
-		for (i = 0, nStored = 0; i < (int)numDevs; i++) {
+		int i, nStored = 0;
+		for (i = 0; i < (int)numDevs; i++) {
 			ftStatus = FT_GetDeviceInfoDetail(i, &Flags, &Type, &ID, &LocId, SerialNumber, Description, &ftHandleTemp);
 			if (ftStatus == FT_OK) {
 				const char* strdev = nullptr;
@@ -103,24 +102,27 @@ int SerialFtdi::_list_devices(tsAryChar32& devname, tsAryChar32& desc) {
 				if (strdev != nullptr) {
 					// check if MONOSTICK or TWELITER
 #if defined(_MSC_VER) || defined(__MINGW32__)
-					strncpy_s(devname[nStored], SerialNumber, 32);
-					strncpy_s(desc[nStored], strdev, 32);
+					strncpy_s(ser_devname[ser_count + nStored], SerialNumber, 32);
+					strncpy_s(ser_desc[ser_count + nStored], strdev, 32);
 #elif defined(__APPLE__) || defined(__linux)
-					strncpy(devname[nStored], SerialNumber, 32);
-					strncpy(desc[nStored], strdev, 32);
+					strncpy(ser_devname[ser_count + nStored], SerialNumber, 32);
+					strncpy(ser_desc[ser_count + nStored], strdev, 32);
 #endif
 					++nStored;
 				}
 			}
 		}
 
+		ser_count += nStored;
 		return nStored;
 	}
 
 	return 0;
 }
 
-bool SerialFtdi::open(const char* devname) {
+bool SerialFtdi::_open(const char* devname) {
+	_session_id = -1; // closed.
+
 	if (!is_opened()) {
 		_ftStatus = FT_OpenEx((void*)devname, FT_OPEN_BY_SERIAL_NUMBER, &_ftHandle);
 
@@ -138,6 +140,7 @@ bool SerialFtdi::open(const char* devname) {
 #elif defined(__APPLE__) || defined(__linux)
 			strncpy(_devname, devname, sizeof(_devname));
 #endif
+			_session_id = _ftHandle == nullptr ? -1 : int(_ftHandle); // opened!
 			return true;
 		}
 		else {

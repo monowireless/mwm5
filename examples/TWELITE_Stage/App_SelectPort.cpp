@@ -20,8 +20,8 @@ void App_SelectPort::setup() {
 	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｼﾘｱﾙﾎﾟｰﾄ選択";
 
 	// add items
-	SerialFtdi::list_devices();
-	if (SerialFtdi::ser_count == 0) {
+	Serial2.list_devices();
+	if (Serial2.ser_count == 0) {
 		APP_HNDLR::new_hndlr(&App_SelectPort::hndlr_not_found);
 	} else {
 		APP_HNDLR::new_hndlr(&App_SelectPort::hndlr_list);
@@ -93,7 +93,7 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 			int n = c - '0';
 
 			// if single char is specified, select the port of the listed number.
-			if (n >= 1 && n <= SerialFtdi::ser_count) {
+			if (n >= 1 && n <= Serial2.ser_count) {
 				b_selected = true;
 
 				if (_n_arg == APP_ID) { // only if _n_arg is provided as APP_ID
@@ -102,7 +102,7 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 			}
 		}
 
-		for (int i = 0; i < SerialFtdi::ser_count; i++) {
+		for (int i = 0; i < Serial2.ser_count; i++) {
 			int n = _listPorts.push_back(""); // insert a new entry.
 
 			// get entry object
@@ -112,20 +112,20 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 
 			// set display name
 			item.clear();
-			item << SerialFtdi::ser_desc[i];
+			item << Serial2.ser_desc[i];
 
 			item << ' ';
 			item << '(';
-			item << SerialFtdi::ser_devname[i];
+			item << Serial2.ser_devname[i];
 			item << ')';
 			
 			// set device serial as second data.
 			item_second.clear();
-			item_second << SerialFtdi::ser_devname[i];
+			item_second << Serial2.ser_devname[i];
 
 
 			// if ser# of FTDI device is specified over settings, check with it.
-			if (!strncmp(SerialFtdi::ser_devname[i]
+			if (!strncmp(Serial2.ser_devname[i]
 				, (const char*)sAppData.au8_TWESTG_STAGE_FTDI_ADDR
 				, 8)) {
 				b_selected = true;
@@ -155,7 +155,6 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 					auto& wstr = _listPorts[i_sel].second;
 					devname << wstr;
 
-						
 					if (Serial2.is_opened()) Serial2.close();
 					Serial2.open((const char*)devname.c_str()); // open the device
 

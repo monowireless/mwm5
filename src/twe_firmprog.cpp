@@ -207,6 +207,9 @@ int TweProg::process_body(int c) {
 	//uint8_t U8_BAUD_DIV = 3; // The limit of Serial2 (HardwareSerial)
 	const uint8_t U8_BAUD_DIV = 2; // 1Mbps works with Serial2_IDF, however speed is not so fast, so 500kbps is good compromization.
 	const uint32_t U32_BAUD = (1000000UL / U8_BAUD_DIV);
+#elif defined(MWM5_BUILD_RASPI) // maybe ok with 1Mbps
+	const uint8_t U8_BAUD_DIV = 2; 
+	const uint32_t U32_BAUD = (1000000UL / U8_BAUD_DIV);
 #elif defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
 	const uint8_t U8_BAUD_DIV = 1;
 	const uint32_t U32_BAUD = (1000000UL / U8_BAUD_DIV);
