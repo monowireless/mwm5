@@ -67,8 +67,8 @@ bool twe_wid_button::update(SDL_Event& e) {
 	bool b;
 
 	if (e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP || e.type == SDL_FINGERMOTION) {
-		int x_s = (::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x; // - ::SCREEN_POS_X;
-		int y_s = (::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y; // - ::SCREEN_POS_Y;
+		int x_s = int((::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x); // - ::SCREEN_POS_X;
+		int y_s = int((::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y); // - ::SCREEN_POS_Y;
 
 		SDL_Event em;
 		memset(&em, 0, sizeof(SDL_Event));

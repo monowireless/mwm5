@@ -17,7 +17,7 @@ inline bool TWE_Button::_is_coord_in_range(int x, int y) {
 		if (coord.lin == _l_vis && coord.col >= _c_vis && coord.col < _c_vis + _len_vis) {
 			ret = true;
 		} else 
-		if (_additional_hot_area.is_coord_in_range(coord.col, coord.lin)) {
+		if (_additional_hot_area.is_coord_in_range(uint8_t(coord.col), uint8_t(coord.lin))) {
 			ret = true;
 		}
 	}

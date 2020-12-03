@@ -40,25 +40,35 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\gen\M5Stack.h" />
+    <ClInclude Include="..\..\src\gen\modctrl_duo.hpp" />
     <ClInclude Include="..\..\src\gen\modctrl_ftdi.hpp" />
+    <ClInclude Include="..\..\src\gen\modctrl_raspi.hpp" />
     <ClInclude Include="..\..\src\gen\sdl2_button.hpp" />
     <ClInclude Include="..\..\src\gen\sdl2_clipboard.hpp" />
     <ClInclude Include="..\..\src\gen\sdl2_common.h" />
     <ClInclude Include="..\..\src\gen\sdl2_icon.h" />
     <ClInclude Include="..\..\src\gen\sdl2_keyb.hpp" />
+    <ClInclude Include="..\..\src\gen\serial_common.hpp" />
+    <ClInclude Include="..\..\src\gen\serial_duo.hpp" />
     <ClInclude Include="..\..\src\gen\serial_ftdi.hpp" />
+    <ClInclude Include="..\..\src\gen\serial_srv_pipe.hpp" />
+    <ClInclude Include="..\..\src\gen\serial_termios.hpp" />
     <ClInclude Include="..\..\src\gen\twe_sdl_m5.h" />
     <ClInclude Include="..\..\src\version.h" />
     <ClInclude Include="..\..\src\win\msc_term.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\gen\modctrl_ftdi.cpp" />
+    <ClCompile Include="..\..\src\gen\modctrl_raspi.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_button.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_clipboard.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_icon.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_keyb.cpp" />
     <ClCompile Include="..\..\src\gen\sdl2_main.cpp" />
+    <ClCompile Include="..\..\src\gen\serial_common.cpp" />
     <ClCompile Include="..\..\src\gen\serial_ftdi.cpp" />
+    <ClCompile Include="..\..\src\gen\serial_srv_pipe.cpp" />
+    <ClCompile Include="..\..\src\gen\serial_termios.cpp" />
     <ClCompile Include="..\..\src\win\msc_term.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

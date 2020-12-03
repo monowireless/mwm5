@@ -42,6 +42,24 @@
     <ClInclude Include="..\..\src\gen\sdl2_icon.h">
       <Filter>gen</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gen\modctrl_duo.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\modctrl_raspi.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\serial_common.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\serial_duo.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\serial_termios.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\serial_srv_pipe.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\win\msc_term.cpp">
@@ -66,6 +84,18 @@
       <Filter>gen</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gen\sdl2_icon.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\modctrl_raspi.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\serial_common.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\serial_termios.cpp">
+      <Filter>gen</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gen\serial_srv_pipe.cpp">
       <Filter>gen</Filter>
     </ClCompile>
   </ItemGroup>

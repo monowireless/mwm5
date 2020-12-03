@@ -37,7 +37,6 @@ using namespace TWEUTILS;
 #define STR_ACTEXTRAS L"Act_extras"
 #define STR_MWSDK_TWENET L"TWENET"
 #define STR_MWSDK L"MWSDK"
-#define STR_MWSDK_SEL_FILE "MWSDK.ini"
 
 #define STR_WKS_ACTS L"Wks_Acts"
 #define STR_WKS_TWEAPPS L"Wks_TweApps"
@@ -214,7 +213,9 @@ bool TweFile::read_chunk(uint16_t n) {
 		_f.seek(_pos_chunk);
 		_f.read(_data.data(), CHUNK_SIZE);
 #else
-        _ifs.seekg(_pos_chunk);
+		// _ifs.seekg(0, _ifs.beg);
+		_ifs.clear();
+        _ifs.seekg(_pos_chunk, _ifs.beg);
         _ifs.read((char*)_data.data(), CHUNK_SIZE);
 #endif
 		return true;
@@ -552,8 +553,8 @@ void TweCwd::_get_sdk_dir() {
 		auto reg_twenet_dir = std::regex(R"(^MWSDK[ \t]*=[ \t]*([a-zA-Z0-9_\-]+))");
 
 		SmplBuf_ByteSL<1024> fname_usever;
-		fname_usever << make_full_path(get_dir_exe(), STR_MWSDK_SEL_FILE);
-
+		fname_usever << make_full_path(_dir_exe, make_file_ext(_filename_exe, L"ini"));
+		
 		std::ifstream ifs(fname_usever.c_str());
 		std::string buff;
 
@@ -932,7 +933,7 @@ bool TweDesc::load(const wchar_t* descfile, E_TWE_LANG::value_type lang) {
 				remove_endl(buff);
 
 				// remove BOM
-				if (buff.size() >= 3 && buff[0] == 0xEF && buff[1] == 0xBB && buff[2] == 0xBF) {
+				if (buff.size() >= 3 && buff[0] == char(0xEF) && buff[1] == char(0xBB) && buff[2] == char(0xBF)) {
 					buff.erase(0, 3);
 				}
 

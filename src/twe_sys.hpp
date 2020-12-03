@@ -151,6 +151,24 @@ namespace TWESYS {
 	 * @returns	The logical CPU count.
 	 */
 	extern int Get_Logical_CPU_COUNT();
+
+	/**
+	 * @fn	extern int Get_Physical_CPU_COUNT();
+	 *
+	 * @brief	Gets physical CPU count
+	 *
+	 * @returns	The physical CPU count.
+	 */
+	extern int Get_Physical_CPU_COUNT();
+
+	/**
+	 * @fn	extern int Get_CPU_COUNT();
+	 *
+	 * @brief	Gets CPU count
+	 *
+	 * @returns	The CPU count.
+	 */
+	extern int Get_CPU_COUNT();
 }
 
 #if defined(ESP32)

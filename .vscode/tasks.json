@@ -61,8 +61,8 @@
                 "command": "sh",
                 "args": [
                     "-c",
-                    "make -j$(sysctl -n hw.physicalcpu) OSX_COMPILERTYPE=gcc-9",
-                    //"make -j$(sysctl -n hw.physicalcpu) OSX_COMPILERTYPE=clang",
+                    //"make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=gcc-9",
+                    "make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=clang",
                     ""
                 ]
             },
@@ -102,7 +102,8 @@
                 "command": "sh",
                 "args": [
                     "-c",
-                    "make -j$(sysctl -n hw.physicalcpu) OSX_COMPILERTYPE=gcc-9 DEBUG_BUILD=1",
+                    //"make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=gcc-9 DEBUG_BUILD=1",
+                    "make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=clang DEBUG_BUILD=1",
                     ""
                 ]
             },

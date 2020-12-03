@@ -10,6 +10,7 @@
 #include "serial_ftdi.hpp"
 #include "serial_termios.hpp"
 #include "serial_duo.hpp"
+#include "serial_srv_pipe.hpp"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include "../win/msc_term.hpp"
@@ -24,12 +25,29 @@ extern void loop();
 
 extern TWEARD::M5Stack M5;
 
-extern TWE::SerialFtdi Serial;
-#if defined(MWM5_BUILD_RASPI)
-using SerialDuoRaspi = SerialDuo<SerialTermios, SerialFtdi>;
-extern SerialDuoRaspi Serial2;
-#else
-extern TWE::SerialFtdi Serial2;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	extern SerialFtdi Serial;
+	extern SerialFtdi Serial2;
+#elif defined(__APPLE__)
+#	if defined(MWM5_SERIAL_NO_FTDI)
+	extern SerialDummy Serial;
+	extern SerialSrvPipe Serial2;
+#	elif defined(MWM5_SERIAL_DUMMY)
+	extern SerialDummy Serial;
+	extern SerialDummy Serial2;
+#	else
+	extern SerialFtdi Serial;
+	extern SerialFtdi Serial2;
+#	endif
+#elif defined(__linux)
+	extern SerialFtdi Serial;
+#	if defined(MWM5_BUILD_RASPI)  && defined(MWM5_SERIAL_DUO)
+	extern SerialFtdi Serial;
+	using SerialDuoRaspi = SerialDuo<SerialTermios, SerialFtdi>;
+	extern SerialDuoRaspi Serial2;
+#	else
+	extern SerialFtdi Serial2;
+#	endif
 #endif
 
 namespace TWE {
@@ -41,10 +59,22 @@ namespace TWE {
 	/**
 	 * @brief	Writer object implementing IStereamOut to Serial2=TWE.
 	 */
-#if defined(MWM5_BUILD_RASPI) && defined(MWM5_SERIAL_DUO)
-	extern TWE::TWE_PutChar_Serial<SerialDuoRaspi> WrtTWE;
-#else
+#if defined(_MSC_VER) || defined(__MINGW32__)
 	extern TWE::TWE_PutChar_Serial<TWE::SerialFtdi> WrtTWE;
+#elif defined(__APPLE__)
+#	if defined(MWM5_SERIAL_NO_FTDI)
+	extern TWE::TWE_PutChar_Serial<TWE::SerialSrvPipe> WrtTWE;
+#	elif defined(MWM5_SERIAL_DUMMY)
+	extern TWE::TWE_PutChar_Serial<TWE::SerialDummy> WrtTWE;
+#	else
+	extern TWE::TWE_PutChar_Serial<TWE::SerialFtdi> WrtTWE;
+#	endif
+#elif defined(__linux)
+#	if defined(MWM5_BUILD_RASPI)  && defined(MWM5_SERIAL_DUO)
+	extern TWE::TWE_PutChar_Serial<SerialDuoRaspi> WrtTWE;
+#	else
+	extern TWE::TWE_PutChar_Serial<TWE::SerialFtdi> WrtTWE;
+#	endif
 #endif
 }
 

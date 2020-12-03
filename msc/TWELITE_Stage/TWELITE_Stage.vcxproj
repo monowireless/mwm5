@@ -138,11 +138,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\src\gen</IncludePath>
+    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\esp32_coding;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)..\examples\TWELITE_Stage\build;$(SolutionDir)..\examples\TWELITE_Stage\build</IncludePath>
+    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
@@ -185,9 +185,11 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_static.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_staticD.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -236,8 +238,9 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>ftd2xx.dll;SDL2.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>ftd2xx.lib;SDL2_staticD.lib;SDL2mainD.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
     <PostBuildEvent>
@@ -290,8 +293,9 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>ftd2xx.dll;SDL2.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>ftd2xx.lib;SDL2_static.lib;SDL2main.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
     <PostBuildEvent>
@@ -348,6 +352,7 @@
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ShowProgress>NotSet</ShowProgress>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -375,10 +380,12 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>ftd2xx.dll;SDL2.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>ftd2xx.lib;SDL2_static.lib;SDL2main.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ShowProgress>NotSet</ShowProgress>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -436,6 +443,9 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_NOTICE_0x01.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_Opening.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_basic.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_help.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\menu_info.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\_AppVer.cpp" />
@@ -456,6 +466,7 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\AppIDs.h" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Commander.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Console.hpp" />
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_CUE.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Glancer.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Interactive.hpp" />

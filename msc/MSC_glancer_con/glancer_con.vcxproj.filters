@@ -14,6 +14,21 @@
     <ClCompile Include="..\..\src\twe_utils_crc8.cpp">
       <Filter>src_from_mwm5</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\twe_fmt_twelite.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_fmt_pal.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_fmt_appio.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_fmt_appuart.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\twe_fmt_apptag.cpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\twe_common.hpp">
@@ -43,10 +58,37 @@
     <ClInclude Include="..\..\src\twe_utils_simplebuffer.hpp">
       <Filter>src_from_mwm5</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_twelite.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_pal.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_stdin.h">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_common.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_appio.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_appuart.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_actstd.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\twe_fmt_apptag.hpp">
+      <Filter>src_from_mwm5</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src_from_mwm5">
       <UniqueIdentifier>{6cf9ddc3-aace-4189-a24c-5b13e1825439}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\examples_con\glancer\Makefile" />
   </ItemGroup>
 </Project>

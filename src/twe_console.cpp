@@ -573,7 +573,7 @@ void ITerm::clear_line(uint8_t line, bool fill_blank) {
 }
 
 // move cursor
-void ITerm::move_cursor(uint8_t cols, uint8_t lines) {
+ITerm& ITerm::move_cursor(uint8_t cols, uint8_t lines) {
 	cursor_l = lines;
 	int16_t col_v = cols;
 
@@ -586,4 +586,6 @@ void ITerm::move_cursor(uint8_t cols, uint8_t lines) {
 
 	u32Dirty |= (1UL << cursor_l);
 	u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
+
+	return *this;
 }

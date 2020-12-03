@@ -196,6 +196,15 @@ typedef struct {
     TWESTG_tuDatum uDatum; // 格納データ (4bytes)
 } TWESTG_tsDatum;
 
+/*!
+ * メッセージ入れ替えのためのテーブル
+ */
+typedef struct {
+	uint8 u8Id;          //! 項目ID
+	const char* strName;  //! 項目名
+	const char* strDesc;  //! 詳細
+} TWESTG_tsMsgReplace;
+
 /**
  * 単一設定定義(tsElement)
  * 

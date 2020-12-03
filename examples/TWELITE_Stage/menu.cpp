@@ -61,6 +61,7 @@ const char str_appnames[int(E_APP_ID::_END_)][STR_APPNAMES_STRLEN] = {
 	"ターミナル",
 	"標準アプリ ビューア",
 	"ＰＡＬ ビューア",
+	"ＣＵＥ ビューア",
 	"グランサー(簡易モニタ)",
 	"コマンダー",
 	"", // _APP_END_
@@ -79,6 +80,7 @@ const wchar_t str_appurls[int(E_APP_ID::_END_)][256] = {
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/terminal",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/twelite81",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/pal_viewer",
+	L"https://stage.twelite.info/usage/screens/main_menu/viewer/cue_viewer",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/glancer",
 	L"https://stage.twelite.info/usage/screens/main_menu/viewer/commander",
 	L"", // _APP_END_

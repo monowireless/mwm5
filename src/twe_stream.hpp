@@ -39,6 +39,11 @@ namespace TWE {
 			while (*s != 0) operator ()((char_t)*s++);
 			return *this;
 		}
+		template <int N>
+		inline IStreamOut& operator << (const uint8_t(&s)[N]) { // const char*
+			for (int i = 0; i < N; i++) operator ()((char_t)s[i]);
+			return *this;
+		}
 		inline IStreamOut& operator << (const wchar_t* s) { // const char*
 			while (*s != 0) write_w(*s++);
 			return *this;

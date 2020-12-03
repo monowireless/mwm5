@@ -58,6 +58,13 @@ APPSRC+=twesettings/twesettings_weak.c
 
 APPSRC_CXX+=twe_firmprog.cpp
 APPSRC_CXX+=twe_fmt.cpp
+APPSRC_CXX+=twe_fmt_actstd.cpp
+APPSRC_CXX+=twe_fmt_appio.cpp
+APPSRC_CXX+=twe_fmt_apptag.cpp
+APPSRC_CXX+=twe_fmt_appuart.cpp
+APPSRC_CXX+=twe_fmt_common.cpp
+APPSRC_CXX+=twe_fmt_pal.cpp
+APPSRC_CXX+=twe_fmt_twelite.cpp
 APPSRC_CXX+=twe_sercmd_binary.cpp
 APPSRC_CXX+=twe_cui_listview.cpp
 APPSRC_CXX+=twe_cui_button.cpp
@@ -120,7 +127,9 @@ APPSRC_CXX+=gen/sdl2_keyb.cpp
 APPSRC_CXX+=gen/sdl2_clipboard.cpp
 APPSRC_CXX+=gen/sdl2_button.cpp
 APPSRC_CXX+=gen/sdl2_icon.cpp
+APPSRC_CXX+=gen/serial_common.cpp
 APPSRC_CXX+=gen/serial_ftdi.cpp
+APPSRC_CXX+=gen/serial_srv_pipe.cpp
 APPSRC_CXX+=gen/modctrl_ftdi.cpp
 ifeq ($(OSNAME),raspi)
 APPSRC_CXX+=gen/serial_common.cpp

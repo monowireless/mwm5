@@ -91,15 +91,15 @@ int SerialTermios::_list_devices(bool append_entry) {
     int nStored = 0;
     
     // entry
-    if (std::filesystem::exists("/dev/serial1")) {
-        ::strncpy(ser_devname[ser_count + nStored], "serial1", 32);
+    if (std::filesystem::exists("/dev/serial0")) {
+        ::strncpy(ser_devname[ser_count + nStored], "serial0", 32);
         ::strncpy(ser_desc[ser_count + nStored], "UART", 32);
         nStored++;
     }
 
     // entry
-    if (std::filesystem::exists("/dev/serial0")) {
-        ::strncpy(ser_devname[ser_count + nStored], "serial0", 32);
+    if (std::filesystem::exists("/dev/serial1")) {
+        ::strncpy(ser_devname[ser_count + nStored], "serial1", 32);
         ::strncpy(ser_desc[ser_count + nStored], "UART", 32);
         nStored++;
     }

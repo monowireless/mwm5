@@ -143,10 +143,16 @@ namespace TWESERCMD {
 		inline uint8_t state() { return u8state; }
 		// return true, if parsing has been completed.
 		inline bool is_complete() { return u8state == E_TWESERCMD_COMPLETE; }
-		// set payload object explicitly.
-		inline void set_payload(TWEUTILS::SmplBuf_Byte& bobj) {
+		// set payload data explicitly (from array object)
+		template <typename T>
+		inline void set_payload(T& bobj) {
 			payload.reserve_and_set_empty(bobj.size());
 			std::copy(bobj.begin(), bobj.end(), std::back_inserter(payload));
+		}
+		// set payload data explicitly (from set of begin/end pointers)
+		inline void set_payload(uint8_t *b, uint8_t *e) {
+			payload.reserve_and_set_empty(uint32_t(e - b));
+			while(b != e) { payload.push_back(*b); ++b; }
 		}
 		// get payload object.
 		inline TWEUTILS::SmplBuf_Byte& get_payload() { return payload; }

@@ -2,12 +2,26 @@
 APPSRC_CXX += glancer.cpp
 
 APPSRC_CXX += twe_fmt.cpp
+APPSRC_CXX += twe_fmt_actstd.cpp
+APPSRC_CXX += twe_fmt_appio.cpp
+APPSRC_CXX += twe_fmt_apptag.cpp
+APPSRC_CXX += twe_fmt_appuart.cpp
+APPSRC_CXX += twe_fmt_common.cpp
+APPSRC_CXX += twe_fmt_pal.cpp
+APPSRC_CXX += twe_fmt_twelite.cpp
 APPSRC_CXX += twe_sercmd.cpp
 APPSRC_CXX += twe_sercmd_ascii.cpp
 APPSRC_CXX += twe_utils_crc8.cpp
 
 APPSRC_HPP += twe_common.hpp
 APPSRC_HPP += twe_fmt.hpp
+APPSRC_HPP += twe_fmt_actstd.hpp
+APPSRC_HPP += twe_fmt_appio.hpp
+APPSRC_HPP += twe_fmt_apptag.hpp
+APPSRC_HPP += twe_fmt_appuart.hpp
+APPSRC_HPP += twe_fmt_common.hpp
+APPSRC_HPP += twe_fmt_pal.hpp
+APPSRC_HPP += twe_fmt_twelite.hpp
 APPSRC_HPP += twe_sercmd.hpp
 APPSRC_HPP += twe_sercmd_ascii.hpp
 APPSRC_HPP += twe_stream.hpp

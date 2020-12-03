@@ -53,15 +53,16 @@
 #include "../linux/linux_term.hpp"
 #endif
 
-#if defined(MWM5_BUILD_RASPI)
 #include "serial_common.hpp"
-#include "serial_duo.hpp"
-#include "modctrl_duo.hpp"
-#include "modctrl_raspi.hpp"
-#include "serial_termios.hpp"
+#if defined(MWM5_BUILD_RASPI)
+# include "serial_duo.hpp"
+# include "modctrl_duo.hpp"
+# include "modctrl_raspi.hpp"
+# include "serial_termios.hpp"
 #endif
 #include "modctrl_ftdi.hpp"
 #include "serial_ftdi.hpp"
+#include "serial_srv_pipe.hpp"
 
 #include "esp32/esp32_lcd_color.h"
 
@@ -91,6 +92,8 @@ static void signalHandler( int signum );
 
 static void s_ser_hook_on_write(const uint8_t* p, int len);
 
+static int _Get_Physical_CPU_COUNT_query_by_external_command();
+
 #ifdef _DEBUG_MESSAGE
 #define DBGOUT(...) fprintf(stderr, __VA_ARGS__) 
 #else
@@ -100,6 +103,9 @@ static void s_ser_hook_on_write(const uint8_t* p, int len);
 /***********************************************************
  * VARIABLES
  ***********************************************************/
+
+ /** @brief	Number of physical cpus */
+static int _physical_cpu_count = 0;
 
 // exit flag
 bool g_quit_sdl_loop = false;
@@ -141,26 +147,52 @@ TWE_GetChar_CONIO con_keyboard;
 TWE_PutChar_CONIO TWE::WrtCon;
 
 // The Serial Device
-SerialFtdi Serial;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	SerialFtdi Serial;
+	SerialFtdi Serial2;
+	TWE_PutChar_Serial<SerialFtdi> TWE::WrtTWE(Serial2);
+	TweModCtlFTDI obj_ftdi(Serial2);
+	TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialFtdi, TweModCtlFTDI>(Serial2, obj_ftdi));
+#elif defined(__APPLE__)
+#	if defined(MWM5_SERIAL_NO_FTDI)
+	SerialDummy Serial;
+	SerialSrvPipe Serial2(nullptr);
+	TWE_PutChar_Serial<SerialSrvPipe> TWE::WrtTWE(Serial2);
+	TweModCtlSerialSrvPipe modctl_ser2(Serial2);
+	TweProg TWE::twe_prog(new TweBlProtocol<SerialSrvPipe, TweModCtlSerialSrvPipe>(Serial2, modctl_ser2));
+#	elif defined(MWM5_SERIAL_DUMMY)
+	SerialDummy Serial;
+	SerialDummy Serial2;
+	TWE_PutChar_Serial<SerialDummy> TWE::WrtTWE(Serial2);
+	TweModCtlDummy obj_dummy;
+	TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialDummy, TweModCtlDummy>(Serial2, obj_dummy));
+#	else
+	SerialFtdi Serial;
+	SerialFtdi Serial2;
+	TWE_PutChar_Serial<SerialFtdi> TWE::WrtTWE(Serial2);
+	TweModCtlFTDI obj_ftdi(Serial2);
+	TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialFtdi, TweModCtlFTDI>(Serial2, obj_ftdi));
+#	endif
+#elif defined(__linux)
+	SerialFtdi Serial;
+#	if defined(MWM5_BUILD_RASPI)  && defined(MWM5_SERIAL_DUO)
+	SerialFtdi Serial;
+	// Serial2 is supporting both UART(SerialTermios) and FTDI(SerialFTDI).
+	SerialDuoRaspi Serial2;
+	TWE_PutChar_Serial<SerialDuoRaspi> TWE::WrtTWE(Serial2);
 
-#if defined(MWM5_BUILD_RASPI)  && defined(MWM5_SERIAL_DUO)
-// Serial2 is supporting both UART(SerialTermios) and FTDI(SerialFTDI).
-SerialDuoRaspi Serial2;
-TWE_PutChar_Serial<SerialDuoRaspi> TWE::WrtTWE(Serial2);
-
-// TWE BOOTLOADER PROTOCOL
-using TweModCtlDuoRaspi = TweModCtlDuo<SerialDuoRaspi, TweModCtlRaspi, TweModCtlFTDI>;
-TweModCtlRaspi objModC_RaspiGPIO; // GPIO
-TweModCtlFTDI objModC_FTDI(Serial2._objD); // FTDI Bitbang
-TweModCtlDuoRaspi objModC_raspi(Serial2, objModC_RaspiGPIO, objModC_FTDI); // combined object
-TweProg TWE::twe_prog(new TweBlProtocol<SerialDuoRaspi, TweModCtlDuoRaspi>(Serial2, objModC_raspi));
-#else
-SerialFtdi Serial2;
-TWE_PutChar_Serial<SerialFtdi> TWE::WrtTWE(Serial2);
-
-// TWE BOOTLOADER PROTOCOL
-TweModCtlFTDI obj_ftdi(Serial2);
-TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialFtdi, TweModCtlFTDI>(Serial2, obj_ftdi));
+	// TWE BOOTLOADER PROTOCOL
+	using TweModCtlDuoRaspi = TweModCtlDuo<SerialDuoRaspi, TweModCtlRaspi, TweModCtlFTDI>;
+	TweModCtlRaspi objModC_RaspiGPIO; // GPIO
+	TweModCtlFTDI objModC_FTDI(Serial2._objD); // FTDI Bitbang
+	TweModCtlDuoRaspi objModC_raspi(Serial2, objModC_RaspiGPIO, objModC_FTDI); // combined object
+	TweProg TWE::twe_prog(new TweBlProtocol<SerialDuoRaspi, TweModCtlDuoRaspi>(Serial2, objModC_raspi));
+#	else
+	SerialFtdi Serial2;
+	TWE_PutChar_Serial<SerialFtdi> TWE::WrtTWE(Serial2);
+	TweModCtlFTDI obj_ftdi(Serial2);
+	TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialFtdi, TweModCtlFTDI>(Serial2, obj_ftdi));
+#	endif
 #endif
 
 // the M5 stack instance
@@ -807,8 +839,8 @@ struct app_core_sdl {
 
 			// finger
 			if (e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP || e.type == SDL_FINGERMOTION) {
-				int x_s = (::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x - ::SCREEN_POS_X;
-				int y_s = (::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y - ::SCREEN_POS_Y;
+				int x_s = int((::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x - ::SCREEN_POS_X);
+				int y_s = int((::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y - ::SCREEN_POS_Y);
 
 				int x = x_s * 640 / ::SCREEN_WIDTH / 2;
 				int y = y_s * 480 / ::SCREEN_HEIGHT / 2;
@@ -1591,6 +1623,9 @@ static void s_init() {
 	the_cwd.change_dir(the_cwd.get_dir_exe());
 #endif
 
+	// find physical CPU count
+	_physical_cpu_count = _Get_Physical_CPU_COUNT_query_by_external_command();
+
 	// DLL delay loading (only for VC++)
 #if defined(_MSC_VER)  // || defined(__MINGW32__) // not for MINGW32, because /DELAYLOAD is not supported.
 	SetDllDirectoryW(make_full_path(the_cwd.get_dir_exe(), L"dll").c_str()); // DLL directory, needs to specify /DELAYLOAD (VC++).
@@ -1604,8 +1639,28 @@ static void s_init() {
 
 	// the OS dependent initialize
 	TWESYS::SysInit();
-	
+
 	// prepare serial port
+#if defined(__APPLE__) && defined(MWM5_SERIAL_NO_FTDI)
+	{	// load serial server (if not preset, program cannot be run)
+		SmplBuf_ByteSL<1024> buff;
+		buff << make_full_path(the_cwd.get_dir_exe(), L"TWELITE_Stage/bin/sersrv_ftdi.command");
+
+		if (!std::filesystem::exists(buff.c_str())) { // find current dir 
+			buff.clear();
+			buff << make_full_path(the_cwd.get_dir_exe(), "sersrv_ftdi.command");
+		}
+
+		if (!std::filesystem::exists(buff.c_str())) {
+			exit_err("Cannot find Serial Server command (sersrv_ftdi.command)!");
+		}
+		else {
+			if (!Serial2.open_sersrv(buff.c_str())) {
+				exit_err("Cannot open Serial Server command (sersrv_ftdi.command)!");
+			}
+		}
+	}
+#endif
 	Serial2.list_devices();
 	Serial2.set_hook_on_write(s_ser_hook_on_write);
 }
@@ -1703,7 +1758,7 @@ static void s_sketch_loop() {
 		if (nSer2 >= 1) {
 			for (int i = 0; i < nSer2; i++) {
 				char_t c = Serial2._get_last_buf(i);
-				con_screen << char_t(Serial2._get_last_buf(i));
+				con_screen << c;
 				the_app_core->log_write(c);
 			}
 		}
@@ -1868,6 +1923,90 @@ int TWESYS::Get_Logical_CPU_COUNT() {
 
 
 /**
+ * @fn	int _Get_Physical_CPU_COUNT_init()
+ *
+ * @brief	Gets physical CPU count initialize
+ *
+ * @returns	The physical CPU count initialize.
+ */
+static int _Get_Physical_CPU_COUNT_query_by_external_command() {
+	int cpu_count = 0;
+#if defined(ESP32)
+	return 1; // actuall 2 cores
+#elif defined(_MSC_VER) || defined(__MINGW32__)
+	/*
+		@echo off
+		for /f "tokens=*" %%f in ('wmic cpu get NumberOfCores /value ^| find "="') do set %%f
+	*/
+	TweCmdPipe cmd("wmic cpu get NumberOfCores /value");
+	if (!cmd) return 0;
+	if (cmd.available()) {
+		SmplBuf_Byte buff;
+
+		while (cmd.readline(buff)) {
+			// remove endl.
+			remove_endl(buff);
+
+			if (buff.size() > 0) {
+				static const char KEYSTR[] = "NumberOfCores=";
+				if (beginsWith_NoCase(buff, KEYSTR)) {
+					auto ptr = buff.c_str();
+					cpu_count = atoi(ptr + sizeof(KEYSTR) - 1);
+				}
+			}
+		}
+	}
+	if (cmd) cmd.close();
+	return cpu_count;
+#elif defined(__APPLE__) || defined(__linux)
+# if defined(__APPLE__)
+	TweCmdPipe cmd("sysctl -n hw.physicalcpu");
+# elif defined(__linux)
+	TweCmdPipe cmd("grep \"^cpu.cores\" /proc/cpuinfo | sed -e \"s/ [\\t]//g\" -e \"s/cpucores://\"");
+# endif
+	if (cmd.available()) {
+		SmplBuf_Byte buff;
+
+		while (cmd.readline(buff)) {
+			// remove endl.
+			remove_endl(buff);
+			if (buff.size() > 0) {
+				auto ptr = buff.c_str();
+				cpu_count = atoi(ptr);
+				if (cpu_count > 0 && cpu_count <= 128) break;
+			}
+		}
+	}
+
+	if (cmd) cmd.close();
+	return cpu_count;
+#endif
+}
+
+int TWESYS::Get_Physical_CPU_COUNT() {
+	return _physical_cpu_count;
+}
+
+/**
+ * @fn	int TWESYS::Get_CPU_COUNT()
+ *
+ * @brief	Gets CPU count
+ *
+ * @returns	The CPU count, limited 16 cpus as maximum.
+ */
+int TWESYS::Get_CPU_COUNT() {
+	int n = 0;
+
+	if (_physical_cpu_count) n = _physical_cpu_count;
+	else n = TWESYS::Get_Logical_CPU_COUNT() / 2;
+
+	if (n == 0) n = 1;
+	if (n > 16) n = 16;
+
+	return n;
+}
+
+/**
  * @fn	int main(int argc, char* args[])
  *
  * @brief	Main entry-point for this application
@@ -1911,6 +2050,11 @@ int main(int argc, char* args[]) {
 	
 	// on exit 
 	con_screen.close_term(); // shall take the screen back before calling _exit().
+
+#if defined(__APPLE__) && defined(MWM5_SERIAL_NO_FTDI)
+	// close serial server
+	Serial2.close_sersrv();
+#endif
 
 #if defined(__APPLE__) || defined(__linux)
 	int apiret = system("clear"); (void)apiret;

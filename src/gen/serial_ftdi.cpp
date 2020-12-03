@@ -1,7 +1,7 @@
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
-#if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
+#if !defined(MWM5_SERIAL_NO_FTDI) && (defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__))
 
 #include "serial_ftdi.hpp"
 
@@ -140,7 +140,7 @@ bool SerialFtdi::_open(const char* devname) {
 #elif defined(__APPLE__) || defined(__linux)
 			strncpy(_devname, devname, sizeof(_devname));
 #endif
-			_session_id = _ftHandle == nullptr ? -1 : int(_ftHandle); // opened!
+			_session_id = _ftHandle == nullptr ? -1 : (*(uint64_t*)(void*)_ftHandle) & 0xFFFFFFFF; // opened!
 			return true;
 		}
 		else {

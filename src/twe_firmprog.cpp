@@ -50,7 +50,7 @@ bool ITweBlProtocol::receive(int c) {
 	} else 
 	if (_resp_state == RESP_STAT_PROCESS && c >= 0) {
 		if (_resp_buf.length() == 0) {
-			if (c < 2) {
+			if (c < 2) { // first byte is length of packet, len < 2 is too short.
 				_resp_state = RESP_STAT_ERROR;
 				return true;
 			}
@@ -100,7 +100,13 @@ const TweProg::E_ST_TWEBLP TweProg::BL_PROTOCOL_ERASE_AND_WRITE[] = {
 	E_ST_TWEBLP::IDENTIFY_FLASH,
 	E_ST_TWEBLP::SELECT_FLASH,
 	E_ST_TWEBLP::ERASE_FLASH,
+#if defined(__APPLE__) && defined(MWM5_SERIAL_NO_FTDI)
 	E_ST_TWEBLP::WRITE_FLASH_FROM_FILE,
+	E_ST_TWEBLP::VERIFY_FLASH,
+#else
+	E_ST_TWEBLP::WRITE_FLASH_FROM_FILE,
+	E_ST_TWEBLP::VERIFY_FLASH,
+#endif
 	E_ST_TWEBLP::NONE // TERRMINATE
 };
 
@@ -461,6 +467,85 @@ int TweProg::process_body(int c) {
 			if (berr) return 0;
 			else return ret ? 1 : 2; // 2 continue
 		}	
+		break;
+
+	case E_ST_TWEBLP::VERIFY_FLASH:
+		if (c == EVENT_NEW_STATE) {
+			_firm.n_blk = 0;
+		}
+		if (c == EVENT_NEW_STATE || c == EVENT_PROCEED) {
+			uint32_t u32addr = _firm.n_blk * _firm.PROTOCOL_CHUNK;
+			if (!_bl->request(0x0B, 0x0C
+				, uint8_t(u32addr & 0xff)
+				, uint8_t((u32addr >> 8) & 0xff)
+				, uint8_t((u32addr >> 16) & 0xff)
+				, uint8_t((u32addr >> 24) & 0xff)
+				, uint8_t(128)
+			)
+				) {
+				error_state();
+				ret = false;
+			}
+			else ret = true;
+
+			if (_protocol_cb && c == EVENT_NEW_STATE) // NEW STATE occurrs at only the first call.
+				_protocol_cb(E_ST_TWEBLP::VERIFY_FLASH, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
+		}
+		else
+		if (c == EVENT_RESPOND) {
+			file_type_shared file = _firm.file.lock();
+			if (_firm.file.expired()) {
+				return false;
+			}
+
+			file->seek(_firm.n_blk * _firm.PROTOCOL_CHUNK + 4);
+			file->read(_firm.buf, _firm.PROTOCOL_CHUNK);
+
+			auto&& payl = _bl->get_response_buf();
+
+			ret = false;
+			bool berr = true;
+
+			if (payl.length() == 0x84) {
+				// payl[0] : length (FIXED)
+				// payl[1] : RESPOND ID (FIXED)
+				// payl[2] : status (0x00: success)
+				// payl[3..] : 128bytes block
+				if (payl[2] == 0) { // success
+					uint32_t u32addr = _firm.n_blk * _firm.PROTOCOL_CHUNK; // start address
+					uint32_t u32addr_e = u32addr + _firm.PROTOCOL_CHUNK; // end+1 address
+					if (u32addr_e > file->size()) u32addr_e = file->size();
+
+					// compare file content with read value
+					for (int i = 0; (i < _firm.PROTOCOL_CHUNK) && (u32addr + i < u32addr_e); i++) {
+						if (payl[3 + i] != _firm.buf[i]) {
+							// verify error
+							return 0; // error
+						}
+					}
+
+					// set as next block
+					_firm.n_blk++;
+
+					// progress 0..1024
+					int progress = (1024 * _firm.n_blk + 512) / _firm.n_blk_e;
+					if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::VERIFY_FLASH, EVENT_RESPOND, TWE::APIRET(true, progress), _bl->get_response_buf(), _pobj);
+
+					if (_firm.n_blk >= _firm.n_blk_e) {
+						// the last packet
+						ret = 1;
+					}
+					else {
+						// next block request
+						process_body(EVENT_PROCEED);
+					}
+					berr = false;
+				}
+			}
+			if (berr) error_state();
+			if (berr) return 0;
+			else return ret ? 1 : 2; // 2 continue
+		}
 		break;
 	default:
 		break;

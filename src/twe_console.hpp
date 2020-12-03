@@ -446,10 +446,16 @@ namespace TWETERM {
 		// set screen buffer
 		void set_screen_buf(GChar* ptr, uint8_t oldlines, uint8_t oldcols);
 
-		// cursor
+		// change cursor mode
 		inline void set_cursor(uint8_t m) { cursor_mode = m; }
 
-		void move_cursor(uint8_t cols, uint8_t lines);
+		// move cursor position
+		ITerm& move_cursor(uint8_t cols, uint8_t lines);
+
+		ITerm& operator ()(int x, int y) {
+			move_cursor(x, y);
+			return *this;
+		}
 
 		// wrap text
 		inline void set_wraptext(bool b) { wrap_mode = b;  }

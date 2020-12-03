@@ -202,6 +202,7 @@ namespace TWE {
 			READ_MAC_CUSTOM,
 			ERASE_FLASH,
 			WRITE_FLASH_FROM_FILE,
+			VERIFY_FLASH,
 			FINISH = 0x81,
 			FINISH_ERROR,
 			MASK_FINISH = 0x8F
@@ -269,7 +270,7 @@ namespace TWE {
 		struct sFirm {
 			static const size_t PROTOCOL_CHUNK = 128;
 			file_type_weak file;
-			uint8_t buf[PROTOCOL_CHUNK];
+			uint8_t buf[PROTOCOL_CHUNK+64];
 			size_t len;
 			uint16_t n_blk;
 			uint16_t n_blk_e;

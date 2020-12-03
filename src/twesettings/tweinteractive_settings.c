@@ -136,7 +136,21 @@ static void s_TWEINTCT_vSerUpdateScreen_settings(TWEINTRCT_tsContext *psIntr, in
 		); // デバッグ表示
 #endif
 
-		TWE_fprintf(psIntr->pStream, ") %s"_TWELB, psIntr->psFinal->apEle[i]->sStr.strName);
+		{
+			// 設定名（入れ替えテーブルの探索）
+			const char *name = psIntr->psFinal->apEle[i]->sStr.strName;
+			const TWESTG_tsMsgReplace *p = psIntr->msgReplace;
+			if(p) {
+				while(p->u8Id != 0xFF) { 
+					if (p->u8Id == psIntr->psFinal->apEle[i]->u16Id) {
+						name = p->strName;
+						break;
+					}
+					p++;
+				} 
+			}
+			TWE_fprintf(psIntr->pStream, ") %s"_TWELB, name);
+		}
 
 		// invert close
 		if (i == i_sel) {
@@ -354,12 +368,20 @@ void TWEINTCT_vProcessInputByte_settings(TWEINTRCT_tsContext *psIntr, TWEINTRCT_
 			
 			s_TWEINTCT_vSerUpdateScreen_settings(psIntr, i);
 			
-			// TWE_fprintf(psIntr->pStream, _TWELB "--- Set %s ---" _TWELB, pE->sStr.strName);
-
-			if (pE->sStr.strDesc[0] != '\0') {
-				TWE_fprintf(psIntr->pStream, _TWELB"%s", pE->sStr.strDesc);
+			// 設定名（入れ替えテーブルの探索）
+			const char *desc = psIntr->psFinal->apEle[i]->sStr.strDesc;
+			const TWESTG_tsMsgReplace *p = psIntr->msgReplace;
+			if(p) {
+				while(p->u8Id != 0xFF) { 
+					if (p->u8Id == psIntr->psFinal->apEle[i]->u16Id) {
+						desc = p->strDesc;
+						break;
+					}
+					p++;
+				}
 			}
-
+			if (desc[0] != '\0') TWE_fprintf(psIntr->pStream, _TWELB"%s", desc);
+		
 			TWE_fprintf(psIntr->pStream, _TWELB "Input: ", pE->sStr.strLabel);
 			TWEINPSTR_vStart(psIntr->pSerInpStr, pE->sFormat.u8Format & E_TWEINPUTSTRING_DATATYPE_STANDARD_MASK, pE->sFormat.u8InputMaxLength, i);
 

@@ -60,6 +60,18 @@ TWE::TweProg::E_MOD_TYPE App_FirmProg::_firmfile_modtype;
 // pass the Parent node's object to change_app().
 App_FirmProg* App_FirmProg::SubScreen::_parent = nullptr;
 
+// color table
+static const uint16_t COLTBL_MAIN[8] = {
+	BLACK,
+	RED,
+	color565(31, 191, 31), // GREEN
+	YELLOW,
+	color565(127, 127, 255), // BLUE,
+	color565(255, 0, 142), // MAGENTA,
+	CYAN,
+	ALMOST_WHITE
+};
+
 /**
  * @fn	static int change_app(TWE::APP_MGR& the_app, int n, int prev_app, int exit_id)
  *
@@ -186,12 +198,17 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 			return Screen_FileBrowse::SCR_ID;
 
 		case SubScreen::EXIT_NEXT:
+			
 			// switch to Console.
-			if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 0) {
-				::the_app.exit(APP_ID, int(E_APP_ID::INTERACTIVE));
-			}
-			else {
-				::the_app.exit(APP_ID, int(E_APP_ID::CONSOLE));
+			switch (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN) {
+			case 0: ::the_app.exit(APP_ID, int(E_APP_ID::INTERACTIVE)); break; // INTERACTIVE MENU
+			case 1: ::the_app.exit(APP_ID, int(E_APP_ID::CONSOLE)); break; // TERMINAL
+			case 2:
+				::the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
+#ifndef ESP32
+				Serial2.reopen(); // try to re-open the Serial device (in case of re-attaching device)
+#endif
+				break; // last menu
 			}
 			::the_sys_console.clear_screen();
 			::twe_prog.reset_module();
@@ -279,16 +296,18 @@ void App_FirmProg::setup_screen() {
 	the_screen.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 	the_screen.force_refresh();
 
-	// main screen area
+	// middle area
 	the_screen_l.set_font(13);
 	the_screen_l.set_color(default_fg_color, BLACK);
 	the_screen_l.set_cursor(0); // 0: no 1: curosr 2: blink cursor
+	the_screen_l.set_color_table(COLTBL_MAIN); // set color palette
 	the_screen_l.force_refresh();
 
 	// bottom area
 	the_screen_b.set_font(1);
 	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
 	the_screen_b.set_cursor(0);
+	the_screen_b.set_color_table(COLTBL_MAIN); // set color palette
 	the_screen_b.force_refresh();
 
 	// bottom area
@@ -885,7 +904,7 @@ void App_FirmProg::Screen_FatalError::setup() {
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     --/長押:MENU          MENU/--               --/--";
+	the_screen_c << "     --/長押:MENU         RETRY/--               --/--";
 
 	auto i = _listFiles.get_selected_index();
 	if (i != -1) {
@@ -909,8 +928,13 @@ void App_FirmProg::Screen_FatalError::loop() {
 			exit(EXIT_BACK_TO_MENU); 
 			return;
 
+		case KeyInput::KEY_ENTER:
 		case KeyInput::KEY_BUTTON_B:
-			exit(EXIT_BACK_TO_MENU);
+#ifndef ESP32
+			Serial2.reopen();
+#endif
+			// ::the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
+			::the_app.exit(0, (int)E_APP_ID::FIRM_PROG);
 			return;
 
 		case KeyInput::KEY_BUTTON_B_LONG:
@@ -1101,6 +1125,10 @@ void App_FirmProg::Screen_ModIdentify::start_protocol() {
 	// if the protocol is still on going, don't proceed it.
 	if (_b_protocol) return;
 	
+#ifndef ESP32
+	Serial2.reopen();
+#endif
+
 	// flush rx buffer at first.
 	twe_prog.reset_hold_module(); // hold module (to stop serial message)
 	update_serial_keyb_input(true); // update input queue (grab remaining buffer data into the_uart_queue)
@@ -1235,11 +1263,17 @@ void App_FirmProg::Screen_FileProg::hndlr_success(event_type ev, arg_type arg) {
 									   "\033[42;30m成功:設定\033[0m"
 														   "/--                ↓/--";
 		}
-		else {
+		else if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 1) {
 			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
 			the_screen_c << "     ↑/長押:MENU    " 
 									  "\033[42;30m成功:ﾀｰﾐﾅﾙ\033[0m"
 														   "/--                ↓/--";
+		}
+		else {
+			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+			the_screen_c << "     ↑/長押:MENU    " 
+									  "\033[42;30m成功:戻る\033[0m"
+														  "/--                ↓/--";
 
 		}
 		break;
@@ -1396,7 +1430,8 @@ void App_FirmProg::Screen_FileProg::cb_protocol(
 		"READ_CHIPID",
 		"READ_MAC_CUSTOM",
 		"ERASE_FLASH",
-		"WRITE_FLASH"
+		"WRITE_FLASH",
+		"VERIFY_FLASH"
 	};
 	
 	if (pobj) {
@@ -1406,10 +1441,13 @@ void App_FirmProg::Screen_FileProg::cb_protocol(
 
 		if (req_or_resp == TweProg::EVENT_NEW_STATE) {
 			if (cmd == TweProg::E_ST_TWEBLP::WRITE_FLASH_FROM_FILE) {
-				scm << crlf << crlf << L"ファームウェアを書き込んでいます..." << crlf;
+				scm << crlf << crlf << L"\033[Kファームウェアを書き込んでいます..." << crlf;
 				scp << crlf;
-			}
-			else {
+			} else
+			if (cmd == TweProg::E_ST_TWEBLP::VERIFY_FLASH) {
+				scm << L"\033[A\033[G\033[K書き込み内容確認(ベリファイ)中..." << crlf;
+				scp << crlf;
+			} else {
 				scp << crlf
 					<< strcmd[(int)cmd]
 					<< "\033[7;1m>\033[0m\033[7m"
@@ -1424,9 +1462,14 @@ void App_FirmProg::Screen_FileProg::cb_protocol(
 		}
 		else {
 			const int barmax = 32;
-			if (cmd == TweProg::E_ST_TWEBLP::WRITE_FLASH_FROM_FILE) {
+			if (cmd == TweProg::E_ST_TWEBLP::WRITE_FLASH_FROM_FILE || cmd == TweProg::E_ST_TWEBLP::VERIFY_FLASH) {
 				int progres = (evarg.get_value() + barmax / 2) / 32; // 0..1023 -> 0..16
-				scm << "\033[G|\033[42;30m"; // line heed
+
+				if (cmd == TweProg::E_ST_TWEBLP::WRITE_FLASH_FROM_FILE)
+					scm << "\033[G|\033[44;30m"; // write
+				else
+					scm << "\033[G|\033[42;30m"; // verify
+
 				for (int i = 0; i < progres && i < barmax; i++)
 					scm << ' ';
 				scm << "\033[0m";
@@ -1726,14 +1769,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 		_act_dir = make_full_path(_parent->_build_workspace, _parent->_build_project, _parent->_build_name, L"build");
 		the_cwd.change_dir(_act_dir);
 
+		// set parallel jobs count.
 		int ct_cpu = sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS;
 		if (ct_cpu == 0) {
-			ct_cpu = TWESYS::Get_Logical_CPU_COUNT();
-#if defined(MWM5_BUILD_RASPI)
-			if (ct_cpu >= 4) ct_cpu--; // raspi3B, limit to 3core use.
-#else
-			ct_cpu /= 2; // use half count (mostly run in HyperThreading or SMT)
-#endif
+			ct_cpu = TWESYS::Get_CPU_COUNT(); // Physical CPU count (or Logical/2 if failed to get Physical CPU count)
+			if (ct_cpu >= 4) ct_cpu = ct_cpu - 1; // free one core not to make system too busy.
 		}
 
 		SmplBuf_ByteSL<1024> cmdstr;

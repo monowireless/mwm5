@@ -24,7 +24,7 @@
             "cppStandard": "c++14"
         },
         {
-            "name": "Mac(CLANG)",
+            "name": "Mac(CLANG-X64)",
             "intelliSenseMode": "clang-x64",
             "includePath": [
                 "${workspaceFolder}",

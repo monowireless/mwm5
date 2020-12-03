@@ -290,73 +290,141 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 		// display sensor data
 		if (identify_packet_type(spobj) == E_PKT::PKT_PAL) {
 			auto&& pal = refTwePacketPal(spobj);
+			PalEvent ev;
 
-			// display a kind of PAL PCB.
-			switch(pal.u8palpcb) {
-				case E_PAL_PCB::MAG: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_CYAN) << "開閉"; break;
-				case E_PAL_PCB::AMB: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "環境"; break;
-				case E_PAL_PCB::MOT: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "加速"; break;
-				case E_PAL_PCB::NOTICE: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_RED) << "通知"; break;
-				default: _trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_WHITE) << "不明";
+			// acquire event data.
+			if (pal.has_PalEvent()) {
+				ev = pal.get_PalEvent();
 			}
-			_trm << TermAttr(TERM_ATTR_OFF) << ':';
-			
-			if (pal.is_PalEvent()) { // If includes event data.
-				_trm << "イベント=" << int(pal.get_PalEvent().u8event_id);
-			} else switch (pal.u8palpcb) { // Not including event data, display PAL PCB specific data.
-			case E_PAL_PCB::MAG:
-			{
-				// generate pal board specific data structure.
-				PalMag mag = pal.get_PalMag();
 
-				if (mag.u8MagStat == 0) {
+			switch (pal.get_PalDataType()) {
+				case E_PAL_DATA_TYPE::EVENT_ONLY:
+				{
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_RED) << "イベント" << TermAttr(TERM_ATTR_OFF) << ':';
+					_trm << " イベント=" << int(pal.get_PalEvent().u8event_id);
+				}
+				break;
+
+				case E_PAL_DATA_TYPE::MAG_STD:
+				{
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_CYAN) << "開閉" << TermAttr(TERM_ATTR_OFF) << ':';
+
+					// generate pal board specific data structure.
+					PalMag mag = pal.get_PalMag();
+
+					if (mag.u8MagStat == 0) {
+						_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
+						_trm << "OPEN(開)";
+						_trm << TermAttr(TERM_ATTR_OFF);
+					}
+					else {
+						_trm << "CLOSE(閉)";
+					}
+				}
+				break;
+
+				case E_PAL_DATA_TYPE::AMB_STD:
+				{
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "環境" << TermAttr(TERM_ATTR_OFF) << ':';
+
+					// generate pal board specific data structure.
+					PalAmb amb = pal.get_PalAmb();
+
 					_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
-					_trm << "OPEN(開)";
+					_trm << printfmt(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)amb.i16Temp / 100.0);
+					_trm << TermAttr(TERM_ATTR_OFF);
+
+					_trm << ' ';
+
+					_trm << TermAttr(TERM_COLOR_FG_BLUE | TERM_BOLD);
+					_trm << printfmt(_bwide ? "湿度=%02d%%" : "%02d%%", (amb.u16Humd + 50) / 100);
+					_trm << TermAttr(TERM_ATTR_OFF);
+
+					_trm << ' ';
+
+					_trm << TermAttr(TERM_COLOR_FG_YELLOW | TERM_BOLD);
+					_trm << printfmt(_bwide ? "照度=%4d" : "L%4d", amb.u32Lumi > 9999 ? 9999 : amb.u32Lumi);
 					_trm << TermAttr(TERM_ATTR_OFF);
 				}
-				else {
-					_trm << "CLOSE(閉)";
+				break;
+
+				case E_PAL_DATA_TYPE::MOT_STD:
+				{
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "加速" << TermAttr(TERM_ATTR_OFF) << ':';
+
+					// generate pal board specific data structure.
+					PalMot mot = pal.get_PalMot();
+
+					if (mot.u8samples > 0) {
+						_trm << printfmt(_bwide ? "X=%5d Y=%5d Z=%5d" : "%5d,%5d,%5d", mot.i16X[0], mot.i16Y[0], mot.i16Z[0]);
+					}
+					else {
+						_trm << "n/a.";
+					}
 				}
-			} break;
+				break;
 
-			case E_PAL_PCB::AMB:
-			{
-				// generate pal board specific data structure.
-				PalAmb amb = pal.get_PalAmb();
+				case E_PAL_DATA_TYPE::EX_CUE_STD:
+				{
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "CUE" << TermAttr(TERM_ATTR_OFF) << ':';
 
-				_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
-				_trm << printfmt(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)amb.i16Temp / 100.0);
-				_trm << TermAttr(TERM_ATTR_OFF);
+					TweCUE cue = pal.get_TweCUE();
+					if (ev) {
+						_trm << printfmt(" EV:%d", ev.u8event_id);
+					}
 
-				_trm << ' ';
+					if (cue.has_vcc()) {
+						(void)cue.get_vcc_i16mV(); // do not print
+					} 
 
-				_trm << TermAttr(TERM_COLOR_FG_BLUE | TERM_BOLD);
-				_trm << printfmt(_bwide ? "湿度=%02d%%" : "%02d%%", (amb.u16Humd + 50) / 100);
-				_trm << TermAttr(TERM_ATTR_OFF);
+					if (cue.has_adc1()) {
+						(void)cue.get_adc1_i16mV(); // do not print
+					}
 
-				_trm << ' ';
+					if (cue.has_mag()) {
+						if (cue.has_mag()) {
+							TermAttr TB(TERM_COLOR_BG_BLUE | TERM_COLOR_FG_WHITE);
+							TermAttr TR(TERM_COLOR_BG_RED | TERM_COLOR_FG_WHITE);
+							TermAttr TC(TERM_ATTR_OFF);
 
-				_trm << TermAttr(TERM_COLOR_FG_YELLOW | TERM_BOLD);
-				_trm << printfmt(_bwide ? "照度=%4d" : "L%4d", amb.u32Lumi > 9999 ? 9999 : amb.u32Lumi);
-				_trm << TermAttr(TERM_ATTR_OFF);
-			} break;
+							switch (cue.get_mag_stat_u8() & 0x7F) {
+							// case 0: _trm << L"[磁無]"; break;
+							case 1: _trm << ' ' << TR << L"[N]" << TC; break;
+							case 2: _trm << ' ' << TB << L"[S]" << TC; break;
+							}
+						}
+					}
 
-			case E_PAL_PCB::MOT:
-			{
-				// generate pal board specific data structure.
-				PalMot mot = pal.get_PalMot();
+					if (cue.has_accel()) {
+						int ave_x = 0, ave_y = 0, ave_z = 0;
+						if (cue.get_accel_count_u8() >= 8) {
+							for (int i = 0; i < 8; i++) {
+								ave_x += cue.get_accel_X_i16mG(i);
+								ave_y += cue.get_accel_Y_i16mG(i);
+								ave_z += cue.get_accel_Z_i16mG(i);
+							}
 
-				if (mot.u8samples > 0) {
-					_trm << printfmt(_bwide ? "X=%5d Y=%5d Z=%5d" : "%5d,%5d,%5d", mot.i16X[0], mot.i16Y[0], mot.i16Z[0]);
+							ave_x >>= 3;
+							ave_y >>= 3;
+							ave_z >>= 3;
+
+							_trm << printfmt(" XYZ=(%d", ave_x);
+							_trm << printfmt(",%04d", ave_y);
+							_trm << printfmt(",%04d)", ave_z);
+						}
+					}
+
+					if (pal.is_data_source_timer()) {
+						_trm << " ﾀｲﾏｰ";
+					}
 				}
-				else {
-					_trm << "n/a.";
-				}
-			} break;
+				break;
 
-			default:
-				_trm << "n.a";
+				default:
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_WHITE) << "不明" << TermAttr(TERM_ATTR_OFF) << ':';
+				break;
 			}
+
 		}
 
 		_trm << "\033[4G"; // move cursor at column 2.

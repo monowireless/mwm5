@@ -32,6 +32,24 @@ namespace TWEUTILS {
 		return r;
 	}
 	
+	inline uint8_t G_OCTET(const uint8_t*& p) {
+		return *(p)++; 
+	}
+	
+	inline uint16_t G_WORD(const uint8_t*& p) {
+		uint32_t r = *p++;
+		r = (r << 8) + *p++;
+		return r;
+	}
+	
+	inline uint32_t G_DWORD(const uint8_t*& p) {
+		uint32_t r = *p++;
+		r = (r << 8) + *p++;
+		r = (r << 8) + *p++;
+		r = (r << 8) + *p++;
+		return r;
+	}
+	
 	inline uint8_t& S_OCTET(uint8_t*& q, uint8_t c) {
 		*q++ = c;
 		return *q;
@@ -59,6 +77,8 @@ namespace TWEUTILS {
 		return (i <= 170 ? (1950+i*5) : (2800+(i-170)*10) );
 	}
 
+
+#if 0
 	/**
 	 * @class	enum_wapper
 	 *
@@ -68,18 +88,53 @@ namespace TWEUTILS {
 	 * @tparam	T	 	Generic type parameter.
 	 */
 	template<class _Enum, typename T = uint8_t>
-	class enum_wapper
+	class enum_wapper_strict
 	{
 	private:
 		_Enum _e;
 		// operator int() = delete;
 	public:
-		enum_wapper(const _Enum& e) { _e = e; }
+		enum_wapper_strict(const _Enum& e) { _e = e; }
 		inline operator _Enum() const { return _e; }
 		inline _Enum to_enum() const { return _e; }
 		inline void operator =(const _Enum& x) { _e = x; }
 		inline bool operator ==(const _Enum& x) const { return _e == x; }
 	};
+#endif
+
+	/**
+	 * @class	enum_wapper
+	 *
+	 * @brief	An enum wapper.
+	 *
+	 * @tparam	_Enum	Type of the enum.
+	 * @tparam	T	 	Generic type parameter.
+	 */
+	template<class _Enum>
+	class enum_wapper
+	{
+	public:
+		using T = typename std::underlying_type<_Enum>::type;
+
+	private:
+		_Enum _e;
+		// operator int() = delete;
+	public:
+		enum_wapper() : _e{} {}
+		enum_wapper(const _Enum e) { _e = e; }
+		
+		inline operator _Enum() const { return _e; }
+		inline _Enum to_enum() const { return _e; }
+		inline void operator =(const _Enum e) { _e = e; }
+		inline bool operator ==(const _Enum e) const { return _e == e; }
+		
+		enum_wapper(const T& x) { _e = static_cast<_Enum>(x); }
+		//inline operator int() { return static_cast<int>(_e); }
+		inline _Enum to_value() const { return _e; }
+		inline void operator =(const T x) { _e = static_cast<_Enum>(x); }
+		inline bool operator ==(const T x) const { return _e == static_cast<_Enum>(x); }
+	};
+
 
 	/**
 	 * @class	backwards

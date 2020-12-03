@@ -227,13 +227,26 @@
   <ItemGroup>
     <ClCompile Include="..\..\examples_con\glancer\glancer.cpp" />
     <ClCompile Include="..\..\src\twe_fmt.cpp" />
+    <ClCompile Include="..\..\src\twe_fmt_appio.cpp" />
+    <ClCompile Include="..\..\src\twe_fmt_apptag.cpp" />
+    <ClCompile Include="..\..\src\twe_fmt_appuart.cpp" />
+    <ClCompile Include="..\..\src\twe_fmt_pal.cpp" />
     <ClCompile Include="..\..\src\twe_sercmd.cpp" />
     <ClCompile Include="..\..\src\twe_sercmd_ascii.cpp" />
+    <ClCompile Include="..\..\src\twe_fmt_twelite.cpp" />
     <ClCompile Include="..\..\src\twe_utils_crc8.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\twe_common.hpp" />
     <ClInclude Include="..\..\src\twe_fmt.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_actstd.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_apptag.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_appuart.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_common.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_pal.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_stdin.h" />
+    <ClInclude Include="..\..\src\twe_fmt_twelite.hpp" />
+    <ClInclude Include="..\..\src\twe_fmt_appio.hpp" />
     <ClInclude Include="..\..\src\twe_sercmd.hpp" />
     <ClInclude Include="..\..\src\twe_sercmd_ascii.hpp" />
     <ClInclude Include="..\..\src\twe_stream.hpp" />
@@ -241,6 +254,9 @@
     <ClInclude Include="..\..\src\twe_utils_crc8.hpp" />
     <ClInclude Include="..\..\src\twe_utils_fixedque.hpp" />
     <ClInclude Include="..\..\src\twe_utils_simplebuffer.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\examples_con\glancer\Makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

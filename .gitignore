@@ -18,8 +18,8 @@
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
-x64/
-x86/
+#x64/
+#x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/Release
 [Aa][Rr][Mm]64/Debug
@@ -35,11 +35,10 @@ CODE_*/
 wifipass.h
 
 # Executable
-build/
-!build/Makefile
-!build/makefile
+**/build/*.sav
+**/build/objs/
 
-fonts/outdir/
+**/fonts/outdir/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

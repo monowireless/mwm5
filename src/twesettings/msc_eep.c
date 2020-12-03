@@ -39,7 +39,7 @@ static bool_t s_bReadFromFile() {
 	fp = fopen(s_get_savename(), "rb");
 #endif
 	if (fp != NULL) {
-		int ret = fread(s_au8buff, sizeof(uint8), EEPROM_6X_USER_SIZE, fp); (void)ret;
+		size_t ret = fread(s_au8buff, sizeof(uint8), EEPROM_6X_USER_SIZE, fp); (void)ret;
 		fclose(fp);
 	}
 	else {

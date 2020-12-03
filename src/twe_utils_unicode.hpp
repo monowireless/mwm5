@@ -245,7 +245,6 @@ namespace TWEUTILS {
 	}
 
 
-
 	/**
 	 * @fn	static inline bool endsWith_NoCase(SmplBuf_Byte& str, const char_t* suffix, unsigned suffixlen)
 	 *
@@ -313,7 +312,6 @@ namespace TWEUTILS {
 		return str.size() >= prefixLen && 0 == str.compare(0, prefixLen, prefix, prefixLen);
 	}
 
-
 	/**
 	 * @fn	static inline bool endsWith_NoCase(SmplBuf_Byte& str, const char_t* suffix, unsigned suffixlen)
 	 *
@@ -337,7 +335,10 @@ namespace TWEUTILS {
 			return false;
 		}
 	}
-
+	template <size_t N>
+	static inline bool beginsWith_NoCase(const SmplBuf_Byte& str, const char_t(&prefix)[N]) {
+		return beginsWith_NoCase(str, (const char_t*)prefix, N - 1);
+	}
 
 	/**
 	 * @fn	static inline bool endsWith_NoCase(SmplBuf_WChar& str, const wchar_t* suffix, unsigned suffixlen)
@@ -362,7 +363,10 @@ namespace TWEUTILS {
 			return false;
 		}
 	}
-
+	template <size_t N>
+	static inline bool beginsWith_NoCase(const SmplBuf_WChar& str, const wchar_t(&prefix)[N]) {
+		return beginsWith_NoCase(str, (const wchar_t*)prefix, N - 1);
+	}
 
 	/*******************************************************************************
 	 * HERE IS SORT ALGORITHM

@@ -1,0 +1,34 @@
+{
+    "C_Cpp.errorSquiggles": "Enabled",
+    "C_Cpp.default.includePath": [
+        "../../../../Tools/VSCode/**",
+        "../../../../TWENET/current/include/**",
+        "../../../../TWENET/current/src/**"
+    ],
+    "C_Cpp.default.browse.path": [
+        "../../../../Tools/VSCode/**",
+        "../../../../TWENET/current/include/**",
+        "../../../../TWENET/current/src/**"
+    ],
+    "C_Cpp.default.defines": [
+        "VERSION_MAIN=0",
+        "VERSION_SUB=0",
+        "VERSION_VAR=0",
+        "EMBEDDED",
+        "USER_VSR_HANDLER",
+        "JN516x=5160",
+        "JENNIC_CHIP_FAMILY_NAME=_JN516x",
+        "WATCHDOG_ENABLED",
+        "JENNIC_HW_BBC_RXINCCA=1",
+        "JENNIC_HW_BBC_DMA=1",
+        "JENNIC_HW_BBC_ISA=0",
+        "JENNIC_SW_EXTERNAL_FLASH=0",
+        "JN516X_DMA_UART_BACKWARDS_COMPATIBLE_API=1",
+        "UART_BACKWARDS_COMPATIBLE_API=1",
+        "JENNIC_CHIP_FAMILY=JN516x",
+        "JENNIC_CHIP_FAMILY_JN516x",
+        "JENNIC_STACK_MAC",
+        "JENNIC_MAC_MAC",
+    ]
+
+}

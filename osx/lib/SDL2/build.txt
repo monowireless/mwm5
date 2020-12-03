@@ -1,0 +1,4 @@
+SDL2-2.0.12 built with XCode (Version 12.2 (12B45b)) as static library (20-Nov-2020).
+
+% lipo -info libSDL2.a 
+Architectures in the fat file: libSDL2.a are: arm64 x86_64 

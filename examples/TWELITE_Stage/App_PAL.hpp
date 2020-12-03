@@ -120,7 +120,7 @@ private:
 
 public:
 	App_PAL()
-		: parse_ascii(256)
+		: parse_ascii(512)
 		, the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)

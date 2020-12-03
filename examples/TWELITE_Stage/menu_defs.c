@@ -107,9 +107,11 @@ const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[] = {
 		{ "NXT", "書換完了後の画面",
 		  "書換完了後の画面を選択します\r\n"
 		  "0: 既定値でｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞにします。\r\n"
-		  "1: ターミナル画面にします。" },
+		  "1: ターミナル画面にします。\r\n"
+		  "2: 書換メニューに戻ります。"
+		},
 		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'n' },
-		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
+		{ {.u32 = 0}, {.u32 = 16}, TWESTGS_VLD_u32MinMax, NULL } },
 	{E_TWESTG_DEFSETS_VOID} // TERMINATOR
 };
 

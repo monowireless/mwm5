@@ -50,11 +50,20 @@ void print_unknown(TWEUTILS::SmplBuf_Byte& payl) {
 
 void print_pal(spTwePacket pkt) {
 	auto&& pal = refTwePacketPal(pkt);
+	PalEvent ev;
 
-	if (pal.is_PalEvent()) {
-		std::cout << "PAL_EVENT:ID=" << int(pal.get_PalEvent().u8event_id);
-	} else switch(pal.u8palpcb) {
-		case E_PAL_PCB::MAG:
+	// acquire event data.
+	if (pal.has_PalEvent()) {
+		ev = pal.get_PalEvent();
+	}
+
+	switch(pal.get_PalDataType()) {
+		case E_PAL_DATA_TYPE::EVENT_ONLY: 
+		{
+			if (ev) std::cout << "PAL_EVENT:ID=" << int(ev.u8event_id);
+		} break;
+
+		case E_PAL_DATA_TYPE::MAG_STD:
 		{
 			// generate pal board specific data structure.
 			PalMag mag = pal.get_PalMag();
@@ -70,7 +79,7 @@ void print_pal(spTwePacket pkt) {
 			std::cout << ")";
 		} break;
 
-		case E_PAL_PCB::AMB:
+		case E_PAL_DATA_TYPE::AMB_STD:
 		{
 			// generate pal board specific data structure.
 			PalAmb amb = pal.get_PalAmb();
@@ -81,7 +90,7 @@ void print_pal(spTwePacket pkt) {
 			std::cout << ":LUMI=" << amb.u32Lumi;
 		} break;
 
-		case E_PAL_PCB::MOT:
+		case E_PAL_DATA_TYPE::MOT_STD:
 		{
 			// generate pal board specific data structure.
 			PalMot mot = pal.get_PalMot();
@@ -98,6 +107,55 @@ void print_pal(spTwePacket pkt) {
 				}
 			}
 		} break;
+
+		case E_PAL_DATA_TYPE::EX_CUE_STD:
+		{
+			// generate TWELITE CUE standard data
+			TweCUE cue = pal.get_TweCUE();
+
+			std::cout << "PAL_CUE";
+
+			// extended header
+			std::cout << ":EX(" << int(pal.u8data_type) << "," << int(pal.u8_data_cause) << "," << int(pal.u8_data_cause) << ")";
+
+			// event data
+			if (ev) std::cout << ":EVENT=" << int(ev.u8event_id);
+
+			// volt
+			if (cue.has_vcc()) {
+				std::cout << ":VCC=" << int(cue.get_vcc_i16mV());
+			}
+
+			// adc1
+			if (cue.has_adc1()) {
+				std::cout << ":AD1=" << int(cue.get_adc1_i16mV());
+			}
+
+			// mag
+			if (cue.has_mag()) {
+				std::cout << ":MAG=";
+				std::cout << "(";
+				switch (cue.get_mag_stat_u8() & 0x7F) {
+				case 0: std::cout << "NO MANGET"; break;
+				case 1: std::cout << "N POLE"; break;
+				case 2: std::cout << "S POLE"; break;
+				}
+				std::cout << ")";
+			}
+
+			// mot
+			if (cue.has_accel()) {
+				std::cout << "MOT";
+				std::cout << ":SAMPLES=" << int(cue.get_accel_count_u8());
+				std::cout << ":SR=" << int(cue.u8sample_rate_code);
+				for (int i = 0; i < cue.get_accel_count_u8(); i++) {
+					std::cout << ":" << i << "(" << cue.get_accel_X_i16mG(i);
+					std::cout << "," << cue.get_accel_Y_i16mG(i);
+					std::cout << "," << cue.get_accel_Z_i16mG(i);
+					std::cout << ")";
+				}
+			}
+		} break;
 	}
 }
 
@@ -108,7 +166,7 @@ void print_app_uart(spTwePacket pkt) {
 	auto p = aur.payload.begin();
 	
 	// display the rest as hex.
-	std::cout << "MSG=0x";
+	std::cout << ":MSG=0x";
 	while(p != aur.payload.end()) {
 		std::cout << std::hex << std::setw(2) << std::setfill('0') << int(*p); 
 		++p;

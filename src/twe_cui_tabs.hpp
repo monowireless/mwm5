@@ -56,7 +56,7 @@ namespace TWECUI {
 			if (_obj) {
 				T* pobj = reinterpret_cast<T*>(_obj);
 
-				if (pobj && idx < _hndlrs.size() && _hndlrs[idx]) {
+				if (pobj && idx < int(_hndlrs.size()) && _hndlrs[idx]) {
 					pobj->new_hndlr(_hndlrs[idx]); // add handler
 				}
 			}
@@ -139,7 +139,7 @@ namespace TWECUI {
 
 		void select_next() {
 			_selection_request = _selected_index + 1;
-			if (_selection_request >= _tabs.size()) _selection_request = 0;
+			if (_selection_request >= (int)_tabs.size()) _selection_request = 0;
 		}
 
 		void select_prev() {
@@ -157,7 +157,7 @@ namespace TWECUI {
 		bool check_events() {
 			// if tab selection request is placed, switch here.
 			if (_selection_request >= 0) {
-				if (_selection_request >= 0 && _selection_request < _tabs.size()) {
+				if (_selection_request >= 0 && _selection_request < (int)_tabs.size()) {
 					_selected_index = _selection_request;
 					_upapp->call_ev_tab_press(_selection_request);
 					update_view();

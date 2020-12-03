@@ -14,6 +14,7 @@ enum class E_APP_ID {
     CONSOLE,
     TWELITE,
     PAL,
+    CUE,
     GLANCE,
     COMMANDER,
     _APPS_END_,

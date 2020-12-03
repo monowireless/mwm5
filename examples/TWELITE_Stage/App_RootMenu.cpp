@@ -4,6 +4,7 @@
 #include "App_RootMenu.hpp"
 #include "AppIDs.h"
 
+// flag of working state
 static int s_bstarted = 0;
 
 void App_RootMenu::setup() {

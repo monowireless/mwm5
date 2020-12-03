@@ -111,6 +111,12 @@
     <ClCompile Include="..\src\twe_file.cpp" />
     <ClCompile Include="..\src\twe_firmprog.cpp" />
     <ClCompile Include="..\src\twe_fmt.cpp" />
+    <ClCompile Include="..\src\twe_fmt_appio.cpp" />
+    <ClCompile Include="..\src\twe_fmt_apptag.cpp" />
+    <ClCompile Include="..\src\twe_fmt_appuart.cpp" />
+    <ClCompile Include="..\src\twe_fmt_common.cpp" />
+    <ClCompile Include="..\src\twe_fmt_pal.cpp" />
+    <ClCompile Include="..\src\twe_fmt_twelite.cpp" />
     <ClCompile Include="..\src\twe_font.cpp" />
     <ClCompile Include="..\src\twe_printf.cpp" />
     <ClCompile Include="..\src\twe_sercmd.cpp" />
@@ -188,6 +194,14 @@
     <ClInclude Include="..\src\twe_file.hpp" />
     <ClInclude Include="..\src\twe_firmprog.hpp" />
     <ClInclude Include="..\src\twe_fmt.hpp" />
+    <ClInclude Include="..\src\twe_fmt_actstd.hpp" />
+    <ClInclude Include="..\src\twe_fmt_appio.hpp" />
+    <ClInclude Include="..\src\twe_fmt_apptag.hpp" />
+    <ClInclude Include="..\src\twe_fmt_appuart.hpp" />
+    <ClInclude Include="..\src\twe_fmt_common.hpp" />
+    <ClInclude Include="..\src\twe_fmt_pal.hpp" />
+    <ClInclude Include="..\src\twe_fmt_stdin.h" />
+    <ClInclude Include="..\src\twe_fmt_twelite.hpp" />
     <ClInclude Include="..\src\twe_font.hpp" />
     <ClInclude Include="..\src\twe_printf.hpp" />
     <ClInclude Include="..\src\twe_sercmd.hpp" />

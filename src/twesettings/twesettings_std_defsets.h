@@ -43,8 +43,6 @@ extern const uint8 TWESTG_DEFCUST_SLOT[][4];
 extern const uint8 TWESTG_DEFCUST_REMOVE_CHAN3[];
 extern const uint8 TWESTG_DEFCUST_REMOVE_CHAN1[];
 
-extern const TWESTG_tsElement TWESTG_DEFSETS_BASE_MWX[];
-
 #ifdef __cplusplus
 }
 #endif

@@ -181,7 +181,7 @@ $(OBJDIR)/$(TARGET_BIN): $(APPOBJS) $(APPOBJS_CXX)
 
 # generate bin file
 $(TARGET_BIN).$(TARGET_TYPE): $(OBJDIR)/$(TARGET_BIN)
-	@cp -pv $< $@
+	@mv -fv $< $@
 	@chmod +x $@
 	
 # generate .a file

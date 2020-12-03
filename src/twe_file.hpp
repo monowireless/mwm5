@@ -19,6 +19,12 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+
+#if defined(__APPLE__) // for TweCmdPipeInOut
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
+#endif
 #endif
 
 #if _DEBUG
@@ -201,7 +207,7 @@ namespace TWE {
             buf << fname;
 
             // append '/'or'\\' at the tail.
-            if (buf[-1] != sep) {
+            if (buf.length() > 0 && buf[-1] != sep) {
                 buf.push_back(sep);
             }
         }
@@ -209,7 +215,7 @@ namespace TWE {
             // fname is "..", take last name back.
             
             // remove '/'or'\\' at the tail.
-            if (buf[-1] == sep) {
+            if (buf.length() > 0 && buf[-1] == sep) {
                 buf.pop_back();
             }
 
@@ -259,7 +265,6 @@ namespace TWE {
         return std::move(buf);
     }
   
-
 #ifndef ESP32
     class TweCmdPipe {
         typedef TweCmdPipe tself;
@@ -301,8 +306,118 @@ namespace TWE {
         operator bool() { return available(); } // check if it's opened or not.
         bool available(); // check if it reaches EOF, when reaching EOF, the pipe is closed and set exit code.
         bool readline(TWEUTILS::SmplBuf_Byte& buf); // read line. if having bytes, returns true, otherwise false. (NOTE: false does not mean EOF)
+#if 0
+        int getchar() { if (_fp) return fgetc(_fp); else return -1; } // read a byte
+        void set_no_blocking() {
+            if (_fp) {
+                setvbuf(_fp, NULL, _IONBF, 0); // stop buffering
+                fcntl(fileno(_fp), F_SETFL, O_NONBLOCK); // non blocking
+            }
+        }
+#endif
         int exit_code() { return _exit_code; } // get exit code
         void close() { _close(); }
+    };
+#endif // !ESP32
+
+#if defined(__APPLE__)
+    class TweCmdPipeInOut {
+        typedef TweCmdPipeInOut tself;
+        const int MAX_LINE_CHARS;
+
+        // pid2
+        bool _b_opened;
+        pid_t _child_pid;
+        int   _from_child, _to_child;
+        
+        void _close();
+
+    public:
+        // copy
+        TweCmdPipeInOut(const tself &) = delete;
+        void operator = (const tself &ref) = delete;
+
+        // move
+        TweCmdPipeInOut(tself &&ref) = delete;
+        void operator =(tself &&ref) = delete;
+        
+    public:
+        TweCmdPipeInOut(const char* cmd = nullptr, const int max_line_chars = 4095) :
+                _b_opened(false)
+                , _child_pid(0)
+                , _from_child(0)
+                , _to_child(0)
+                , MAX_LINE_CHARS(max_line_chars)
+        {
+            if (cmd != nullptr) {
+                begin(cmd);
+            }
+        }
+
+        ~TweCmdPipeInOut() {
+            end();
+        }
+
+        void end() {
+            if (_b_opened) {
+                close(_to_child);
+                close(_from_child);
+
+                kill(_child_pid, 9);
+
+                _b_opened = false;
+            }
+        }
+
+        bool begin(const char* cmd) {
+            pid_t p;
+            int pipe_stdin[2], pipe_stdout[2];
+
+            if(pipe(pipe_stdin)) return false;
+            if(pipe(pipe_stdout)) return false;
+
+            //printf("pipe_stdin[0] = %d, pipe_stdin[1] = %d\n", pipe_stdin[0], pipe_stdin[1]);
+            //printf("pipe_stdout[0] = %d, pipe_stdout[1] = %d\n", pipe_stdout[0], pipe_stdout[1]);
+
+            p = fork();
+            if(p < 0) return false; /* Fork failed */
+            if(p == 0) { /* child */
+                close(pipe_stdin[1]);
+                dup2(pipe_stdin[0], 0);
+                close(pipe_stdout[0]);
+                dup2(pipe_stdout[1], 1);
+                execl("/bin/sh", "sh", "-c", cmd, NULL);
+                perror("execl");
+                exit(99);
+            }
+            _child_pid = p;
+            _to_child = pipe_stdin[1];
+            _from_child = pipe_stdout[0];
+
+            // set no blocking
+            fcntl(_from_child, F_SETFL, O_NONBLOCK); 
+            fcntl(_to_child, F_SETFL, O_NONBLOCK); 
+
+            close(pipe_stdin[0]);
+            close(pipe_stdout[1]);
+            _b_opened = true; 
+            return true;
+        }
+
+        operator bool() { return available(); }
+        bool available() { return _b_opened; }
+        int getchar() {
+            char b; int n = 0;
+            if (_b_opened) { n = (int)read(_from_child, &b, 1); }
+            return n > 0 ? uint8_t(b) : -1;
+        }
+        void putchar(char c) {
+            if (_b_opened) ::write(_to_child, &c, 1);
+        }
+        size_t write(const uint8_t *p, size_t len) {
+            if (_b_opened) return ::write(_to_child, p, len);
+            else return 0;
+        }
     };
 #endif
 

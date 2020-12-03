@@ -9,6 +9,7 @@
 #include "App_PAL.hpp"
 #include "App_Glancer.hpp"
 #include "App_Commander.hpp"
+#include "App_CUE.hpp"
 #include "App_FirmProg.hpp"
 #include "App_Interactive.hpp"
 #include "App_Console.hpp"
@@ -154,6 +155,10 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 		the_app.new_app<App_Commander>();
 		break;
 
+	case App_CUE::APP_ID:
+		the_app.new_app<App_CUE>();
+		break;
+
 	case App_FirmProg::APP_ID:
 		the_app.new_app<App_FirmProg>(exit_id);
 		break;
@@ -210,6 +215,10 @@ const wchar_t* query_app_launch_message(int n_appsel) {
 		return App_Commander::LAUNCH_MSG;
 		break;
 
+	case App_CUE::APP_ID:
+		return App_CUE::LAUNCH_MSG;
+		break;
+		
 	default:
 		return L"";
 	}
@@ -293,7 +302,16 @@ static void s_check_clipboard() {
 
 		// limited to ASCII chars
 		if (u <= 0xFF) {
+#if 1
 			the_keyboard.push(c);
+#else
+# if defined(_MSC_VER)
+#  pragma message("CLIPBOARD PASTE TO UART QUEUE!")
+# else
+#  warning "CLIPBOARD PASTE TO UART QUEUE!"
+# endif
+			the_uart_queue.push(c); // for debug
+#endif
 		}
 	}
 

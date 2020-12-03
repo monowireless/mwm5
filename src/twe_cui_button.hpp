@@ -366,7 +366,7 @@ namespace TWECUI {
 		 */
 		TWE_Button& operator[](int i) {
 			TWE_Button* ptr = nullptr;
-			if (i >= 0 && i < _btns.size()) {
+			if (i >= 0 && i < (int)_btns.size()) {
 				if (_btns[i]) ptr = _btns[i].get();
 			}
 

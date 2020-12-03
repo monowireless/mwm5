@@ -292,13 +292,22 @@ typedef struct {
 	const wchar_t name[4];
 } ts_PktID_to_Name3;
 
+// 3 Chars label of packet_type (shall follow the order of E_PKT.
 const static ts_PktID_to_Name3 asPktIdToName3[] {
-	{ E_PKT::PKT_PAL,   	L"PAL" },
+	{ E_PKT::PKT_ERROR,		L"N/A" },
 	{ E_PKT::PKT_TWELITE,	L"TWE" },
+	{ E_PKT::PKT_PAL,   	L"PAL" },
 	{ E_PKT::PKT_APPIO, 	L"IO " },
 	{ E_PKT::PKT_APPUART,	L"URT" },
 	{ E_PKT::PKT_APPTAG,	L"TAG" },
-	{ E_PKT::PKT_ERROR,		L"N/A" },
+	{ E_PKT::PKT_ACT_STD,	L"ACT" },
+};
+
+static const int E_PAL_DERIVED_EVT = 0;
+static const int E_PAL_DERIVED_CUE = 1;
+static const wchar_t wstr_Name3_PALderived[][4]{
+	L"EVT",
+	L"CUE"
 };
 
 /**
@@ -373,8 +382,16 @@ void App_Glancer::pkt_data_and_view::print_obj(spTwePacket& spobj) {
 		if (pkt_type == E_PKT::PKT_PAL) {
 			// PAL Packet
 			auto&& pal = refTwePacketPal(spobj);
+
 			if (pal.is_PalEvent()) {
 				u8event_id = pal.get_PalEvent().u8event_id;
+			}
+
+			// change 3chars label (EVT, CUE)
+			switch (pal.get_PalDataType()) {
+			case E_PAL_DATA_TYPE::EVENT_ONLY: pAppName = wstr_Name3_PALderived[E_PAL_DERIVED_EVT]; break;
+			case E_PAL_DATA_TYPE::EX_CUE_STD: pAppName = wstr_Name3_PALderived[E_PAL_DERIVED_CUE]; break;
+			default: break;
 			}
 		}
 

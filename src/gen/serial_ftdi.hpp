@@ -3,7 +3,7 @@
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
-#if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
+#if !defined(MWM5_SERIAL_NO_FTDI) && (defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__))
 
 #include "twe_common.hpp"
 #include "twe_serial.hpp"

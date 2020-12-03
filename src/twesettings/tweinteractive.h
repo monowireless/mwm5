@@ -78,6 +78,8 @@ typedef struct _TWEINTRCT_sContext {
 
 	const TWEINTRCT_tsFuncs *pFuncs; // メニュー関数
 	void *pvWrapObjCpp; // CPP用ラッパオブジェクトへのポインタ
+
+	const TWESTG_tsMsgReplace *msgReplace; //! 設定メッセージの入れ替えテーブル
 } TWEINTRCT_tsContext;
 
 /*!

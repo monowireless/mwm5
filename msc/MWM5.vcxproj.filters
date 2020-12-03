@@ -230,6 +230,27 @@
     <ClCompile Include="..\src\twe_cui_widget.cpp">
       <Filter>TWELibSrc</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_actstd.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_appio.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_apptag.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_appuart.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_common.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_pal.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\twe_fmt_twelite.cpp">
+      <Filter>TWELibSrc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\printf\printf.h">
@@ -470,6 +491,30 @@
       <Filter>TWELibSrc</Filter>
     </ClInclude>
     <ClInclude Include="..\src\twe_cui_tabs.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_actstd.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_appio.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_apptag.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_appuart.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_common.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_pal.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_stdin.h">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\twe_fmt_twelite.hpp">
       <Filter>TWELibSrc</Filter>
     </ClInclude>
   </ItemGroup>

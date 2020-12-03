@@ -15,6 +15,39 @@
 
 #include "twesettings_weak.h"
 
+/** @brief	characters table to choose menu selection.*/
+static const char index_char[] = "0123456789qwertyuiop";
+
+/**
+ * @fn	static inline char get_index_char(int i)
+ *
+ * @brief	Get menu selection character by index.
+ *
+ * @param	i	the menu index (zero based)
+ *
+ * @returns	The index character.
+ */
+static inline char get_index_char(int i) {
+	return (i >= 0 && i < sizeof(index_char)) ? index_char[i] : ' ';
+}
+
+/**
+ * @fn	static inline int get_char_index(char c)
+ *
+ * @brief	Gets index from menu selection character.
+ *
+ * @param	c	The character.
+ *
+ * @returns	The selection index.
+ */
+static inline int get_char_index(char c) {
+	int i;
+	for (i = 0; i < sizeof(index_char); i++) {
+		if (c == index_char[i]) return i;
+	}
+	return -1;
+}
+
 /*!
  * インタラクティブモードで画面クリアと設定の全表示を行う
  */
@@ -35,8 +68,8 @@ void TWEINTCT_vSerUpdateScreen_defmenus(TWEINTRCT_tsContext *psIntr) {
 			TWEINTRCT_cbu32GenericHandler(psIntr, E_TWEINRCT_OP_GET_SLOTNAME, psIntr->psFinal->u8Kind, i, &pstrSlotName);
 
 			// print slot
-			TWE_fprintf(psIntr->pStream, _TWET_INV "%d" _TWET_RST ": %s%s%s"_TWELB
-				, i
+			TWE_fprintf(psIntr->pStream, _TWET_INV "%c" _TWET_RST ": %s%s%s"_TWELB
+				, get_index_char(i)
 				, (i == 0) ? "" : " "
 				, (i == psIntr->i16SelectedIndex) ? _TWET_INV : "" // selected index, display inverted.
 				, pstrSlotName);
@@ -51,7 +84,7 @@ void TWEINTCT_vSerUpdateScreen_defmenus(TWEINTRCT_tsContext *psIntr) {
 		int i = (psIntr->config.u8DefMenusSlots ? psIntr->config.u8DefMenusSlots + 1 : 0);
 		int j = (psIntr->config.u8DefMenusSlots ? 2 : 1);
 		while (psIntr->pFuncs[j].u8MenuId != 0xFF) {
-			TWE_fprintf(psIntr->pStream, _TWET_INV "%d" _TWET_RST ": %s%s"_TWELB, i,
+			TWE_fprintf(psIntr->pStream, _TWET_INV "%c" _TWET_RST ": %s%s"_TWELB, get_index_char(i),
 				(i == psIntr->i16SelectedIndex) ? _TWET_INV : "", // selected index, display inverted.
 				psIntr->pFuncs[j].pu8MenuString);
 
@@ -85,8 +118,9 @@ void TWEINTCT_vProcessInputByte_defmenus(TWEINTRCT_tsContext *psIntr, TWEINTRCT_
 
 	TWE_APIRET apiRet;
 
-	if (keycode >= '0' && keycode < psIntr->u8screen_max + psIntr->config.u8DefMenusSlots + '0') {
-		iCommitSelection = keycode - '0';
+	int _key_index = get_char_index((char)keycode);
+	if (_key_index >= 0 && _key_index < psIntr->u8screen_max + psIntr->config.u8DefMenusSlots) {
+		iCommitSelection = _key_index;
 		keycode = '1';
 	}
 
