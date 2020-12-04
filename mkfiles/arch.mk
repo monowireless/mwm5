@@ -10,7 +10,8 @@ else
   OSNAME=mac
  endif
  ifeq ($(UNAME_S),Linux)
-  ifneq ($(abspath /etc/rpi-issue),)
+  RASPI_CHECK=$(shell sh -c "[ -f /etc/rpi-issue ] && echo YES")
+  ifeq ($(RASPI_CHECK),YES)
     OSNAME=raspi
   else
     OSNAME=linux
