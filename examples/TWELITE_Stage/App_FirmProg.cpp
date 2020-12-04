@@ -875,7 +875,9 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 			break;
 
 		case KeyInput::KEY_BUTTON_C_LONG:
+#ifndef ESP32
 			shell_open_folder(_parent->_firmfile_dir);
+#endif
 			break;
 		}
 	} while (the_keyboard.available());

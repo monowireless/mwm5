@@ -152,11 +152,16 @@ void App_CUE::screen_refresh() {
 }
 
 // button navigation
-void App_CUE::set_nav_bar() {
+void App_CUE::set_nav_bar(const char *msg) {
 	the_screen_c.clear_screen();
 
-	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "  前TAB/長押:戻る            --/--             次TAB/ﾘｾｯﾄ";
+	if (msg == nullptr) {
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << "  前TAB/長押:戻る            --/--             次TAB/ﾘｾｯﾄ";
+	}
+	else {
+		the_screen_c << msg;
+	}
 }
 
 

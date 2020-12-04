@@ -82,7 +82,7 @@ private:
 	void set_title_bar(int page_id);
 
 	// set navigation bar on the bottom
-	void set_nav_bar();
+	void set_nav_bar(const char *msg=nullptr);
 
 	// simple screen
 	void hndr_basic(event_type ev, arg_type arg = 0);

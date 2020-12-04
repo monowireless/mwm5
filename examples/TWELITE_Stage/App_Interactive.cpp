@@ -395,18 +395,23 @@ void App_Interactive::monitor_uart(KeyInput::keyinput_type c) {
 				// set new state
 				intr.stat = E_STAT::RESET_WITH_SET; // next
 				intr.re.comp("ENTERING.CONFIG.MODE"); // expected pattern (for App_Tag/PAL end device)
-				twe_prog.reset_module(); // module reset				
+				twe_prog.reset_module(); // module reset
+				the_screen.clear_screen();
 				break;
 
 			case E_STAT::RESET_WITH_SET:
 				// starting state
 				if (intr.timeout.is_timeout()) {
+#ifdef ESP32
+					the_screen.clear_screen();
+#endif
 					// not AppTag/PAL end device, so try to press + + +
 					WrtTWE << '+';
 					delay(400);
 					WrtTWE << '+';
 					delay(400);
 					WrtTWE << '+';
+
 					b_next = true;
 				}
 
@@ -431,6 +436,10 @@ void App_Interactive::monitor_uart(KeyInput::keyinput_type c) {
 			case E_STAT::DETECT_ENTERING:
 				if (intr.timeout.is_timeout()) {
 					twe_prog.setpin(false);
+#ifdef ESP32
+					WrtTWE << 0x0d;
+					WrtTWE << 0x0a;
+#endif
 				}
 				if (intr.re.exec((const char*)l_buff.get().c_str())) {
 					intr.timeout.start(1000);

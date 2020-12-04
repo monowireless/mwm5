@@ -101,6 +101,8 @@ void App_CUE::hndr_help(event_type ev, arg_type arg) {
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
 		set_title_bar(PAGE_ID::PAGE_HELP);
+		//          "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		set_nav_bar("  前TAB/長押:戻る      次ページ/--             次TAB/ﾘｾｯﾄ");
 
 		// the message
 		dc.show_message(0);

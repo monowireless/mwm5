@@ -283,6 +283,7 @@ void App_CUE::hndr_basic(event_type ev, arg_type arg) {
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
 		set_title_bar(PAGE_ID::PAGE_BASIC);
+		set_nav_bar();
 		dc.show_message();
 		break;
 
