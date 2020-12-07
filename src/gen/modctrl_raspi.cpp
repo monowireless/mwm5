@@ -27,7 +27,10 @@ static bool export_ports(int port) {
         int fd = open("/sys/class/gpio/export", O_WRONLY);
         if (fd == -1) ret = false;
         if (ret && (write(fd, port_txt, 2) != 2)) ret = false;
-        if (fd != -1) close(fd);
+        if (fd != -1) {
+            fsync(fd);
+            close(fd);
+        }
     }
 
     return ret;
@@ -47,7 +50,10 @@ static bool set_port_dir(int port, int dir_is_output) {
         const char *dir_txt = dir_is_output ? "out" : "in";
         int dir_txt_len = dir_is_output ? 3 : 2;
         if (ret && (write(fd, dir_txt, dir_txt_len) != dir_txt_len)) ret = false;
-        if (fd != -1) close(fd);
+        if (fd != -1) {
+            fsync(fd);
+            close(fd);
+        }
     }
 
     return ret;
@@ -66,7 +72,10 @@ static bool set_port_out(int port, int hi_lo) { // 1 as high, 0 as lo
         if (fd == -1) ret = false;
         const char *dir_txt = hi_lo ? "1" : "0";
         if (ret && (write(fd, dir_txt, 1) != 1)) ret = false;
-        if (fd != -1) close(fd);
+        if (fd != -1) {
+            fsync(fd);
+            close(fd);
+        }
     }
 
     return ret;
@@ -75,17 +84,25 @@ static bool set_port_out(int port, int hi_lo) { // 1 as high, 0 as lo
 void TweModCtlRaspi::setup() {
     // RESET (output, high)
     export_ports(_port_rst);
+    delay(100); // not sure, this delay is mandate or not...
     set_port_dir(_port_rst, 1); // output
+    delay(100);
     set_port_out(_port_rst, 1); // set high
+    delay(100);
 
     // PGM (output, high)
     export_ports(_port_pgm);
+    delay(100);
     set_port_dir(_port_pgm, 1); // output
+    delay(100);
     set_port_out(_port_pgm, 1); // set high
+    delay(100);
 
     // SET PIN (set output when needed)
     export_ports(_port_set);
+    delay(100);
     set_port_dir(_port_set, 0); // input
+    delay(100);
 }
 
 bool TweModCtlRaspi::reset(bool bHold) {
@@ -108,16 +125,13 @@ bool TweModCtlRaspi::setpin(bool bSet) {
 }
 
 bool TweModCtlRaspi::prog() {
+    set_port_out(_port_pgm, 0); // PGM=LO
     set_port_out(_port_rst, 0); // RST=LO
-    set_port_out(_port_pgm, 0); // PGM=LO
     delay(50);
-
     set_port_out(_port_rst, 1); // RST=HIGH
-    set_port_out(_port_pgm, 0); // PGM=LO
-    delay(200); //delay(40);
-
+    delay(200);
     set_port_out(_port_pgm, 1); // PGM=HIGH
-
+    
     return true;
 }
 

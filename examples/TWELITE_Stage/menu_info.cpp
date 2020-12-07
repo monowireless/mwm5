@@ -57,6 +57,9 @@ void TWEINTCT_vSerUpdateScreen_stage_info(TWEINTRCT_tsContext *psIntr) {
 	s_output_within_width(trm, the_cwd.get_dir_wks_tweapps(), maxw);
 	trm << crlf << "SDK   =";
 	s_output_within_width(trm, the_cwd.get_dir_sdk(), maxw);
+
+	trm << crlf << L"[その他]";
+	trm << crlf << printfmt("PHYS_CPU_COUNT=%d", TWESYS::Get_Physical_CPU_COUNT()) << crlf;
 #endif
 
 	TWE_fputs(_TWELB, psIntr->pStream);

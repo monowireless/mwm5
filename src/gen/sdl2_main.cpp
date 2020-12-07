@@ -174,8 +174,8 @@ TWE_PutChar_CONIO TWE::WrtCon;
 	TweProg TWE::twe_prog(new TweBlProtocol<TWE::SerialFtdi, TweModCtlFTDI>(Serial2, obj_ftdi));
 #	endif
 #elif defined(__linux)
-	SerialFtdi Serial;
 #	if defined(MWM5_BUILD_RASPI)  && defined(MWM5_SERIAL_DUO)
+	// RASPI with /dev/serial0 and GPIO.
 	SerialFtdi Serial;
 	// Serial2 is supporting both UART(SerialTermios) and FTDI(SerialFTDI).
 	SerialDuoRaspi Serial2;
@@ -188,6 +188,8 @@ TWE_PutChar_CONIO TWE::WrtCon;
 	TweModCtlDuoRaspi objModC_raspi(Serial2, objModC_RaspiGPIO, objModC_FTDI); // combined object
 	TweProg TWE::twe_prog(new TweBlProtocol<SerialDuoRaspi, TweModCtlDuoRaspi>(Serial2, objModC_raspi));
 #	else
+	// standard linux with FTDI only.
+	SerialFtdi Serial;
 	SerialFtdi Serial2;
 	TWE_PutChar_Serial<SerialFtdi> TWE::WrtTWE(Serial2);
 	TweModCtlFTDI obj_ftdi(Serial2);
@@ -1962,7 +1964,11 @@ static int _Get_Physical_CPU_COUNT_query_by_external_command() {
 # if defined(__APPLE__)
 	TweCmdPipe cmd("sysctl -n hw.physicalcpu");
 # elif defined(__linux)
+#  if defined(MWM5_BUILD_RASPI)
+	TweCmdPipe cmd("awk '/^processor/ { if (CPU<$3) CPU=$3 } END{print (CPU+1)}' < /proc/cpuinfo");
+#  else
 	TweCmdPipe cmd("grep \"^cpu.cores\" /proc/cpuinfo | sed -e \"s/ [\\t]//g\" -e \"s/cpucores://\"");
+#  endif
 # endif
 	if (cmd.available()) {
 		SmplBuf_Byte buff;

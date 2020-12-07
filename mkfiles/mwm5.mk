@@ -132,7 +132,6 @@ APPSRC_CXX+=gen/serial_ftdi.cpp
 APPSRC_CXX+=gen/serial_srv_pipe.cpp
 APPSRC_CXX+=gen/modctrl_ftdi.cpp
 ifeq ($(OSNAME),raspi)
-APPSRC_CXX+=gen/serial_common.cpp
 APPSRC_CXX+=gen/serial_termios.cpp
 APPSRC_CXX+=gen/modctrl_raspi.cpp
 endif
