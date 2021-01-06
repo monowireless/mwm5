@@ -10,8 +10,9 @@
 using namespace TWE;
 
 // Serial Devices
-TWE::ISerial::tsAryChar32 TWE::SerialPortEntries::ser_devname(8);
-TWE::ISerial::tsAryChar32 TWE::SerialPortEntries::ser_desc(8);
+TWE::ISerial::tsAryChar32 TWE::SerialPortEntries::ser_devname(TWE::SerialPortEntries::SERPORT_ENT_MAX);
+TWE::ISerial::tsAryChar32 TWE::SerialPortEntries::ser_desc(TWE::SerialPortEntries::SERPORT_ENT_MAX);
+uint8_t TWE::SerialPortEntries::ser_modctl_mode[TWE::SerialPortEntries::SERPORT_ENT_MAX] = { 0 };
 int TWE::SerialPortEntries::ser_count = 0;
 int TWE::SerialPortEntries::_idx_C_end = 0;
 int TWE::SerialPortEntries::_idx_D_end = 0;

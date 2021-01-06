@@ -7,8 +7,9 @@
 
 #include "twe_common.hpp"
 #include "serial_ftdi.hpp"
+#include "modctl_common.hpp"
 
-class TweModCtlFTDI {
+class TweModCtlFTDI : public TweModCtlCommon {
 	TWE::SerialFtdi& _ser_ftdi;
 
 	void setpins(int rst, int pgm, int set);
@@ -16,7 +17,9 @@ class TweModCtlFTDI {
 public:
 	TweModCtlFTDI(TWE::SerialFtdi& serobj) : _ser_ftdi(serobj) {}
 	
-	void setup() {}
+	void setup();
+
+	void begin();
 
 	bool reset(bool bHold=false);
 

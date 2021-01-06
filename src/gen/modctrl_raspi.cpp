@@ -105,6 +105,9 @@ void TweModCtlRaspi::setup() {
     delay(100);
 }
 
+void TweModCtlRaspi::begin() {
+}
+
 bool TweModCtlRaspi::reset(bool bHold) {
     set_port_out(_port_rst, 0); // RST=LO
 

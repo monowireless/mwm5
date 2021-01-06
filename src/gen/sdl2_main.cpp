@@ -204,7 +204,8 @@ M5Stack M5(M5_LCD_WIDTH, M5_LCD_HEIGHT);
 
 // settings from getopt
 struct _gen_preference {
-	int render_engine; // choose rendering option (osx Metal)
+	int render_engine;    // choose rendering option (osx Metal)
+	int serial_safe_mode; // choose serial safe modes
 } the_pref;
 
 /***********************************************************

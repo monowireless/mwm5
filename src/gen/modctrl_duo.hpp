@@ -6,9 +6,10 @@
 #if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
 
 #include "twe_common.hpp"
+#include "modctl_common.hpp"
 
 template <class SDUO, class C, class D>
-class TweModCtlDuo {
+class TweModCtlDuo : public TweModCtlCommon {
     SDUO& _sduo;
     C& _c;
     D& _d;
@@ -20,6 +21,12 @@ public:
         // initialize both of mods (called only once)
         _c.setup();
         _d.setup();
+    }
+
+    void begin() {
+        // called when starting protocol
+        _c.begin();
+        _d.begin();
     }
 
 	bool reset(bool bHold=false) {

@@ -118,8 +118,11 @@ TweProg::E_ST_TWEBLP TweProg::next_state() {
 			_p_st_table = nullptr;
 		}
 		else {
-			_state = *_p_st_table++; // set state from table
-			process_body(EVENT_NEW_STATE); // send message
+			// send message
+			do {
+				_state = *_p_st_table++; // set state from table
+				if (process_body(EVENT_NEW_STATE) != PROCESS_SKIP) break;
+			} while (1);
 		}
 	}
 	else {
@@ -131,13 +134,15 @@ TweProg::E_ST_TWEBLP TweProg::next_state() {
 
 void TweProg::error_state() {
 	_state = E_ST_TWEBLP::FINISH_ERROR;
-	_bl->change_baud(115200);
+	_bl->change_baud(_bl->get_baud_default());
 	_bl->reset_module();
 }
 
 
 bool TweProg::begin(const E_ST_TWEBLP* tbl) {
 	_p_st_table = tbl;
+
+	_bl->begin();
 
 	if (!_bl->connect()) {
 		error_state();
@@ -164,7 +169,7 @@ bool TweProg::process_input(int c) {
 		auto rcvstat = _bl->get_receive_status();
 		if (rcvstat == ITweBlProtocol::RESP_STAT_COMPLETED) {
 			switch (process_body(EVENT_RESPOND)) {
-			case 1:
+			case PROCESS_SUCCESS:
 				next_state();
 				if (_state == E_ST_TWEBLP::FINISH || _state == E_ST_TWEBLP::FINISH_ERROR) {
 					bexit = true;
@@ -173,7 +178,7 @@ bool TweProg::process_input(int c) {
 					bexit = false;
 				}
 				break;
-			case 2:
+			case PROCESS_CONT:
 				bexit = false;
 				break;
 			default:
@@ -207,7 +212,7 @@ bool TweProg::process_input(int c) {
  * @returns	0:error, 1:success, 2:wait more response
  */
 int TweProg::process_body(int c) {
-	APIRET ret = false;
+	int ret = false;
 
 #if defined(ESP32)
 	//uint8_t U8_BAUD_DIV = 3; // The limit of Serial2 (HardwareSerial)
@@ -225,11 +230,17 @@ int TweProg::process_body(int c) {
 	case E_ST_TWEBLP::CONNECT:
 		// change baud rate higher
 		if (c == EVENT_NEW_STATE) {
-			if (!_bl->request(0x27, 0x28, U8_BAUD_DIV)) {
-				error_state();
-				ret = false;
+			if (!_bl->get_modctl_enabled()) {
+				// skip changing baud rate (safe mode)
+				ret = PROCESS_SKIP;
+			} else {
+				// set fast mode
+				if (!_bl->request(0x27, 0x28, U8_BAUD_DIV)) {
+					error_state();
+					ret = PROCESS_FAIL;
+				}
+				else ret = PROCESS_SUCCESS;
 			}
-			else ret = true;
 
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::CONNECT, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
 		} else
@@ -238,7 +249,7 @@ int TweProg::process_body(int c) {
 			_bl->change_baud(U32_BAUD);
 			delay(50);
 
-			ret = true;
+			ret = PROCESS_SUCCESS;
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::CONNECT, EVENT_RESPOND, ret, _bl->get_response_buf(), _pobj);
 		}
 		break;
@@ -248,9 +259,9 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_NEW_STATE) {
 			if (!_bl->request(0x25, 0x26)) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::IDENTIFY_FLASH, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
 		}
@@ -258,7 +269,7 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_RESPOND) {
 			auto&& payl = _bl->get_response_buf();
 
-			ret = false;
+			ret = PROCESS_FAIL;
 			if (payl.length() >= 5) {
 				// payl[0] : length (FIXED)
 				// payl[1] : RESPOND ID (FIXED)
@@ -266,10 +277,10 @@ int TweProg::process_body(int c) {
 				// payl[3] : flash manufacturer (should be 0xCC)
 				// payl[4] : flash type (should be 0xEE)
 				if (payl[2] != 0x00 || payl[3] != 0xCC || payl[4] != 0xEE) { // should be [00 CC EE] for TWELITE module
-					ret = false;
+					ret = PROCESS_FAIL;
 				}
 				else {
-					ret = true;
+					ret = PROCESS_SUCCESS;
 				}
 			}
 			if (!ret) error_state();
@@ -281,22 +292,22 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_NEW_STATE) {
 			if (!_bl->request(0x2C, 0x2D, 0x08)) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::SELECT_FLASH, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
 		} else
 		if (c == EVENT_RESPOND) {
 			auto&& payl = _bl->get_response_buf();
 
-			ret = false;
+			ret = PROCESS_FAIL;
 			if (payl.length() >= 3) {
 				// payl[0] : length (FIXED)
 				// payl[1] : RESPOND ID (FIXED)
 				// payl[2] : Status (should be 0)
 				if (payl[2] == 0) {
-					ret = true;
+					ret = PROCESS_SUCCESS;
 				}
 			}
 			if (!ret) error_state();
@@ -309,16 +320,16 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_NEW_STATE) {
 			if (!_bl->request(0x32, 0x33)) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::READ_CHIPID, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
 		} else
 		if (c == EVENT_RESPOND) {
 			auto&& payl = _bl->get_response_buf();
 			
-			ret = false;
+			ret = PROCESS_FAIL;
 			module_info.type = TweProg::E_MOD_TYPE::UNDEF;
 
 			if (payl.length() >= 7) {
@@ -333,7 +344,7 @@ int TweProg::process_body(int c) {
 				else if ((module_info.chip_id & 0xFFFF) == 0xB686)
 					module_info.type = TweProg::E_MOD_TYPE::TWELITE_RED;
 
-				ret = true;
+				ret = PROCESS_SUCCESS;
 			}
 			if (!ret) error_state();
 
@@ -346,16 +357,16 @@ int TweProg::process_body(int c) {
 			// read 8bytes from 0x01001578 (LSB first)
 			if (!_bl->request(0x1F, 0x20, 0x70, 0x15, 0x00, 0x01, 0x08, 00)) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::READ_MAC_CUSTOM, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
 		} else
 		if (c == EVENT_RESPOND) {
 			auto&& payl = _bl->get_response_buf();
 
-			ret = false;
+			ret = PROCESS_FAIL;
 			if (payl.length() >= 9) {
 				// payl[0] : length (FIXED)
 				// payl[1] : RESPOND ID (FIXED)
@@ -369,7 +380,7 @@ int TweProg::process_body(int c) {
 					// get serial number from MAC address (lower 28bits)
 					module_info.mac_addr_to_serialnumber();
 
-					ret = true;
+					ret = PROCESS_SUCCESS;
 				}
 			}
 			if (!ret) error_state();
@@ -382,22 +393,22 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_NEW_STATE) {
 			if (!_bl->request(0x07, 0x08)) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb) _protocol_cb(E_ST_TWEBLP::ERASE_FLASH, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
 		} else
 		if (c == EVENT_RESPOND) {
 			auto&& payl = _bl->get_response_buf();
 
-			ret = false;
+			ret = PROCESS_FAIL;
 			if (payl.length() >= 3) {
 				// payl[0] : length (FIXED)
 				// payl[1] : RESPOND ID (FIXED)
 				// payl[2] : status (0x00: success)
 				if (payl[2] == 0) {
-					ret = true;
+					ret = PROCESS_SUCCESS;
 				}
 			}
 			if (!ret) error_state();
@@ -424,9 +435,9 @@ int TweProg::process_body(int c) {
 					)
 				) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb && c == EVENT_NEW_STATE) // NEW STATE occurrs at only the first call.
 				_protocol_cb(E_ST_TWEBLP::WRITE_FLASH_FROM_FILE, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
@@ -435,7 +446,7 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_RESPOND) {
 			auto&& payl = _bl->get_response_buf();
 
-			ret = false;
+			ret = PROCESS_FAIL;
 			bool berr = true;
 
 			if (payl.length() >= 3) {
@@ -453,7 +464,7 @@ int TweProg::process_body(int c) {
 
 					if (_firm.n_blk >= _firm.n_blk_e) {
 						// the last packet
-						ret = 1;
+						ret = PROCESS_SUCCESS;
 					} else {
 						// next block request
 						process_body(EVENT_PROCEED);
@@ -465,7 +476,7 @@ int TweProg::process_body(int c) {
 
 
 			if (berr) return 0;
-			else return ret ? 1 : 2; // 2 continue
+			else return ret ? PROCESS_SUCCESS : PROCESS_CONT; // 2 continue
 		}	
 		break;
 
@@ -484,9 +495,9 @@ int TweProg::process_body(int c) {
 			)
 				) {
 				error_state();
-				ret = false;
+				ret = PROCESS_FAIL;
 			}
-			else ret = true;
+			else ret = PROCESS_SUCCESS;
 
 			if (_protocol_cb && c == EVENT_NEW_STATE) // NEW STATE occurrs at only the first call.
 				_protocol_cb(E_ST_TWEBLP::VERIFY_FLASH, EVENT_NEW_STATE, ret, _bl->get_command_buf(), _pobj);
@@ -495,7 +506,7 @@ int TweProg::process_body(int c) {
 		if (c == EVENT_RESPOND) {
 			file_type_shared file = _firm.file.lock();
 			if (_firm.file.expired()) {
-				return false;
+				return PROCESS_FAIL;
 			}
 
 			file->seek(_firm.n_blk * _firm.PROTOCOL_CHUNK + 4);
@@ -503,7 +514,7 @@ int TweProg::process_body(int c) {
 
 			auto&& payl = _bl->get_response_buf();
 
-			ret = false;
+			ret = PROCESS_FAIL;
 			bool berr = true;
 
 			if (payl.length() == 0x84) {
@@ -533,7 +544,7 @@ int TweProg::process_body(int c) {
 
 					if (_firm.n_blk >= _firm.n_blk_e) {
 						// the last packet
-						ret = 1;
+						ret = PROCESS_SUCCESS;
 					}
 					else {
 						// next block request
@@ -543,8 +554,8 @@ int TweProg::process_body(int c) {
 				}
 			}
 			if (berr) error_state();
-			if (berr) return 0;
-			else return ret ? 1 : 2; // 2 continue
+			if (berr) return PROCESS_FAIL;
+			else return ret ? PROCESS_SUCCESS : PROCESS_CONT; // 2 continue
 		}
 		break;
 	default:

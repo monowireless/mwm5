@@ -88,8 +88,9 @@ int SerialFtdi::_list_devices(bool append_entry) {
 				const char STR_DEV_MONOSTICK[] = "MONOSTICK";
 				const char STR_DEV_TWELITER1[] = "TWELITE R";
 				const char STR_DEV_TWELITER2[] = "TWELITE R2";
-				
+				const char STR_DEV_GENERAL[] = "FTDI_GEN";
 
+				bool b_dev_general = false;
 				if (!strncmp(Description, "MONOSTICK", 9)) strdev = STR_DEV_MONOSTICK;
 				else if (!strncmp(Description, "TWE-Lite-R", 10)) {
 					if (SerialNumber[0] == 'R' && SerialNumber[1] == '2') strdev = STR_DEV_TWELITER2;
@@ -97,6 +98,10 @@ int SerialFtdi::_list_devices(bool append_entry) {
 				}
 				else if (!strncmp(Description, "TWE-Lite-USB", 12)) {
 					strdev = STR_DEV_MONOSTICK;
+				}
+				else {
+					strdev = STR_DEV_GENERAL;
+					b_dev_general = true;
 				}
 
 				if (strdev != nullptr) {
@@ -108,6 +113,7 @@ int SerialFtdi::_list_devices(bool append_entry) {
 					strncpy(ser_devname[ser_count + nStored], SerialNumber, 32);
 					strncpy(ser_desc[ser_count + nStored], strdev, 32);
 #endif
+					ser_modctl_mode[ser_count + nStored] = b_dev_general ? 0 : 1;
 					++nStored;
 				}
 			}
@@ -141,6 +147,8 @@ bool SerialFtdi::_open(const char* devname) {
 			strncpy(_devname, devname, sizeof(_devname));
 #endif
 			_session_id = _ftHandle == nullptr ? -1 : (*(uint64_t*)(void*)_ftHandle) & 0xFFFFFFFF; // opened!
+
+
 			return true;
 		}
 		else {

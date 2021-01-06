@@ -25,20 +25,30 @@ namespace TWE {
 		static const uint8_t RESP_STAT_CRC_ERROR = 0x83;
 		static const uint8_t RESP_STAT_UNEXPECTED_MSG = 0x84;
 
+		static const uint32_t BAUD_PROG_SAFE = 38400;
+		static const uint32_t BAUD_APP_STANDARD = 115200;
+
 	public:
 		ITweBlProtocol() :
 			_arg_buf(256), _resp_buf(256), _resp_id(0), _resp_id_expected(0),
-			_tim_start(0), _tim_timeout(1000), _resp_state(0) {}
+			_tim_start(0), _tim_timeout(1000), _resp_state(0),
+			_baud_default(BAUD_APP_STANDARD), _baud_prog(BAUD_PROG_SAFE) {}
 		virtual ~ITweBlProtocol() {}
 
 	public:
-		virtual void setup() = 0;
+		virtual void setup() = 0; // called once at the init.
+		virtual void begin() = 0; // called when starting protocol.
+
+		virtual void set_modctl_enabled(bool b_modctl) = 0; // set false to disactivate module control even if it's capable.
+		virtual bool get_modctl_enabled() = 0;
+
 		virtual void serial_write(const char * str, int len) = 0;
 		virtual bool connect() = 0;
 		virtual bool change_baud(int i) = 0;
 		virtual bool reset_module() = 0;
 		virtual bool hold_reset_pin() = 0;
 		virtual bool setpin(bool bSet) = 0;
+		
 
 	protected:
 		TWEUTILS::SmplBuf_Byte _arg_buf;
@@ -49,7 +59,6 @@ namespace TWE {
 		uint8_t _resp_state; // 0:not started, 1:now going, 0x80:completed, 0x81:error
 		uint8_t _resp_id, _resp_id_expected;
 
-		
 	public:
 		inline TWEUTILS::SmplBuf_Byte& get_command_buf() {
 			return _arg_buf;
@@ -110,6 +119,14 @@ namespace TWE {
 			return request_body(id_req, id_resp);
 		}
 
+		// baud rate handling
+	protected:
+		uint32_t _baud_default;   // baud for apps (set when finishing)
+		uint32_t _baud_prog;      // baud for firmware prog (if 0, use safe operation)
+
+	public:
+		bool set_baud_default(uint32_t baud) { _baud_default = baud; return true; }
+		uint32_t get_baud_default() { return _baud_default; }
 	};
 
 	/**
@@ -126,16 +143,26 @@ namespace TWE {
 	public:
 		SER& _ser;
 		MODCTL& _modc;
+		bool _b_modctl_enabled; // safemode, no modctl(reset/pgm), fix baud 38400bps.
 
 	public:
 		TweBlProtocol(SER& ser, MODCTL& modc) :
-			_ser(ser), _modc(modc), ITweBlProtocol() {}
+			_ser(ser), _modc(modc), _b_modctl_enabled(true), ITweBlProtocol() {}
 
 		~TweBlProtocol() {}
 
 		void setup() {
 			_modc.setup();
 		}
+
+		void begin() {
+			_modc.begin();
+			_b_modctl_enabled = _modc.get_enabled();
+		}
+		
+		void set_modctl_enabled(bool b_modctl) { _modc.set_enabled(b_modctl); }
+
+		bool get_modctl_enabled() { return _modc.get_enabled(); }
 
 		void _discard_readbuffer() {
 #ifndef ESP32
@@ -155,8 +182,8 @@ namespace TWE {
 		}
 
 		bool connect() {
-			_ser.begin(38400);
-			_modc.prog();
+			_ser.begin(BAUD_PROG_SAFE);
+			if(_b_modctl_enabled) _modc.prog();
 			_discard_readbuffer();
 
 			return true;
@@ -164,19 +191,19 @@ namespace TWE {
 
 		bool reset_module() {
 			_ser.flush();
-			_ser.begin(115200);
+			_ser.begin(get_baud_default());
 
 			delay(50);
 
-			return _modc.reset();
+			return (_b_modctl_enabled) ? _modc.reset() : true;
 		}
 
 		bool hold_reset_pin() {
-			return _modc.reset(true);
+			return (_b_modctl_enabled) ? _modc.reset(true) : true;
 		}
 
 		bool setpin(bool bSet) {
-			return _modc.setpin(bSet);
+			return (_b_modctl_enabled) ? _modc.setpin(bSet) : true;
 		}
 
 		void serial_write(const char* str, int len) {
@@ -192,6 +219,11 @@ namespace TWE {
 		static const int EVENT_NEW_STATE = 0;
 		static const int EVENT_RESPOND = 1;
 		static const int EVENT_PROCEED = 2;
+
+		static const int PROCESS_FAIL = 0;
+		static const int PROCESS_SUCCESS = 1;
+		static const int PROCESS_CONT = 2;
+		static const int PROCESS_SKIP = 16;
 
 		enum class E_ST_TWEBLP {
 			NONE = 0,
@@ -334,7 +366,13 @@ namespace TWE {
 			_state = E_ST_TWEBLP::NONE;
 		}
 
-
+		/**
+		 * @fn	void TweProg::_new_bl(ITweBlProtocol* bl)
+		 *
+		 * @brief	Creates a new bootloader object.
+		 *
+		 * @param [in,out]	bl	If non-null, the bl.
+		 */
 		void _new_bl(ITweBlProtocol* bl) {
 			_bl.reset(bl);
 		}
@@ -342,7 +380,8 @@ namespace TWE {
 		/**
 		 * @fn	void TweProg::setup()
 		 *
-		 * @brief	Setups this object
+		 * @brief	Setups this object as initialization.
+		 * 			(called once on init)
 		 */
 		void setup() {
 			_bl->setup();

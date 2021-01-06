@@ -5,8 +5,9 @@
 
 #ifdef ESP32 // for EPS32 (PRG=GPIO5, RST=GPIO26)
 #include "twe_common.hpp"
+#include "modctl_common.hpp"
 
-class TweModCtlESP32 {
+class TweModCtlESP32 : public TweModCtlCommon {
 	static const uint8_t PIN_SET = 5;
 	static const uint8_t PIN_PGM = 2;
 	static const uint8_t PIN_RST = 26;
@@ -16,6 +17,7 @@ public:
 
 	void setup();
 
+	void begin();
 
 	/**
 	 * @fn	bool TweModCtlESP32::reset();

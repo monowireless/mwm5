@@ -16,7 +16,9 @@ void TweModCtlESP32::setup() {
 	
 	pinMode(PIN_PGM, OUTPUT);
 	digitalWrite(PIN_PGM, HIGH);
-	//dacWrite(25, 0);
+}
+
+void TweModCtlESP32::begin() {
 }
 
 bool TweModCtlESP32::reset(bool bHold) {

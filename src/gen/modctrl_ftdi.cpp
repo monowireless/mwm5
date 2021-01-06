@@ -10,6 +10,15 @@
 
 using namespace TWE;
 
+
+void TweModCtlFTDI::setup() {
+}
+
+void TweModCtlFTDI::begin() {
+	// not capable if FTDI device is not configured using BITBANG.
+	this->_set_capable(_ser_ftdi.get_modctl_capable());
+}
+
 void TweModCtlFTDI::setpins(int rst, int pgm, int set) {
 	if (_ser_ftdi.is_opened()) {
 		uint8_t u8pin;

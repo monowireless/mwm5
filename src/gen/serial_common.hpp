@@ -11,9 +11,12 @@ namespace TWE {
 	protected:
         static int _idx_C_end;
         static int _idx_D_end;
+
     public:
+		const static int SERPORT_ENT_MAX = 8;
         static ISerial::tsAryChar32 ser_devname;
 		static ISerial::tsAryChar32 ser_desc;
+		static uint8_t ser_modctl_mode[SERPORT_ENT_MAX]; // 0: no capability 1: serial port has capability
 		static int ser_count;
 
     public:
@@ -30,6 +33,7 @@ namespace TWE {
 
         char _devname[SIZ_DEV_NAME];
 		char _devname_prev[SIZ_DEV_NAME];
+		int _devname_opened_idx;
 
         TWEUTILS::FixedQueue<uint8_t> _que; // primary buffer (used when read() is called.)
 
@@ -39,17 +43,44 @@ namespace TWE {
         void (*_hook_on_write)(const uint8_t* p, int len); // hook function when writing.
 
         int _session_id; // -1:no_session or positive value
-    
+
+		uint8_t _modctl_capable;
+						   // modctl capability
+						   //   0: no capability (e.g. FTDI bitbang does not work)
+		                   //   1: enabled (e.g. FTDI bitbang is enabled)
+		                   //   2: depends on modctl implementation (e.g. /dev/serial)
+		           
+
     public:
         SerialCommon(size_t bufsize = 2048) : 
-              _devname{}
+			  _devname{}, _devname_prev{}, _devname_opened_idx(-1)
             , _que(TWEUTILS::FixedQueue<uint8_t>::size_type(bufsize))
             , _buf{}
             , _buf_len(0)
             , _hook_on_write(nullptr)
             , _session_id(-1)
+			, _modctl_capable(false)
         {}
-    
+
+		void _set_modctl_capable(bool n) { _modctl_capable = n; } // may set internally when opened.
+		int get_modctl_capable() { return _modctl_capable; }
+
+		/**
+		 * @fn	int SerialCommon::find_idx_by_name(const char* devname)
+		 *
+		 * @brief	Searches for the first index by name
+		 *
+		 * @param	devname	The device name.
+		 *
+		 * @returns	The found index by name.
+		 */
+		int find_idx_by_name(const char* devname) {
+			for (int i = 0; i < ser_count; i++) {
+				if (!strcmp(devname, ser_devname[i])) return i;
+			}
+			return -1;
+		}
+
     	/**
 		 * @fn	void SerialCommon::begin(uint32_t baud)
 		 *
@@ -67,24 +98,59 @@ namespace TWE {
             }
 		}
 
+        /**
+         * @fn	bool SerialCommon::open(const char* devname)
+         *
+         * @brief	Opens port by the given devname
+         *
+         * @param	devname	The device name
+         *
+         * @returns	True if it succeeds, false if it fails.
+         */
         bool open(const char* devname) {
+			// find index of the device list
+			int devidx = find_idx_by_name(devname);
+			if (devidx == -1) return false;
+
+
+			_modctl_capable = ser_modctl_mode[devidx]; // check if the device name is TWELITE-R (modctl capable)
+
+			// open it (call method by CTRP)
 			bool ret = static_cast<CDER&>(*this)._open(devname);
+
+			// success!
 			if (ret) {
 #if defined(_MSC_VER) || defined(__MINGW32__)
 				strncpy_s(_devname_prev, _devname, sizeof(_devname_prev));
 #elif defined(__APPLE__) || defined(__linux)
 				strncpy(_devname_prev, _devname, sizeof(_devname_prev));
 #endif
+				_devname_opened_idx = devidx;
 			}
+
+			// returns (true if success)
 			return ret;
         }
 
+        /**
+         * @fn	void SerialCommon::close()
+         *
+         * @brief	Closes this port
+         */
         void close() { 
 			static_cast<CDER&>(*this)._close();
+			_devname_opened_idx = -1;
 			_session_id = -1;
 			_devname[0] = 0; // clear _devname as well
         }
 
+		/**
+		 * @fn	bool SerialCommon::reopen()
+		 *
+		 * @brief	Reopens this port
+		 *
+		 * @returns	True if it succeeds, false if it fails.
+		 */
 		bool reopen() {
 			if (is_opened()) {
 				close();
@@ -97,12 +163,33 @@ namespace TWE {
 			return ret;
 		}
 
+        /**
+         * @fn	void SerialCommon::flush()
+         *
+         * @brief	Flushes TX requests.
+         */
         void flush() {
             static_cast<CDER&>(*this)._flush();
         }
 
+		/**
+		 * @fn	bool SerialCommon::is_opened()
+		 *
+		 * @brief	Query if this object is opened
+		 *
+		 * @returns	True if opened, false if not.
+		 */
 		bool is_opened() { return _session_id != -1; }
 
+        /**
+         * @fn	bool SerialCommon::set_baudrate(int baud)
+         *
+         * @brief	Sets a baudrate
+         *
+         * @param	baud	The baud.
+         *
+         * @returns	True if it succeeds, false if it fails.
+         */
         bool set_baudrate(int baud) {
             return static_cast<CDER&>(*this)._set_baudrate(baud);
         }
