@@ -769,6 +769,18 @@ namespace TWEUTILS {
 		return *this;
 	}
 
+	template<>
+	inline TWE::IStreamOut& SimpleBuffer<wchar_t, TWE::IStreamOut, 1>::operator ()(char_t c) {
+		push_back(wchar_t(c));
+		return *this;
+	}
+
+	template<>
+	inline TWE::IStreamOut& SimpleBuffer<wchar_t, TWE::IStreamOut, 1>::write_w(wchar_t c) {
+		// UTF-8 conversion
+		push_back(c);
+		return *this;
+	}
 
 	/**
 	 * @class	SimpleBufferL
@@ -832,21 +844,17 @@ namespace TWEUTILS {
 
 	// typedefs
 	typedef SimpleBuffer<uint8_t, _SimpleBuffer_DummyStreamOut, 1> SmplBuf_Byte;
+	typedef SimpleBuffer<uint8_t, TWE::IStreamOut, 1> SmplBuf_ByteS;
 	template <int N> using SmplBuf_ByteL = SimpleBufferL<uint8_t, N, _SimpleBuffer_DummyStreamOut, 1>;
+	template <int N> using SmplBuf_ByteSL = SimpleBufferL<uint8_t, N, TWE::IStreamOut, 1>;
 
 	typedef SimpleBuffer<wchar_t, _SimpleBuffer_DummyStreamOut, 1> SmplBuf_WChar;
+	typedef SimpleBuffer<wchar_t, TWE::IStreamOut, 1> SmplBuf_WCharS;
 	template <int N> using SmplBuf_WCharL = SimpleBufferL<wchar_t, N, _SimpleBuffer_DummyStreamOut, 1>;
-
-	typedef SimpleBuffer<uint8_t, TWE::IStreamOut, 1> SmplBuf_ByteS;
-	template <int N> using SmplBuf_ByteSL = SimpleBufferL<uint8_t, N, TWE::IStreamOut, 1>;
+	template <int N> using SmplBuf_WCharSL = SimpleBufferL<wchar_t, N, TWE::IStreamOut, 1>;
 
 	// some operators << to the IStreamOut.
 	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_Byte& s) {
-		for (const auto x : s) { lhs.operator ()((const char_t)x); }
-		return lhs;
-	}
-	template <int N>
-	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_ByteL<N>& s) {
 		for (const auto x : s) { lhs.operator ()((const char_t)x); }
 		return lhs;
 	}
@@ -855,21 +863,31 @@ namespace TWEUTILS {
 		return lhs;
 	}
 	template <int N>
+	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_ByteL<N>& s) {
+		for (const auto x : s) { lhs.operator ()((const char_t)x); }
+		return lhs;
+	}
+	template <int N>
 	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_ByteSL<N>& s) {
 		for (const auto x : s) { lhs.operator ()((char_t)x); }
 		return lhs;
 	}
+
 	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_WChar& s) {
 		for (const auto x : s) { lhs.write_w(x); }
 		return lhs;
 	}
-
-	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_WChar&& s) {
+	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_WCharS& s) {
 		for (const auto x : s) { lhs.write_w(x); }
 		return lhs;
 	}
 	template <int N>
 	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_WCharL<N>& s) {
+		for (const auto x : s) { lhs.write_w(x); }
+		return lhs;
+	}
+	template <int N>
+	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_WCharSL<N>& s) {
 		for (const auto x : s) { lhs.write_w(x); }
 		return lhs;
 	}

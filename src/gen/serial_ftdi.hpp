@@ -14,6 +14,8 @@
 namespace TWE {
 	class SerialFtdi : public ISerial, public SerialCommon<SerialFtdi> {
 		friend class SerialCommon<SerialFtdi>;
+		using SUPER_SER = SerialCommon<SerialFtdi>;
+
 		template <class C, class D> friend class SerialDuo;
 
 		FT_STATUS _ftStatus;
@@ -160,6 +162,15 @@ namespace TWE {
 			}
 		}
 #endif
+
+		/**
+		 * @fn	TWEUTILS::SmplBuf_WChar& SerialFtdi::_query_extra_deviceinfo()
+		 *
+		 * @brief	Queries extra deviceinfo
+		 *
+		 * @returns	The extra deviceinfo.
+		 */
+		void _query_extra_device_info();
 
 	private:
 		/**

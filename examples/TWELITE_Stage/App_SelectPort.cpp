@@ -19,6 +19,12 @@ void App_SelectPort::setup() {
 	// put a init message
 	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｼﾘｱﾙﾎﾟｰﾄ選択";
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	TermAttr TB(TERM_COLOR_FG_BLACK | TERM_COLOR_BG_WHITE);
+	TermAttr TC(TERM_ATTR_OFF);
+	the_screen_b << TB << L" c ｷｰ: 反転項目のCOM番号を調べる" << TC;
+#endif
+
 	// add items
 	Serial2.list_devices();
 	if (Serial2.ser_count == 0) {
@@ -143,16 +149,48 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 
 	case EV_LOOP:
 		do {
-			int c = the_keyboard.read(); //note: even c==-1, it must be passed to list object to timeout check.
+			int c = the_keyboard.read(); //note: even c==-1, it must be passed to list object for timeout check.
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+			if (c == 'c') {
+				// check com port number
+				int i_sel = _listPorts.get_selected_index();
+
+				if (i_sel >= 0) {
+					TermAttr TB(TERM_COLOR_FG_BLACK | TERM_COLOR_BG_YELLOW);
+					TermAttr TC(TERM_ATTR_OFF);
+
+					// find ser# string from head to space. "XXXXX (DESC)"
+					SmplBuf_ByteSL<32> devname; // create char_t buffer.
+					devname << _listPorts[i_sel].second;
+
+					if (Serial2.is_opened()) Serial2.close();
+					Serial2.open((const char*)devname.c_str()); // open the device
+
+					// get extra information (COM number, the port must be opened)
+					const wchar_t* msg = Serial2.query_extra_device_info();
+					if (msg == nullptr || msg[0] == 0) {
+						msg = L"不明";
+					}
+
+					the_screen_b.clear_line(1);
+					the_screen_b(1, 1)
+						<< TermAttr(TERM_COLOR_FG_BLACK | TERM_COLOR_BG_YELLOW)
+						<< _listPorts[i_sel].first << L" -> " << msg << L"."
+						<< TermAttr(TERM_ATTR_OFF);
+
+					if (Serial2.is_opened()) Serial2.close();
+				}
+			} else
+#endif
 			if (_listPorts.size() > 0 && _listPorts.key_event(c)) {
+				// pass key input to list widget and check select completion.
 				if (_listPorts.is_selection_completed()) {
 					int i_sel = _listPorts.get_selected_index();
 
 					// find ser# string from head to space. "XXXXX (DESC)"
 					SmplBuf_ByteSL<32> devname;
-					auto& wstr = _listPorts[i_sel].second;
-					devname << wstr;
+					devname << _listPorts[i_sel].second;
 
 					if (Serial2.is_opened()) Serial2.close();
 					Serial2.open((const char*)devname.c_str()); // open the device

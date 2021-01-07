@@ -17,6 +17,7 @@
 namespace TWE {
 	class SerialSrvPipe : public ISerial, public SerialCommon<SerialSrvPipe> {
 		friend class SerialCommon<SerialSrvPipe>;
+		using SUPER_SER = SerialCommon<SerialSrvPipe>;
 		template <class C, class D> friend class SerialDuo;
 	
         TweCmdPipeInOut _pipe;
@@ -121,6 +122,17 @@ namespace TWE {
 		 */
 		void _flush() {
 			delay(32); // TODO: it's not concrete way...
+		}
+
+		/**
+		 * @fn	TWEUTILS::SmplBuf_WChar& SerialSrvPipe::query_extra_deviceinfo()
+		 *
+		 * @brief	Queries extra deviceinfo
+		 *
+		 * @returns	The extra deviceinfo.
+		 */
+		void _query_extra_deviceinfo() {
+			SUPER_SER::_devname_extra_info.clear();
 		}
 
 	public:

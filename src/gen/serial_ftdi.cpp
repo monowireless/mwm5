@@ -4,6 +4,7 @@
 #if !defined(MWM5_SERIAL_NO_FTDI) && (defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__))
 
 #include "serial_ftdi.hpp"
+#include "mwm5.h"
 
 extern "C" int printf_(const char* format, ...);
 
@@ -158,5 +159,29 @@ bool SerialFtdi::_open(const char* devname) {
 	}
 	else return false;
 }
+
+void SerialFtdi::_query_extra_device_info() {
+	SUPER_SER::_devname_extra_info.clear();
+
+	if (is_opened()) {
+		FT_STATUS ftStatus;
+		LONG lComPortNumber;
+		ftStatus = FT_GetComPortNumber(_ftHandle, &lComPortNumber);
+
+		if (ftStatus == FT_OK) {
+			if (lComPortNumber == -1) {
+				// No COM port assigned
+			}
+			else {
+				// COM port assigned with number held in lComPortNumber
+				_devname_extra_info << printfmt("COM%d", lComPortNumber);
+			}
+		}
+		else {
+			// FT_GetComPortNumber FAILED!
+		}
+	}
+}
+
 
 #endif //WIN/MAC

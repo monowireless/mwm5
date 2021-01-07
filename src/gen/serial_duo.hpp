@@ -148,6 +148,17 @@ namespace TWE {
             return -1;
         }
 
+        /**
+         * @fn	TWEUTILS::SmplBuf_WChar& SerialDuo::query_extra_device_info()
+         *
+         * @brief	Queries extra device information
+         *
+         * @returns	The extra device information.
+         */
+        void _query_extra_deviceinfo() {
+            SUPER_SER::_extra_device_info.clear();
+        }
+
 	private:
 		/**
 		 * @fn	static int SerialFtdi::list_devices()

@@ -78,6 +78,16 @@ namespace TWE {
 		 */
 		int _update();
 
+		/**
+		 * @fn	TWEUTILS::SmplBuf_WChar& SerialTermios::_query_extra_deviceinfo()
+		 *
+		 * @brief	Queries extra deviceinfo
+		 *
+		 * @returns	The extra deviceinfo.
+		 */
+		void _query_extra_deviceinfo() {
+			SUPER_SER::_devname_extra_info.clear();
+		}
 
 	private:
 		/**

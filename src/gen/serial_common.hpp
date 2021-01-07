@@ -33,6 +33,7 @@ namespace TWE {
 
         char _devname[SIZ_DEV_NAME];
 		char _devname_prev[SIZ_DEV_NAME];
+		TWEUTILS::SmplBuf_WCharSL<64> _devname_extra_info;
 		int _devname_opened_idx;
 
         TWEUTILS::FixedQueue<uint8_t> _que; // primary buffer (used when read() is called.)
@@ -53,7 +54,8 @@ namespace TWE {
 
     public:
         SerialCommon(size_t bufsize = 2048) : 
-			  _devname{}, _devname_prev{}, _devname_opened_idx(-1)
+			  _devname{}, _devname_prev{}, _devname_extra_info{}
+			, _devname_opened_idx(-1)
             , _que(TWEUTILS::FixedQueue<uint8_t>::size_type(bufsize))
             , _buf{}
             , _buf_len(0)
@@ -294,6 +296,18 @@ namespace TWE {
 		int update() {
             return static_cast<CDER&>(*this)._update();
         }
+
+		/**
+		 * @fn	TWEUTILS::SmplBuf_WChar& SerialCommon::query_extra_device_info()
+		 *
+		 * @brief	Queries extra device information
+		 *
+		 * @returns	The extra device information.
+		 */
+		const wchar_t* query_extra_device_info() {
+			static_cast<CDER&>(*this)._query_extra_device_info();
+			return _devname_extra_info.c_str();
+		}
 
 		/**
 		 * @fn	void SerialCommon::set_hook_on_write(void (*ptr)(char_t))
