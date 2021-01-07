@@ -125,9 +125,8 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 
 
 			// if ser# of FTDI device is specified over settings, check with it.
-			if (!strncmp(Serial2.ser_devname[i]
-				, (const char*)sAppData.au8_TWESTG_STAGE_FTDI_ADDR
-				, 8)) {
+			if (sAppData.au8_TWESTG_STAGE_FTDI_ADDR[0] != 0
+				&& !strncmp(Serial2.ser_devname[i], (const char*)sAppData.au8_TWESTG_STAGE_FTDI_ADDR, 8)) {
 				b_selected = true;
 
 				if (_n_arg == APP_ID) { // only if _n_arg is provided as APP_ID

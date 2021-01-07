@@ -23,7 +23,6 @@ public:
 	const wchar_t* get_APP_INIT_MSG() { return L""; }
 	
 private:
-	void idenfify_module();
 
 	// setup procedure
 	void setup_screen();

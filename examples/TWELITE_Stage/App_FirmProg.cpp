@@ -265,11 +265,6 @@ void App_FirmProg::loop() {
 	_subscr.loop();
 }
 
-void App_FirmProg::idenfify_module() {
-	the_screen << "\033[2J" << "Identify Module";
-	_b_running_tweprog = twe_prog.begin(TweProg::BL_PROTOCOL_GET_MODULE_INFO);
-}
-
 void App_FirmProg::setup_screen() {
 	// LCD font color
 	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 

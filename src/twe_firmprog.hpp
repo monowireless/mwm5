@@ -140,14 +140,19 @@ namespace TWE {
 	 */
 	template <class SER, class MODCTL>
 	class TweBlProtocol : public ITweBlProtocol {
-	public:
+	private:
 		SER& _ser;
 		MODCTL& _modc;
 		bool _b_modctl_enabled; // safemode, no modctl(reset/pgm), fix baud 38400bps.
+		bool _b_connected;
 
 	public:
 		TweBlProtocol(SER& ser, MODCTL& modc) :
-			_ser(ser), _modc(modc), _b_modctl_enabled(true), ITweBlProtocol() {}
+			_ser(ser)
+			, _modc(modc)
+			, _b_modctl_enabled(true)
+			, _b_connected(false)
+			, ITweBlProtocol() {}
 
 		~TweBlProtocol() {}
 
@@ -182,30 +187,75 @@ namespace TWE {
 		}
 
 		bool connect() {
-			_ser.begin(BAUD_PROG_SAFE);
-			if(_b_modctl_enabled) _modc.prog();
+			if (_b_modctl_enabled) {
+				// can control module (set BAUD and reset module)
+				_ser.begin(BAUD_PROG_SAFE);
+				_modc.prog();
+				_b_connected = true;
+			}
+			else {
+				// no control (if already connected, keep the baud rate)
+				if (!_b_connected) {
+					_ser.begin(BAUD_PROG_SAFE);
+					_b_connected = true;
+				}
+			}
 			_discard_readbuffer();
 
 			return true;
 		}
 
+		/**
+		 * @fn	bool TweBlProtocol::reset_module()
+		 *
+		 * @brief	Resets the module
+		 * 			This must be called on exit of PMG mode.
+		 *
+		 * @returns	True if it succeeds, false if it fails.
+		 */
 		bool reset_module() {
 			_ser.flush();
 			_ser.begin(get_baud_default());
+
+			_b_connected = false;
 
 			delay(50);
 
 			return (_b_modctl_enabled) ? _modc.reset() : true;
 		}
 
+		/**
+		 * @fn	bool TweBlProtocol::hold_reset_pin()
+		 *
+		 * @brief	Set RST pin as LO
+		 *
+		 * @returns	True if it succeeds, false if it fails.
+		 */
 		bool hold_reset_pin() {
 			return (_b_modctl_enabled) ? _modc.reset(true) : true;
 		}
 
+		/**
+		 * @fn	bool TweBlProtocol::setpin(bool bSet)
+		 *
+		 * @brief	Set SET pin
+		 *
+		 * @param	bSet	True to set LO.
+		 *
+		 * @returns	True if it succeeds, false if it fails.
+		 */
 		bool setpin(bool bSet) {
 			return (_b_modctl_enabled) ? _modc.setpin(bSet) : true;
 		}
 
+		/**
+		 * @fn	void TweBlProtocol::serial_write(const char* str, int len)
+		 *
+		 * @brief	Serial write
+		 *
+		 * @param	str	The string.
+		 * @param	len	The length.
+		 */
 		void serial_write(const char* str, int len) {
 			_ser.write((const uint8_t *)str, len);
 		}

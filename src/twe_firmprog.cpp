@@ -230,10 +230,13 @@ int TweProg::process_body(int c) {
 	case E_ST_TWEBLP::CONNECT:
 		// change baud rate higher
 		if (c == EVENT_NEW_STATE) {
+#if 0	// force safe baud (if modctl is unabled)
 			if (!_bl->get_modctl_enabled()) {
 				// skip changing baud rate (safe mode)
 				ret = PROCESS_SKIP;
-			} else {
+			} else
+#endif
+			{
 				// set fast mode
 				if (!_bl->request(0x27, 0x28, U8_BAUD_DIV)) {
 					error_state();
