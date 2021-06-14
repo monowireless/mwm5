@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MkFiles(VSCode)", "MkFiles(
 		..\mkfiles\arch.mk = ..\mkfiles\arch.mk
 		..\mkfiles\arch_linux.mk = ..\mkfiles\arch_linux.mk
 		..\mkfiles\arch_mac.mk = ..\mkfiles\arch_mac.mk
+		..\mkfiles\arch_raspi.mk = ..\mkfiles\arch_raspi.mk
 		..\mkfiles\arch_win.mk = ..\mkfiles\arch_win.mk
 		..\mkfiles\mwm5.mk = ..\mkfiles\mwm5.mk
 		..\mkfiles\rules.mk = ..\mkfiles\rules.mk

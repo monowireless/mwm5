@@ -117,6 +117,12 @@ SDL_Window* gWindow = nullptr;
 //The window renderer
 SDL_Renderer* gRenderer = nullptr;
 
+// fade effect switch
+#ifndef MWM5_ENABLE_FADE_EFFECT
+# define MWM5_ENABLE_FADE_EFFECT 1
+#endif
+bool g_enable_fade_effect = MWM5_ENABLE_FADE_EFFECT;
+
 // Window icon
 SDL_Surface *gSurface_icon_win = nullptr;
 std::unique_ptr<uint32_t[]> g_pixdata_icon_win;
@@ -274,6 +280,12 @@ struct app_core_sdl {
 	SDL_Texture* mTexture_texte;
 
 	int nAltDown;
+	static const int N_ALTDOWN_HIDE = 0;
+	static const int N_ALTDOWN_SHOWN = 2;
+	static const int N_ALTDOWN_ON_KEY = 1;
+	static const int N_ALTDOWN_FADE_COUNT_MAX = -7;
+	bool IS_N_ALTDOWN_SHOWN_OR_ONKEY(int n) { return n > 0; }
+
 	int nAltState;
 	int nTextEditing;
 
@@ -417,8 +429,9 @@ struct app_core_sdl {
 		const SDL_Rect rctIME = { 100, 100, 100, 100 };
 		SDL_SetTextInputRect((SDL_Rect*)&rctIME); 
 
+		
+#if defined(MWM5_FULLSCREEN_AT_LAUNCH)
 		// set fullscreen as default (for some platform)
-#if defined(MWM5_BUILD_RASPI)
 		_bfullscr = true;
 		SDL_SetWindowFullscreen(gWindow, SDL_WINDOW_FULLSCREEN);
 #endif
@@ -867,15 +880,22 @@ struct app_core_sdl {
 		if (e.type == SDL_MOUSEMOTION && _is_get_focus) { // behave only in focus.
 			int d = screen_weight(32);
 
-			if (e.motion.x < d && e.motion.y) {
-				if (nAltDown != 1) {
-					nAltDown = 2;
+			if (e.motion.x < d) {
+				if (nAltDown != N_ALTDOWN_ON_KEY) { // when press/release event is happened, set nAltDown as 1.
+					nAltDown = N_ALTDOWN_SHOWN; // set nAltDown flag as help screen is shown
 				}
 			}
 			else {
-				if (nAltDown == 2) {
-					if (_is_get_focus) nAltDown = -7;
-					else nAltDown = 0;
+				if (nAltDown == N_ALTDOWN_SHOWN) { // when help screen is shown.
+					if (_is_get_focus) {
+						if (g_enable_fade_effect) {
+							nAltDown = N_ALTDOWN_FADE_COUNT_MAX;
+						}
+						else {
+							nAltDown = N_ALTDOWN_HIDE;
+						}
+					}
+					else nAltDown = N_ALTDOWN_HIDE;
 				}
 			}
 		}
@@ -940,7 +960,7 @@ struct app_core_sdl {
 					|| e.key.keysym.scancode == SDL_SCANCODE_RALT
 #endif
 					) {
-					nAltDown = 1;
+					nAltDown = N_ALTDOWN_ON_KEY;
 					nAltState = 1;
 					update_help_desc(L"");
 				}
@@ -1267,13 +1287,16 @@ struct app_core_sdl {
 				break;
 			}
 
-			if (bhandled && nAltDown > 0) nAltDown = -7;
+			if (bhandled && IS_N_ALTDOWN_SHOWN_OR_ONKEY(nAltDown))
+				nAltDown = g_enable_fade_effect ? N_ALTDOWN_FADE_COUNT_MAX : N_ALTDOWN_HIDE; // HIDE HELP SCREEN
 		}
 
 		if (e.type == SDL_KEYUP) {
 			if (!(e.key.keysym.mod & (KMOD_STG))) {
 				nAltState = 0;
-				if(nAltDown > 0) nAltDown = -7;
+				if (IS_N_ALTDOWN_SHOWN_OR_ONKEY(nAltDown)) {
+					nAltDown = g_enable_fade_effect ? N_ALTDOWN_FADE_COUNT_MAX : N_ALTDOWN_HIDE; // HIDE HELP SCREEN
+				}
 			}
 		}
 	}
@@ -1438,7 +1461,7 @@ struct app_core_sdl {
 	}
 
 	void render_help_screen() {
-		if (nAltDown) {
+		if (nAltDown != N_ALTDOWN_HIDE) {
 			const SDL_Rect dstrect_sub = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 			const SDL_Rect srcrect_sub = { 0, 0, M5_LCD_SUB_WIDTH, M5_LCD_SUB_HEIGHT };
 			
@@ -1460,7 +1483,13 @@ struct app_core_sdl {
 			}
 			SDL_UnlockTexture(mTexture_sub);
 
-			uint8_t alpha = (nAltDown < 0) ? (-nAltDown * 0xc0) / 8 : 0xc0;
+			uint8_t alpha;
+			if (g_enable_fade_effect) {
+				alpha = (nAltDown < 0) ? (-nAltDown * 0xc0) / 8 : 0xc0;
+			}
+			else {
+				alpha = 0xff;
+			}
 
 			SDL_SetRenderTarget(gRenderer, NULL);
 			SDL_SetTextureBlendMode(mTexture_sub, SDL_BLENDMODE_BLEND);
@@ -1571,10 +1600,16 @@ struct app_core_sdl {
 			}
 
 			if (quit_loop_count == -1 && g_quit_sdl_loop) {
-				quit_loop_count = QUIT_LOOP_COUNT_MAX;
-				
 				// exitting message
 				con_screen << crlf << "exiting";
+
+				if (g_enable_fade_effect) {
+					quit_loop_count = QUIT_LOOP_COUNT_MAX;
+				}
+				else {
+					quit_loop_count = 0; // exit the loop.
+					break;
+				}
 			}
 			else if (quit_loop_count >= 0) {
 				con_screen << '.';
@@ -1882,10 +1917,18 @@ static void s_getopt(int argc, char* args[]) {
 	int opt = 0;
 	ts_opt_getopt* popt = oss_getopt_ref();
 
-    while ((opt = oss_getopt(argc, args, "nR:")) != -1) {
+    while ((opt = oss_getopt(argc, args, "E:R:")) != -1) {
         switch (opt) {
-        case 'n': // single arg
-            break;
+		case 'E': // effects
+			{
+				int optval = atoi(popt->optarg);
+				switch (optval) {
+				case 0: g_enable_fade_effect = false; break;
+				case 1: g_enable_fade_effect = true; break;
+				default: g_enable_fade_effect = (MWM5_ENABLE_FADE_EFFECT == 1);
+				}
+			}
+			break;
         case 'R': // Render engine (0:default 1:opengl 2:metal)
             the_pref.render_engine = atoi(popt->optarg);
             break;

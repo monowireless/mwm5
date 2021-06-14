@@ -14,3 +14,6 @@
 #else
 #define KMOD_STG KMOD_ALT
 #endif
+
+// some basic flags
+extern bool g_enable_fade_effect;

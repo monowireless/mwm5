@@ -129,7 +129,7 @@ bool twe_wid_button::update_core(SDL_Event& e) {
 		}
 		else {
 			if (_nButtonOver) {
-				_nHoldScreen = 0x77;
+				_nHoldScreen = 0x77; // fadeout effect
 				start_timer1();
 
 				_nButtonOver = 0;
@@ -210,16 +210,18 @@ void twe_wid_button::render_sdl(SDL_Renderer* renderer) {
 				_b_render_texture = false;
 			}
 
-			int mdiv, alpha;
-			if (_nHoldScreen == 0) { // normal
-				alpha = 0xC0;
-			}
-			else if (_nHoldScreen == -1) { // hold count expires, reset by timer
-				alpha = 0;
-			}
-			else { // hold count (after button press)
-				mdiv = (_nHoldScreen >> 4) + 1;
-				alpha = (_nHoldScreen & 0xF) * 0xc0 / mdiv;
+			int alpha = 0xff;
+			if (g_enable_fade_effect) {
+				if (_nHoldScreen == 0) { // normal
+					alpha = 0xC0;
+				}
+				else if (_nHoldScreen == -1) { // hold count expires, reset by timer
+					alpha = 0;
+				}
+				else { // hold count (after button press)
+					int mdiv = (_nHoldScreen >> 4) + 1;
+					alpha = (_nHoldScreen & 0xF) * 0xc0 / mdiv;
+				}
 			}
 
 			// render bottom bar
