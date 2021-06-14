@@ -230,9 +230,6 @@
     <ClCompile Include="..\src\twe_cui_widget.cpp">
       <Filter>TWELibSrc</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\twe_fmt_actstd.cpp">
-      <Filter>TWELibSrc</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\twe_fmt_appio.cpp">
       <Filter>TWELibSrc</Filter>
     </ClCompile>
@@ -515,6 +512,9 @@
       <Filter>TWELibSrc</Filter>
     </ClInclude>
     <ClInclude Include="..\src\twe_fmt_twelite.hpp">
+      <Filter>TWELibSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\modctl_common.hpp">
       <Filter>TWELibSrc</Filter>
     </ClInclude>
   </ItemGroup>

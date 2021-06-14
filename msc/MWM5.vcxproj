@@ -149,6 +149,7 @@
     <ClInclude Include="..\src\font\font_Shinonome12.h" />
     <ClInclude Include="..\src\font\font_Shinonome14.h" />
     <ClInclude Include="..\src\font\font_Shinonome16.h" />
+    <ClInclude Include="..\src\modctl_common.hpp" />
     <ClInclude Include="..\src\mwm5.h" />
     <ClInclude Include="..\src\mwm50.h" />
     <ClInclude Include="..\src\oss\oss_getopt.h" />

@@ -105,6 +105,11 @@ int SerialFtdi::_list_devices(bool append_entry) {
 					b_dev_general = true;
 				}
 
+				// SerialNumber would be NULL string in case of an error (already opened)
+				if (SerialNumber[0] == 0) {
+					strdev = nullptr;
+				}
+
 				if (strdev != nullptr) {
 					// check if MONOSTICK or TWELITER
 #if defined(_MSC_VER) || defined(__MINGW32__)

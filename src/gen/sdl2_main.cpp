@@ -446,7 +446,7 @@ struct app_core_sdl {
 				sub_screen_tr << crlf << printfmt(STR_ALT "+%d ", i + 1); // ALT+1 .. 3
 
 				bool bOpened = false;
-				if (!strncmp(Serial2.ser_devname[i], Serial2.get_devname(), sizeof(Serial2.ser_devname[i]))) {
+				if (Serial2.ser_devname[i][0] != 0 && !strncmp(Serial2.ser_devname[i], Serial2.get_devname(), sizeof(Serial2.ser_devname[i]))) {
 					bOpened = true;
 				}
 
@@ -666,6 +666,9 @@ struct app_core_sdl {
 		sp_btn_A->setup(gRenderer);
 		sp_btn_B->setup(gRenderer);
 		sp_btn_C->setup(gRenderer);
+
+		// render help screen
+		update_help_screen();
 	}
 
 	bool sdlop_window_size(int n) {
