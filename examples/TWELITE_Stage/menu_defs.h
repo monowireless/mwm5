@@ -5,6 +5,8 @@
 
 #include "twesettings/tweset.h"
 
+#define MWM5_DEFAULT_BAUD 115200
+
 #ifdef __cplusplus
 	extern "C" {
 #endif // C++
@@ -19,6 +21,7 @@ typedef enum {
 #endif
 	E_TWESTG_STAGE_FG_COLOR,
 	E_TWESTG_STAGE_BG_COLOR,
+	E_TWESTG_STAGE_BAUD_TERM,
 	// APP WRT
 	E_TWESTG_STAGE_APPWRT_START = 0x30,
 	E_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN,

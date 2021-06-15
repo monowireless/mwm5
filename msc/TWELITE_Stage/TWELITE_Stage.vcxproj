@@ -479,7 +479,6 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu_defs.h" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\menu_info.h" />
-    <ClInclude Include="App_Commander.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="version_msc.h" />
   </ItemGroup>

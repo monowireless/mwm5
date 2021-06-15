@@ -67,9 +67,21 @@ public:
 		,_ct_refresh(0)
 	{
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
+
+		// set baud app specific
+		if (sAppData.u32_TWESTG_STAGE_BAUD_TERM != MWM5_DEFAULT_BAUD) {
+			change_baud(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
+			twe_prog.set_baud_app(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
+		}
 	}
 
-	~App_Console() {}
+	~App_Console() {
+		// take back app specific baud
+		if (sAppData.u32_TWESTG_STAGE_BAUD_TERM != MWM5_DEFAULT_BAUD) {
+			change_baud(MWM5_DEFAULT_BAUD);
+			twe_prog.set_baud_app(MWM5_DEFAULT_BAUD);
+		}
+	}
 
 	void setup();
 

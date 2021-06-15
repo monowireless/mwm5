@@ -65,7 +65,15 @@ const TWESTG_tsElement TWESTG_STAGE_BASE[] = {
 		{ E_TWEINPUTSTRING_DATATYPE_HEX, 6, 'b' },
 		{ {.u32 = 0}, {.u32 = 0xFFFFFF}, TWESTGS_VLD_u32MinMax, NULL },
 	},
-	
+	{ E_TWESTG_STAGE_BAUD_TERM,
+		{ TWESTG_DATATYPE_UINT32,  sizeof(uint32),  0, 0,  {.u32 = 115200}},
+		{ "BAU", "ボーレート",
+		  "ﾀｰﾐﾅﾙ･ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞのﾎﾞｰﾚｰﾄを指定します。\r\n"
+		  "115200bpsが標準で9600-115200で指定します。\r\n"
+		  "ｱﾌﾟﾘ側での対応が必要です。" },
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 6, 'B' },
+		{ {.u32 = 9600}, {.u32 = 1000000}, TWESTGS_VLD_u32MinMax, NULL },
+	},
 	{E_TWESTG_DEFSETS_VOID} // FINAL DATA
 };
 
@@ -141,10 +149,11 @@ uint8 au8CustomDefault_Unuse[] = {
 	E_TWESTG_STAGE_START_APP, TWESTG_DATATYPE_UNUSE, // hide an item
 	E_TWESTG_STAGE_KEYBOARD_LAYOUT, TWESTG_DATATYPE_UNUSE, // hide an item
 #else
-	6,   // total bytes afterwards
+	8,   // total bytes afterwards
 	E_TWESTG_STAGE_START_APP, TWESTG_DATATYPE_UNUSE, // hide an item
 	E_TWESTG_STAGE_SCREEN_MODE, TWESTG_DATATYPE_UNUSE, // hide an item
 	E_TWESTG_STAGE_FTDI_ADDR, TWESTG_DATATYPE_UNUSE, // hide an item
+	E_TWESTG_STAGE_BAUD_TERM, TWESTG_DATATYPE_UNUSE, // hide an item
 #endif
 };
 

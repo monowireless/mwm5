@@ -58,9 +58,9 @@ void setup() {
 
 	// this procedure should follow after M5.begin();
 #ifdef IDF_UART
-	Serial2_IDF.begin(115200, 1024, 512);
+	Serial2_IDF.begin(MWM5_DEFAULT_BAUD, 1024, 512);
 #else
-	Serial2.begin(115200, SERIAL_8N1, 16, 17);
+	Serial2.begin(MWM5_DEFAULT_BAUD, SERIAL_8N1, 16, 17);
 	Serial2.setRxBufferSize(1536);
 #endif
 
@@ -123,6 +123,33 @@ void loop() {
 	// clipboard check
 	s_check_clipboard();
 #endif
+}
+
+/**
+ * @fn	uint32_t change_baud(uint32_t baud)
+ *
+ * @brief	Change baud
+ *          Note: must call twe_prog.set_baud_app() as well if performing twe_prog, like twe_prog.reset().
+ *          TODO: should change at twe_prog object???
+ *
+ * @param	baud	The baud.
+ *
+ * @returns	An uint32_t.
+ */
+uint32_t change_baud(uint32_t baud) {
+#ifdef IDF_UART
+# warning "Serial2_IDF changing baud may not be implemented!"
+	Serial2_IDF.begin(baud);
+#else
+# ifndef ESP32
+	Serial2.set_baudrate(baud); // e.g. FTDI, /dev/ttyS0, ...
+# else
+# warning "Serial2 changing baud may not be implemented!"
+	Serial2.begin(baud);
+# endif
+#endif
+
+	return baud;
 }
 
 /**

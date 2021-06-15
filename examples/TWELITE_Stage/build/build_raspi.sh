@@ -13,7 +13,7 @@ function bld() {
 
 bld X11 1
 bld fb 1
-bld X11 0
-bld fb 0
+#bld X11 0
+#bld fb 0
 
 echo "# type '...$0 | sh' to execute."

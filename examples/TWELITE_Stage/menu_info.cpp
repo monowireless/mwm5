@@ -42,7 +42,7 @@ void TWEINTCT_vSerUpdateScreen_stage_info(TWEINTRCT_tsContext *psIntr) {
 
 	ITerm& trm = *reinterpret_cast<ITerm*>(file->vpContext_output);
 
-	trm << L"TWELITE STAGE (C) 2020 MONO WIRELESS INC." << crlf;
+	trm << L"TWELITE STAGE (C) 2020-21 MONO WIRELESS INC." << crlf;
 	trm << L"TWELITE 無線モジュールをお楽しみください！" << crlf;
 	trm << crlf;
 

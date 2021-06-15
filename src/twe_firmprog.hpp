@@ -563,6 +563,17 @@ namespace TWE {
 				serial_number = ((mac_addr[4] & 0x0F) << 24) | (mac_addr[5] << 16) | (mac_addr[6] << 8) | mac_addr[7] | 0x80000000;
 			}
 		} module_info;
+
+		/**
+		 * @fn	void TweProg::set_baud_app(uint32_t baud)
+		 *
+		 * @brief	Sets baud for application use.
+		 *
+		 * @param	baud	The baud.
+		 */
+		void set_baud_app(uint32_t baud) {
+			_bl->set_baud_default(baud);
+		}
 	};
 
 	// the instance

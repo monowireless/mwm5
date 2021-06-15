@@ -14,11 +14,16 @@ DO_DYNAMIC_LINK?=0
 ## SDL2 library for Raspberry PI
 # fb: frame buffer (console), X11: for X Window System (desktop)
 RPI_SDL2_LIB?=X11
+#
+# set fullscreen for console
+ifeq ($(RPI_SDL2_LIB),fb)
+CFLAGS += -DMWM5_FULLSCREEN_AT_LAUNCH
+endif
 
 ## ARMv6 support (e.g. FTDI library)
 RPI_ARMv6?=0
-
-## disable fade/transparent effect for slower platform.
+#
+# disable fade/transparent effect for slower platform.
 ifeq ($(RPI_ARMv6),1)
 CFLAGS += -DMWM5_ENABLE_FADE_EFFECT=0
 endif

@@ -132,7 +132,6 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Commander.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
-    <ClInclude Include="App_Commander.h" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_CUE.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
