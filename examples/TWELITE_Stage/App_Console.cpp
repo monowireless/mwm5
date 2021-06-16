@@ -19,6 +19,10 @@ L"でビューアを終了します。" "\r\n";
 	// preference
 	the_settings_menu.begin(appid_to_slotid(APP_ID));
 
+	// set baud app specific
+	change_baud(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
+	twe_prog.set_baud_app(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
+
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 

@@ -122,6 +122,11 @@ void MyTweMenu::gen_SetList() {
 	for (uint8_t i = 1; i < (uint8_t)E_APP_ID::_APPS_END_; i++) {
 		uint8_t i_slot = i;
 		switch(E_APP_ID(i)) {
+		case E_APP_ID::CONSOLE:
+			_spSetList[i_slot] = { 0, i_slot, // slot#n (for app#1)
+				{ TWESTG_STAGE_BASE, NULL, NULL,
+				  NULL, au8CustomDefault_Unuse_Baud, NULL } };
+			break;
 		case E_APP_ID::ROOT_MENU: // dummy label
 		case E_APP_ID::_APPS_END_: // dummy label
 		default:
@@ -145,7 +150,7 @@ void MyTweMenu::gen_SetList() {
 		case E_APP_ID::INTERACTIVE:
 			_spSetList[i_slot] =  { 0, i_slot, // slot#n (for app#1)
 				{ TWESTG_STAGE_BASE, NULL, TWESTG_SLOT_SCREEN_INTRCT,
-				  NULL, au8CustomDefault_Unuse, NULL }};
+				  NULL, au8CustomDefault_Unuse_Baud, NULL }};
 			break;
 		default:
 			_spSetList[i_slot] =  { 0, i_slot, // slot#n (for app#1)

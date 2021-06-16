@@ -44,6 +44,7 @@ extern const TWEINTRCT_tsFuncs asFuncs[];
 extern const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[];
 extern const TWESTG_tsElement TWESTG_SLOT_SCREEN_INTRCT[];
 extern uint8 au8CustomDefault_Unuse[];
+extern uint8 au8CustomDefault_Unuse_Baud[];
 #ifdef __cplusplus
 }
 #endif // C++

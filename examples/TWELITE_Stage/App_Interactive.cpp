@@ -16,6 +16,10 @@ void App_Interactive::setup() {
 	}
 #endif
 
+	// set baud app specific
+	change_baud(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
+	twe_prog.set_baud_app(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
+
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 
