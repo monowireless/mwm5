@@ -33,6 +33,7 @@ bool KeyInput_SDL2::handle_event(SDL_Event& e) {
 
 			if (key) {
 				KeyInput::push(key);
+				if (key == 0x0d) KeyInput::push(0x0a); // generate CRLF
 				return true;
 			}
 		}

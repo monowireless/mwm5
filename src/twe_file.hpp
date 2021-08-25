@@ -455,6 +455,15 @@ namespace TWE {
             return false;
 		}
 
+        static bool is_dir(const char_t* p_dirname) {
+#ifndef ESP32
+            if (p_dirname && p_dirname[0] != 0) {
+                return std::filesystem::is_directory(p_dirname);
+            }
+#endif
+            return false;
+        }
+
         static bool create_dir(const wchar_t* p_dirname) {
 #ifndef ESP32
             if (!is_dir(p_dirname)) {

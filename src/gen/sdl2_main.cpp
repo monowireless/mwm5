@@ -781,21 +781,25 @@ struct app_core_sdl {
 
 		/* HANDLE BUTTON PRESS EVENT */
 		if (_is_get_focus) { // behave only in focus.
+			// handles button
+			bool b_btn_handled = false;
+
 			if (sp_btn_quit->update(e)) {
 				if (sp_btn_quit->available()) {
 					auto readstate = sp_btn_quit->read();
 					g_quit_sdl_loop = true;
 					return;
 				}
+				b_btn_handled = true;
 			}
-
+			
 			if (sp_btn_A->update(e)) {
 				if (sp_btn_A->available()) {
 					auto readstate = sp_btn_A->read();
 					if (readstate == 1) M5.BtnA._press = true;
 					if (readstate == 2) M5.BtnA._lpress = true;
 				}
-				return; // event is handled
+				b_btn_handled = true;
 			}
 
 			if (sp_btn_B->update(e)) {
@@ -804,7 +808,7 @@ struct app_core_sdl {
 					if (readstate == 1) M5.BtnB._press = true;
 					if (readstate == 2) M5.BtnB._lpress = true;
 				}
-				return; // event is handled
+				b_btn_handled = true;
 			}
 
 			if (sp_btn_C->update(e)) {
@@ -813,8 +817,10 @@ struct app_core_sdl {
 					if (readstate == 1) M5.BtnC._press = true;
 					if (readstate == 2) M5.BtnC._lpress = true;
 				}
-				return; // event is handled
+				b_btn_handled = true;
 			}
+
+			if (b_btn_handled) return;
 
 			// main screen
 			//  push mouse event as KEY INPUT QUEUE

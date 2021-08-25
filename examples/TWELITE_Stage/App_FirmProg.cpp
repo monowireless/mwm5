@@ -86,11 +86,19 @@ static const uint16_t COLTBL_MAIN[8] = {
  * @returns	        app id of switched app.
  */
 int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, int exit_code) {
+	// if next_app is set, create screen.
+	//    _subscr.exit(-1, NEXT_APP_ID);
 	if (next_app == Screen_ModIdentify::SCR_ID) {
 		sub_app.new_app<Screen_ModIdentify>();
 		return next_app;
 	}
+	else if (next_app == Screen_FatalError::SCR_ID) {
+		sub_app.new_app<Screen_FatalError>();
+		return next_app;
+	}
 
+	// _subscr.exit(EXIT_CODE) is called from sub screen object.
+	//   this is aliased exit(EXIT_CODE) in each SubScreen object.
 	switch (prev_app) {
 	case Screen_ModIdentify::SCR_ID:
 		switch (exit_code) {
@@ -226,7 +234,14 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 		break;
 
 	case Screen_FatalError::SCR_ID:
-		::the_app.exit(APP_ID);
+		switch (exit_code) {
+		case SubScreen::EXIT_NEXT: // force build w/o module connect
+			sub_app.new_app<Screen_OpenMenu>();
+			return Screen_OpenMenu::SCR_ID;
+			break;
+		default:
+			::the_app.exit(APP_ID);
+		}
 		break;
 	}
 
@@ -244,7 +259,12 @@ void App_FirmProg::setup() {
 	
 	setup_screen();
 	_subscr.setup(change_app);
-	_subscr.exit(-1, Screen_ModIdentify::SCR_ID);
+	if (Serial2.is_opened()) {
+		_subscr.exit(-1, Screen_ModIdentify::SCR_ID); // start from module detect
+	}
+	else {
+		_subscr.exit(-1, Screen_FatalError::SCR_ID); // start from module detect
+	}
 
 #ifndef ESP32
 	// store dir drop dir into internal dirs
@@ -887,17 +907,33 @@ void App_FirmProg::Screen_FatalError::setup() {
 	
 	the_screen.clear_screen();
 
-	the_screen
-		<< crlf
-		<< L"TWELITE 無線モジュールが認識できません。" << crlf
-		<< L"" << crlf
-		// L"....+....1a...+....2....+....3.b..+....4....+....5..3"
-		<< L"同じエラーが続く場合は、TWELITE STAGEを終了し、USBデ" L"\r\n"
-		   L"バイス(MONOSITCK,TWELITE R)を切断し、TWELITEの配線を" L"\r\n"
-		   L"再確認します。改めてUSBデバイスの接続とSTAGEアプリを" L"\r\n"
-		   L"起動してください。"  L"\r\n"
+	if (Serial2.is_opened()) {
+		the_screen
+			<< crlf
+			<<  L"TWELITE 無線モジュールが認識できません。" << crlf
+			<<  L"" << crlf
+			//  L"....+....1a...+....2....+....3.b..+....4....+....5..3"
+			<<  L"同じエラーが続く場合は、TWELITE STAGEを終了し、USBデ" L"\r\n"
+				L"バイス(MONOSITCK,TWELITE R)を切断し、TWELITEの配線を" L"\r\n"
+				L"再確認します。改めてUSBデバイスの接続とSTAGEアプリを" L"\r\n"
+				L"起動してください。"  L"\r\n"
+			;
+	}
+	else {
+		the_screen
+			<< crlf
+			<< L"シリアルポートが開かれていません。" << crlf
+			<< L"" << crlf
+			//  L"....+....1a...+....2....+....3.b..+....4....+....5..3"
+			<< L"主ﾒﾆｭｰまたはAlt(Cmd)押ﾒﾆｭｰからｼﾘｱﾙﾎﾟｰﾄを選択します。" L"\r\n"
+			   L"" L"\r\n"
+			;
+	}
+	the_screen <<
+		L"--以下のｷｰで接続せずﾒﾆｭｰに移動(ﾋﾞﾙﾄﾞのみ)--" L"\r\n"
+		L" B → TWELITE BLUE"  L"\r\n"
+		L" R → TWELITE RED"
 		;
-			
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
@@ -941,7 +977,25 @@ void App_FirmProg::Screen_FatalError::loop() {
 			exit(EXIT_BACK_TO_MENU);
 			return;
 
-		case KeyInput::KEY_BUTTON_C_LONG:
+		case KeyInput::KEY_BUTTON_C_LONG: // force move build menu
+			break;
+
+		case 'B':
+			_parent->_firmfile_modtype = TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT;
+			the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
+				, 0x0FFFFFFF
+				, "\033[44mBLUE\033[0m"
+			);
+			exit(EXIT_NEXT);
+			break;
+
+		case 'R':
+			_parent->_firmfile_modtype = TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT;
+			the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
+				, 0x0FFFFFFF
+				, "\033[41mRED\033[0m"
+			);
+			exit(EXIT_NEXT);
 			break;
 
 		default:
@@ -1774,34 +1828,24 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 		}
 
 		SmplBuf_ByteSL<1024> cmdstr;
-
-#if defined(_MSC_VER) || defined(__MINGW32__) 
-		#define MAKE_CMD_TERM "\""
-		if (TweDir::is_dir(make_full_path(the_cwd.get_dir_sdk(), L"..\\Tools").c_str())) {
-			// Tools dir is located ../{MWSDK_DIR}
-			cmdstr << the_cwd.get_dir_sdk() << char(WCHR_PATH_SEP)
-				<< "..\\Tools\\MinGW\\msys\\1.0\\bin\\bash -c \"/usr/bin/make";
-		}
-		else {
-			// Tools dir is located {MWSDK_DIR}/Tools
-			cmdstr << the_cwd.get_dir_sdk() << char(WCHR_PATH_SEP)
-				<< "Tools\\MinGW\\msys\\1.0\\bin\\bash -c \"/usr/bin/make";
-		}
-#else
 		#define MAKE_CMD_TERM ""
-		cmdstr << "make";
-#endif
+		cmdstr << "make"; // note: dedicated make command shall be present at the first of PATH.
+		// if called via "bash -c"
+		//   #define MAKE_CMD_TERM "\""
+		//   cmdstr << "bash -c \"/usr/bin/make";		
 
 		// set cpu count for parallel building
 		if (ct_cpu > 1) cmdstr << " -j" << printfmt("%d", ct_cpu); // parallel jobs
 
 		// don't use APPDEP (ALWAYS do full build.)
-		cmdstr << " USE_APPDEPS=0"; 
+		cmdstr << " USE_APPDEPS=0";
 
 		// set MODULE type (BLUE/RED)
 		switch (_parent->_firmfile_modtype) {
 		case TweProg::E_MOD_TYPE::TWELITE_BLUE: cmdstr << " TWELITE=BLUE"; break;
 		case TweProg::E_MOD_TYPE::TWELITE_RED: cmdstr << " TWELITE=RED"; break;
+		case TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT: cmdstr << " TWELITE=BLUE"; break;
+		case TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT: cmdstr << " TWELITE=RED"; break;
 		default: break;
 		}
 
@@ -2008,7 +2052,17 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				
 				_parent->_firmfile_name = as_copying(_act_build_file);
 				_parent->_firmfile_disp = as_copying(_act_build_file);
-				exit(EXIT_NEXT); // switch to the firm write.
+
+				switch (_parent->_firmfile_modtype) {
+				case TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT:
+				case TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT:
+					the_screen << crlf << "\033[7m" << L"ビルドが成功しました。" << "\033[0m";
+					_timer_exit.start(10000);
+					break;
+				default: exit(EXIT_NEXT); // switch to the firm write.
+					break;
+				}
+				
 			}
 			else {
 				the_screen << crlf << "\033[7m" << L"ビルド中にエラーを検出しました。" << "\033[0m";

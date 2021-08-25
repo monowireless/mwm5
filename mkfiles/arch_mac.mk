@@ -28,7 +28,8 @@ $(info ...build for x86_64 system with clang for Catalina or later.)
 else ifeq ($(MACOS_TARGET),ARM64)
 MACOS_COMPILERTYPE=clang
 MACOS_ARCH=arm64
-MWM5_SERIAL_NO_FTDI=1
+MWM5_SERIAL_NO_FTDI=0
+#MWM5_SERIAL_NO_FTDI=1 # now D2XX driver supports Apple Silicon.
 $(info ...build for arm64 system with clang for BigSur or later.)
 endif
 

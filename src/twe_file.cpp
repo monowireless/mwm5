@@ -708,7 +708,8 @@ void TweCwd::_get_sdk_twenet_lib() {
  * 			  LANG: set "C" assuring all message outputs in English.
  */
 void TweCwd::_set_sdk_env() {
-	SmplBuf_ByteSL<TWE::TWE_FILE_NAME_MAX> val;
+	SmplBuf_ByteS val;
+	val.reserve(TWE::TWE_FILE_NAME_MAX * 3);
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	/// MWSDK_ROOT=...
@@ -726,6 +727,42 @@ void TweCwd::_set_sdk_env() {
 	// LANG 
 	_putenv_s("LANG", "C");
 
+	// PATH (add path of cygwin)
+	val.clear();
+	size_t reqct;
+	getenv_s(&reqct, NULL, 0, "PATH"); // check size of env
+	if (reqct > (val.capacity() - TWE::TWE_FILE_NAME_MAX)) {
+		val.reserve(TWE::TWE_FILE_NAME_MAX + reqct); // if excess size, reserve more.
+	}
+	
+	val << make_full_path(_dir_sdk, "..\\Tools\\MinGW\\msys\\1.0\\bin");
+	if (TweDir::is_dir(val.c_str())) {
+		printf("echo ---- Cygwin tools PATH is found at %s. ----", val.c_str());
+		
+	}
+	else {
+		val.clear();
+		val << make_full_path(_dir_sdk, "\\Tools\\MinGW\\msys\\1.0\\bin");
+
+		if (!TweDir::is_dir(val.c_str())) {
+			val.clear();
+		}
+		else {
+			printf("echo ---- Cygwin tools PATH is found at %s. (for older MWSDK) ----", val.c_str());
+		}
+	}
+	if (val.size() != 0) {
+		val.append(';');
+
+		getenv_s(&reqct, (char*)val.end().raw_ptr(), reqct, "PATH"); // put data dirctly into Buffer.
+		val.resize_preserving_unused(val.size() + reqct); // expand buffer end without clearing data.
+
+		_putenv_s("PATH", val.c_str());
+	}
+	else {
+		// cannot found!
+		printf("echo ---- Cygwin tools folder is not found! ----");
+	}
 # ifdef _DEBUG
 	system("cmd /c set"); // check env values output to console
 # endif

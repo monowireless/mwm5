@@ -138,7 +138,7 @@ bool twe_wid_button::update_core(SDL_Event& e) {
 		}
 	}
 
-	if (!_nHoldScreen && e.type == SDL_MOUSEBUTTONUP) {
+	if (!_nHoldScreen && e.type == SDL_MOUSEBUTTONUP && _nButtonState == (int)E_BTN_STATE::BTNDOWN) {
 		int x = _screen_weight_w(e.button.x);
 		int y = _screen_weight_h(e.button.y);
 
