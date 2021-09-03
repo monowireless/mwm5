@@ -1,4 +1,4 @@
-﻿           モノワイヤレスオープンソースソフトウェア使用許諾契約書           
+           モノワイヤレスオープンソースソフトウェア使用許諾契約書           
 
                                         VERSION 1, 20-JAN-2020 (MW-OSSLA-1J)
                                        Copyright (C) 2020 Mono Wireless Inc.

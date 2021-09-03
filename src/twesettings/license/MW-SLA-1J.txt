@@ -1,4 +1,4 @@
-﻿                モノワイヤレスソフトウェア使用許諾契約書
+                モノワイヤレスソフトウェア使用許諾契約書
 
     VERSION 1, 8-DEC-2016 (MW-SLA-1J)
     Copyright (C) 2016 Mono Wireless Inc.

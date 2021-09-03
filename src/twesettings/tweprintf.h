@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * 

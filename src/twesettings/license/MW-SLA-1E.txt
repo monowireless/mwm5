@@ -1,4 +1,4 @@
-﻿            MONO WIRELESS SOFTWARE LICENSE AGREEMENT
+            MONO WIRELESS SOFTWARE LICENSE AGREEMENT
             
   VERSION 1, 8-DEC-2016 (MW-SLA-1E)
   Copyright (C) Mono Wireless Inc.
