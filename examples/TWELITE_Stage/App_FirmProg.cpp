@@ -43,6 +43,9 @@ SmplBuf_WChar App_FirmProg::_build_project;
 /** @brief	the last chosen project name */
 SmplBuf_WChar App_FirmProg::_build_project_prev;
 
+/** @brief	the last chosen project name */
+SmplBuf_WChar App_FirmProg::_dirname_drop(TWE::TWE_FILE_NAME_MAX);
+
 #endif
 
 /** @brief	dir where a firmware file is stored. */
@@ -94,6 +97,10 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 	}
 	else if (next_app == Screen_FatalError::SCR_ID) {
 		sub_app.new_app<Screen_FatalError>();
+		return next_app;
+	}
+	else if (next_app == Screen_FileBrowse::SCR_ID) {
+		sub_app.new_app<Screen_FileBrowse>();
 		return next_app;
 	}
 
@@ -212,10 +219,10 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 			case 0: ::the_app.exit(APP_ID, int(E_APP_ID::INTERACTIVE)); break; // INTERACTIVE MENU
 			case 1: ::the_app.exit(APP_ID, int(E_APP_ID::CONSOLE)); break; // TERMINAL
 			case 2:
-				::the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
 #ifndef ESP32
-				Serial2.reopen(); // try to re-open the Serial device (in case of re-attaching device)
+				if (Serial2.is_opened()) Serial2.reopen(); // try to re-open the Serial device (in case of re-attaching device)
 #endif
+				::the_app.exit(EXIT_ID_GOTO_FIRM_PROG_LAST_BUILD, (int)E_APP_ID::FIRM_PROG);
 				break; // last menu
 			}
 			::the_sys_console.clear_screen();
@@ -265,12 +272,6 @@ void App_FirmProg::setup() {
 	else {
 		_subscr.exit(-1, Screen_FatalError::SCR_ID); // start from module detect
 	}
-
-#ifndef ESP32
-	// store dir drop dir into internal dirs
-	_dirname_drop.resize(0);
-	_dirname_drop << the_file_drop.get_dir();
-#endif
 }
 
 void App_FirmProg::loop() {
@@ -418,7 +419,12 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 	}
 
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
-	_listMenu.set_info_area(L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
+	if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+		_listMenu.set_info_area(L"VSCode", L"ｳｪﾌﾞ");
+	}
+	else {
+		_listMenu.set_info_area(L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
+	}
 #endif
 	_listMenu.attach_term(the_screen);
 
@@ -568,7 +574,17 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 					case MENU_ACT: shell_open_folder(the_cwd.get_dir_wks_acts()); break;
 					case MENU_ACT_EXTRA: shell_open_folder(the_cwd.get_dir_wks_act_extras()); break;
 					case MENU_TWEAPPS: shell_open_folder(the_cwd.get_dir_wks_tweapps()); break;
-					case MENU_DROP_DIR: if(_parent->_dirname_drop.length() > 0) shell_open_folder(_parent->_dirname_drop); else bErrMsg = true; break;
+					case MENU_DROP_DIR: 
+						if (_parent->_dirname_drop.length() > 0) {
+							if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+								shell_open_by_command(_parent->_dirname_drop, L"code");
+							}
+							else {
+								shell_open_folder(_parent->_dirname_drop);
+							}
+						}
+						else bErrMsg = true;
+						break;
 					case MENU_LAST: bErrMsg = true; break;
 					}
 
@@ -608,7 +624,13 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 								, _parent->_build_workspace
 								, _parent->_build_name);
 
-							exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_ACT);
+							if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+								_parent->_firmfile_dir = make_full_path(_parent->_dirname_drop, L"build"); // set browse
+								exit(EXIT_NEXT); // GOTO Screen_FileBrowse
+							}
+							else {
+								exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_ACT);
+							}
 							break;
 						}
 
@@ -672,13 +694,23 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 					case MENU_ACT_EXTRA:
 					case MENU_ACT:
 						if (_parent->_build_name.size() > 0) {
-							exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_ACT); // last selected act
+							if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+								exit(EXIT_NEXT2);
+							}
+							else {
+								exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_ACT); // last selected act
+							}
 							return;
 						}
 						break;
 					case MENU_TWEAPPS:
 						if (_parent->_build_name.size() > 0) {
-							exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_TWEAPPS); // last selected tweapps
+							if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+								exit(EXIT_NEXT2);
+							}
+							else {
+								exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_BUILD_TWEAPPS); // last selected tweapps
+							}
 							return;
 						}
 						break;
@@ -832,10 +864,13 @@ bool App_FirmProg::Screen_FileBrowse::dispFileName(const wchar_t* name, SmplBuf_
 	const wchar_t wstr_model[][16] = {
 		L"UNDEF",
 		L"BLUE",
+		L"RED",
+		L"BLUE",
 		L"RED"
 	};
 
 	// check if filename has TWELITE MODE name.
+	int n_mod_type = (int)twe_prog.module_info.type;
 	if (wcsstr(name_upper.data(), wstr_model[(int)twe_prog.module_info.type]) == nullptr) { b_ok = false; }
 
 	// generate return string
@@ -982,6 +1017,7 @@ void App_FirmProg::Screen_FatalError::loop() {
 
 		case 'B':
 			_parent->_firmfile_modtype = TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT;
+			twe_prog.module_info.type = TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT;
 			the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
 				, 0x0FFFFFFF
 				, "\033[44mBLUE\033[0m"
@@ -991,6 +1027,7 @@ void App_FirmProg::Screen_FatalError::loop() {
 
 		case 'R':
 			_parent->_firmfile_modtype = TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT;
+			twe_prog.module_info.type = TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT;
 			the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
 				, 0x0FFFFFFF
 				, "\033[41mRED\033[0m"
@@ -1730,12 +1767,27 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 					continue;
 				} else
 				if (_listFiles.is_selection_completed()) {
-					if (TweDir::is_dir(make_full_path(
-								  _parent->_build_workspace, _parent->_build_project
-								, _listFiles.get_selected().first, L"build").c_str())) {
-						// if build dir is found, we can build,
-						_parent->_build_name = as_copying(_listFiles.get_selected().first); // copy assign (no need to add const explicitely)
-						APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_build);
+					auto&& dir_build = make_full_path(
+						_parent->_build_workspace, _parent->_build_project
+						, _listFiles.get_selected().first, L"build");
+
+					if (TweDir::is_dir(dir_build.c_str())) {
+						if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
+							// if VSCode option is activated, open build dir.
+							_parent->_build_project_prev = _parent->_build_project;
+							_parent->_build_name = _listFiles.get_selected().first;
+
+							//_parent->_dirname_drop = dir_build;
+							_parent->_firmfile_dir = dir_build;
+							//_parent->_last_menu_number = Screen_OpenMenu::MENU_DROP_DIR;
+
+							exit(-1, Screen_FileBrowse::SCR_ID);
+						}
+						else {
+							// if build dir is found, we can build,
+							_parent->_build_name = as_copying(_listFiles.get_selected().first); // copy assign (no need to add const explicitely)
+							APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_build);	
+						}
 					}
 					else {
 						// otherwise list selected dir again. (for TweApps)
@@ -2056,10 +2108,13 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				switch (_parent->_firmfile_modtype) {
 				case TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT:
 				case TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT:
-					the_screen << crlf << "\033[7m" << L"ビルドが成功しました。" << "\033[0m";
+					// show message and hold screen.
 					_timer_exit.start(10000);
+					the_screen << crlf << "\033[7m" << L"ビルドが成功しました。" << "\033[0m";
 					break;
-				default: exit(EXIT_NEXT); // switch to the firm write.
+				default: 
+					// switch to the firm programming.
+					exit(EXIT_NEXT);
 					break;
 				}
 				

@@ -69,7 +69,7 @@ private:
 	static const wchar_t _dirname_regular[];
 
 #ifndef ESP32
-	SmplBuf_WChar _dirname_drop; // dropped dirname
+	static SmplBuf_WChar _dirname_drop; // dropped dirname
 	bool _b_drop_available;
 
 	static int _last_menu_number;
@@ -105,7 +105,7 @@ public:
 		, _listFiles(16, 64) // max files & max text len
 #else
 		, _listFiles(64, 64) // max file & max text len
-		, _dirname_drop(TWE::TWE_FILE_NAME_MAX)
+		//, _dirname_drop(TWE::TWE_FILE_NAME_MAX)
 		, _b_drop_available(false)
 #endif
 		, _subscr()
