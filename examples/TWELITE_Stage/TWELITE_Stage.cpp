@@ -30,6 +30,8 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 void update_serial_keyb_input(bool);
 static void s_check_other_input();
 
+void update_settings();
+
 #ifndef ESP32
 static void s_check_clipboard();
 #endif
@@ -65,16 +67,7 @@ void setup() {
 #endif
 
 	// the preferences 
-	the_settings_menu.begin(0);
-
-#ifndef ESP32
-	push_window_event(
-		SDL2_USERCODE_CREATE_BYTE(SDL2_USERCODE_CHANGE_SCREEN_SIZE, sAppData.u8_TWESTG_STAGE_SCREEN_MODE >> 4),
-								  nullptr, nullptr);
-	push_window_event(
-		SDL2_USERCODE_CREATE_BYTE(SDL2_USERCODE_CHANGE_SCREEN_RENDER, sAppData.u8_TWESTG_STAGE_SCREEN_MODE & 0xF),
-								  nullptr, nullptr);
-#endif
+	update_settings();
 
 	// init the keyboard
 	{
@@ -356,4 +349,30 @@ static void s_check_clipboard() {
 		}
 	}
 }
+
 #endif
+
+/**
+ * @fn	void update_settings()
+ *
+ * @brief	Load the saved settings and apply it.
+ */
+void update_settings() {
+#ifndef ESP32
+	the_settings_menu.begin(appid_to_slotid(App_FirmProg::APP_ID));
+	the_cwd.set_mwsdk_env(
+		sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS
+		, sAppData.u8_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO
+	);
+
+	the_settings_menu.begin(0);
+	push_window_event(
+		SDL2_USERCODE_CREATE_BYTE(SDL2_USERCODE_CHANGE_SCREEN_SIZE, sAppData.u8_TWESTG_STAGE_SCREEN_MODE >> 4),
+		nullptr, nullptr);
+	push_window_event(
+		SDL2_USERCODE_CREATE_BYTE(SDL2_USERCODE_CHANGE_SCREEN_RENDER, sAppData.u8_TWESTG_STAGE_SCREEN_MODE & 0xF),
+		nullptr, nullptr);
+#else
+	the_settings_menu.begin(0);
+#endif
+}
