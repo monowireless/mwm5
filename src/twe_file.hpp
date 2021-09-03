@@ -661,6 +661,15 @@ namespace TWE {
 		void _set_sdk_env();
         void _get_wks_dir();
         void _get_sdk_twenet_lib();
+
+        template <typename T>
+        void _print_var(const char* lbl, T& sbuff) {
+            TWEUTILS::SmplBuf_ByteS str;
+            str.reserve(sbuff.length());
+            str << sbuff;
+            fprintf(stderr, "%s: %s\n", lbl, str.c_str());
+        }
+
 	public:
 		void begin();
 		void change_dir(TWEUTILS::SmplBuf_WChar& dir);
@@ -674,6 +683,8 @@ namespace TWE {
         TWEUTILS::SmplBuf_WChar& get_dir_wks_tweapps() { return _dir_wks_tweapps; }
 		TWEUTILS::SmplBuf_WChar& get_dir_launch() { return _dir_launch; }
         TWEUTILS::SmplBuf_WChar& get_dir_sdk_twenet_lib() { return _dir_twenet_lib; }
+
+        void set_mwsdk_env(uint8_t n_cpu, bool b_lto_disable);
 	};
 
 	extern TweCwd the_cwd;

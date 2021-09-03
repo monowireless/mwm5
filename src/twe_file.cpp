@@ -2,6 +2,7 @@
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_file.hpp"
+#include "twe_printf.hpp"
 #include "twe_utils_unicode.hpp"
 
 using namespace TWE;
@@ -498,6 +499,10 @@ TweFileDropped TWE::the_file_drop; // the instance
 extern "C" const char* twesettings_save_filepath;
 static const char STR_MWSDK_ROOT[] = "MWSDK_ROOT";
 static const char STR_MWSDK_TWENET_LIBSRC[] = "MWSDK_TWENET_LIBSRC";
+static const char STR_MWSDK_MAKE_JOBS[] = "MWSDK_MAKE_JOBS";
+static const char STR_MWSDK_MAKE_DISABLE_LTO[] = "MWSDK_MAKE_DISABLE_LTO";
+
+#define PRINT_VAR(c) _print_var(#c, c)
 
 void TweCwd::begin() {
 	// get launch dirs
@@ -525,11 +530,30 @@ void TweCwd::begin() {
 	_get_sdk_dir();
 	_get_sdk_twenet_lib();
 	_set_sdk_env();
-
-	_dir_sdk.c_str();
+	set_mwsdk_env(0, false);
 
 	// TWEAPP/Wks_Acts dir
 	_get_wks_dir();
+
+	// show envs in console
+	PRINT_VAR(_dir_sdk);
+	PRINT_VAR(_save_profile_name);
+	PRINT_VAR(_dir_cur);
+	PRINT_VAR(_dir_exe);
+	PRINT_VAR(_dir_launch);
+	PRINT_VAR(_dir_tweapps);
+	PRINT_VAR(_dir_twenet_lib);
+	PRINT_VAR(_dir_wks_acts);
+	PRINT_VAR(_dir_wks_act_extras);
+	PRINT_VAR(_dir_wks_tweapps);
+
+	#ifdef _DEBUG
+	# if defined(_MSC_VER) || defined(__MINGW32__)
+		system("cmd /c set |find \"MWSDK\""); // check env values output to console
+	# else 
+		system("env |grep MWSDK"); // check env values output to console
+	# endif
+	#endif
 }
 
 void TweCwd::change_dir(SmplBuf_WChar& dir) {
@@ -540,6 +564,7 @@ void TweCwd::change_dir(SmplBuf_WChar& dir) {
 	dir_b << dir;
 	int ret = chdir((const char*)dir_b.c_str()); (void)ret;
 #endif
+
 }
 
 
@@ -717,17 +742,21 @@ void TweCwd::_set_sdk_env() {
 	for (auto& x : val) { if (x == '\\') x = '/';  }	// replace \ to /
 	val.push_back('/'); // last should be /
 	_putenv_s(STR_MWSDK_ROOT, (const char*)val.c_str());
+	_print_var(STR_MWSDK_ROOT, val);
 
 	/// MWSDK_TWENET_LIBSRC=...
 	val.clear(); val << _dir_twenet_lib;
 	for (auto& x : val) { if (x == '\\') x = '/'; }
 	val.push_back('/'); // last should be /
 	_putenv_s(STR_MWSDK_TWENET_LIBSRC, (const char*)val.c_str());
+	_print_var(STR_MWSDK_TWENET_LIBSRC, val);
 
-	// LANG 
-	_putenv_s("LANG", "C");
-
-	// PATH (add path of cygwin)
+	/// LANG 
+	val.clear(); val << "C";
+	_putenv_s("LANG", val.c_str());
+	_print_var("LANG", val);
+	
+	/// PATH (add path of cygwin)
 	val.clear();
 	size_t reqct;
 	getenv_s(&reqct, NULL, 0, "PATH"); // check size of env
@@ -737,8 +766,7 @@ void TweCwd::_set_sdk_env() {
 	
 	val << make_full_path(_dir_sdk, "..\\Tools\\MinGW\\msys\\1.0\\bin");
 	if (TweDir::is_dir(val.c_str())) {
-		printf("echo ---- Cygwin tools PATH is found at %s. ----", val.c_str());
-		
+		_print_var("PATH(added)", val);
 	}
 	else {
 		val.clear();
@@ -748,7 +776,7 @@ void TweCwd::_set_sdk_env() {
 			val.clear();
 		}
 		else {
-			printf("echo ---- Cygwin tools PATH is found at %s. (for older MWSDK) ----", val.c_str());
+			_print_var("PATH(added,oldsdk)", val);
 		}
 	}
 	if (val.size() != 0) {
@@ -758,26 +786,65 @@ void TweCwd::_set_sdk_env() {
 		val.resize_preserving_unused(val.size() + reqct); // expand buffer end without clearing data.
 
 		_putenv_s("PATH", val.c_str());
+		_print_var("PATH", val);
 	}
 	else {
 		// cannot found!
-		printf("echo ---- Cygwin tools folder is not found! ----");
+		val.emptify() << "Cygwin tools cannot be found!";
+		_print_var("ERROR:", val);
 	}
-# ifdef _DEBUG
-	system("cmd /c set"); // check env values output to console
-# endif
+
+
 #else
 	val.clear(); val << _dir_sdk;
 	val.push_back('/'); // last should be /
 	setenv(STR_MWSDK_ROOT, (const char*)val.c_str(), 1); // MWSDK_ROOT=...
+	_print_var(STR_MWSDK_ROOT, val);
 	val.clear(); val << _dir_twenet_lib;
 	val.push_back('/'); // last should be /
 	setenv(STR_MWSDK_TWENET_LIBSRC, (const char*)val.c_str(), 1); // MWSDK_TWENET_LIBSRC=...
-	setenv("LANG", "C", 1); // LANG=C (to assure english error message.)
+	_print_var(STR_MWSDK_TWENET_LIBSRC, val);
+	val.clear(); val << "C";
+	setenv("LANG", val.c_str(), 1); // LANG=C (to assure english error message.)
+	_print_var("LANG", val);
 # ifdef _DEBUG
 	system("env"); // check env values output to console
 # endif
 #endif
+}
+
+
+void TweCwd::set_mwsdk_env(uint8_t n_cpu, bool b_lto_disable) {
+	SmplBuf_ByteS val;
+	val.reserve(TWE::TWE_FILE_NAME_MAX);
+
+	/// MWSDK_BUILD_CPUS
+	if (n_cpu == 0) {
+		n_cpu = TWESYS::Get_CPU_COUNT();
+		if (n_cpu >= 4) n_cpu--;
+		if (n_cpu == 0) n_cpu = 1;
+	}
+
+	val.clear();
+	val << printfmt("-j%d", n_cpu);
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	_putenv_s(STR_MWSDK_MAKE_JOBS, (const char*)val.c_str());
+#else
+	setenv(STR_MWSDK_MAKE_JOBS, (const char*)val.c_str(), 1);
+#endif
+	_print_var(STR_MWSDK_MAKE_JOBS, val);
+
+	// DISABLE LTO
+	if (b_lto_disable) {
+		val.emptify() << "DISABLE_LTO=1";
+#if defined(_MSC_VER) || defined(__MINGW32__)
+		_putenv_s(STR_MWSDK_MAKE_DISABLE_LTO, val.c_str());
+#else
+		setenv(STR_MWSDK_MAKE_DISABLE_LTO, val.c_str(), 1);
+#endif
+		_print_var(STR_MWSDK_MAKE_DISABLE_LTO, val);
+	}
 }
 
 void TweCwd::_get_wks_dir() {
@@ -1120,11 +1187,17 @@ void _shell_open_default(T obj, S cmd) {
 	}
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
-	strbuff << obj;
 	if (HAS_CMD) {
-		ShellExecuteA(NULL, "open", cmdbuff.c_str(), (LPCSTR)strbuff.c_str(), NULL, SW_SHOWNORMAL);
+		// use simply system command.
+		strbuff << cmdbuff << ' ' << obj;
+		system(strbuff.c_str());
+
+		// shellexcute will generate another command prompt window.
+		// strbuff << obj;
+		//ShellExecuteA(NULL, "open", cmdbuff.c_str(), (LPCSTR)strbuff.c_str(), NULL, SW_SHOWMINIMIZED);
 	} else {
-		ShellExecuteA(NULL, "open", (LPCSTR)strbuff.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		strbuff << obj;
+		ShellExecuteA(NULL, "open", (LPCSTR)strbuff.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 	}
 #elif defined(__APPLE__) || defined(__linux)
 	strbuff << cmdbuff << ' ' << obj;
