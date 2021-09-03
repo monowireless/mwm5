@@ -1,3 +1,4 @@
+# remove files
 rm -rfv .vs
 for d in *; do 
 	if [ -d $d ]; then

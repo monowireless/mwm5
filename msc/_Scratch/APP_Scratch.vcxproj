@@ -383,16 +383,16 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\examples\_Scratch\Scratch.cpp" />
+    <ClCompile Include="..\version_msc.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\MSC_SDL2_Screen\MSC_SDL2_Screen.vcxproj">
       <Project>{22054ea5-ad66-4e51-bf7b-658d499eee2d}</Project>
     </ProjectReference>
     <ProjectReference Include="..\MWM5.vcxproj">
       <Project>{339856f1-e23f-4547-8671-1ef4fc37f4aa}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\examples\_Scratch\Scratch.cpp" />
-    <ClCompile Include="..\version_msc.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
