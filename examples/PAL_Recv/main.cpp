@@ -373,7 +373,7 @@ void setup() {
 
 	// this procedure should follow after M5.begin();
 	Serial2.setRxBufferSize(512);
-	Serial2.begin(MWM5_DEFAULT_BAUD, SERIAL_8N1, 16, 17);
+	Serial2.begin(115200, SERIAL_8N1, 16, 17);
 
 	// allocate buffer in the_uart_queue
 	the_uart_queue.setup(512);
