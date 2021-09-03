@@ -34,6 +34,9 @@
 # endif
 #endif
 
+// for thread
+#include <thread>
+
 // for check file content
 #include <regex>
 
@@ -2099,6 +2102,20 @@ int main(int argc, char* args[]) {
 	// SDL MainLoop
 	the_app_core->loop();
 
+	// force exit
+	auto func = [](uint32_t timeout) {
+		#if defined(_MSC_VER) || defined(__MINGW32__)
+		Sleep(timeout);
+		_exit(0);
+		#elif defined(__APPLE__) || defined(__linux)
+		usleep(timeout * 1000UL);
+
+		// force terminate here!
+		_exit(0);
+		#endif
+	};
+	std::thread th_exit(func, 1000);
+
 	// delete instance
 	try {
 		the_app_core.reset();
@@ -2116,12 +2133,11 @@ int main(int argc, char* args[]) {
 #endif
 
 #if defined(__APPLE__) || defined(__linux)
+	// clear console screen
 	int apiret = system("clear"); (void)apiret;
-
-	// force terminate...
-	_exit(0); // terminate here to pass rest of clean up process. (may not open crash report dialogue.)
 #endif
 
+	th_exit.join();
 	return 0;
 }
 
