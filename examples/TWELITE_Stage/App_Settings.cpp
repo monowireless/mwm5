@@ -6,6 +6,8 @@
 #include "menu_defs.h"
 #include "menu.hpp"
 
+extern void update_settings();
+
 void App_Settings::setup() {
 	// preference
 	the_settings_menu.begin(0);
@@ -37,17 +39,7 @@ void App_Settings::setup() {
 }
 
 App_Settings::~App_Settings() {
-#ifndef ESP32
-	// if screen mode has been changed, set the mode here.
-	if (_screen_info != sAppData.u8_TWESTG_STAGE_SCREEN_MODE) {
-		push_window_event(
-			SDL2_USERCODE_CREATE_BYTE(SDL2_USERCODE_CHANGE_SCREEN_SIZE, sAppData.u8_TWESTG_STAGE_SCREEN_MODE >> 4),
-			nullptr, nullptr);
-		push_window_event(
-			SDL2_USERCODE_CREATE_BYTE(SDL2_USERCODE_CHANGE_SCREEN_RENDER, sAppData.u8_TWESTG_STAGE_SCREEN_MODE & 0xF),
-			nullptr, nullptr);
-	}
-#endif
+	update_settings();
 }
 
 void App_Settings::loop() { 
