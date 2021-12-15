@@ -79,6 +79,9 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_help.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_aria_basic.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp">

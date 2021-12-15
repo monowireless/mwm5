@@ -520,3 +520,47 @@ TweCUE& TwePacketPal::operator >> (TweCUE& out) {
 
 	return out;
 }
+
+/**
+ * @fn	TweARIA& TwePacketPal::operator>> (TweARIA& out)
+ *
+ * @brief	acquire TweARIA standard data set.
+ *
+ * @param [in,out]	out	The out.
+ *
+ * @returns	The shifted result.
+ */
+TweARIA& TwePacketPal::operator >> (TweARIA& out) {
+	out.u32StoredMask = 0;
+
+	if (e_board != E_PAL_PCB::ARIA) {
+		return out;
+	}
+
+	// basic defs
+	static const uint8_t VOLT = uint8_t(E_SNSCD::VOLT);
+	static const uint8_t VCC = uint8_t(E_EXCD_VOLT::POWER);
+	static const uint8_t ADC1 = uint8_t(E_EXCD_VOLT::ADC1);
+
+	// default data
+	out.u16Volt = 0xFFFF;
+	// ambstat
+	out.i16Temp = 0x7FFF;
+	out.u16Humd = 0xFFFF;
+
+	// magstat
+	out.bMagRegularTransmit = out.u8MagStat & 0x80 ? 1 : 0;
+	out.u8MagStat &= 0x7F;
+
+	// find data
+	void* argList[]{ &out.u16Volt, &out.u16Adc1, &out.u8MagStat, &out.i16Temp, &out.u16Humd };
+	const uint8_t  au8argsiz[] = { 2,		2,		1,		2,		2, };
+	const uint8_t  au8argctm[] = { 1,		1,		1,		1,		1, };
+	const uint16_t au8dsList[] = { VOLT,	VOLT,	0,		1,		2, };
+	const uint16_t au8exList[] = { VCC,		ADC1,	0,		0,		0, };
+	uint8_t au8exlist[sizeof(argList) / sizeof(void*)];
+
+	out.u32StoredMask = store_data(out.U8VARS_CT, argList, au8argsiz, au8argctm, au8dsList, au8exList, au8exlist);
+
+	return out;
+}

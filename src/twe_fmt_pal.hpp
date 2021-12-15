@@ -19,7 +19,8 @@ namespace TWEFMT {
 		AMB = 0x02,		// AMB PAL (ambient sensor)
 		MOT = 0x03,		// MOT PAL (motion PAL)
 		NOTICE = 0x04,	// NOTICE PAL
-		CUE = 0x05		// TWELITE CUE
+		CUE = 0x05,		// TWELITE CUE
+		ARIA = 0x06		// TWELITE ARIA
 	};
 
 	/*****************************************************
@@ -30,6 +31,7 @@ namespace TWEFMT {
 		AMB_STD = 0x02,
 		MOT_STD = 0x03,
 		EX_CUE_STD = 0x05, // (extended) CUE standard
+		EX_ARIA_STD = 0x06, // (extended) ARIA standard
 		EVENT_ONLY = 0x80, // has event, but no further data
 		NODEF = 0xFF
 	};
@@ -260,6 +262,39 @@ namespace TWEFMT {
 		TweCUE() : u16Volt(0xFFFF), u16Adc1(0xFFFF), u8MagStat(0xff), bMagRegularTransmit(0xFF), u8samples(0xFF), u8sample_rate_code(0xFF), i16X{}, i16Y{}, i16Z{} {}
 	};
 
+	struct TweARIA : public PalBase {
+		const uint8_t U8VARS_CT = 5; // Volt + ADC1 + 3Sensors
+		const uint32_t STORE_COMP_MASK = (1 << U8VARS_CT) - 1;
+		static const uint32_t STORE_VOLT_MASK = 0b1; // Volt & ADC1 & 1sample
+		static const uint32_t STORE_ADC1_MASK = 0b10; // Volt & ADC1 & 1sample
+		static const uint32_t STORE_MAG_MASK = 0b100;
+		static const uint32_t STORE_VOLT_TEMP = 0b1000; // temperature
+		static const uint32_t STORE_VOLT_HUMID = 0b10000; // humidity
+
+		uint16_t u16Volt;       // module voltage
+		uint16_t u16Adc1;	// ADC1 voltage
+
+		uint8_t u8MagStat;  // MAGNET SW status
+		uint8_t bMagRegularTransmit; // MSB flag of u8MagStat
+
+		int16_t i16Temp;
+		uint16_t u16Humd;
+
+		bool has_vcc() { return u32StoredMask & STORE_VOLT_MASK; }
+		int16_t get_vcc_i16mV() { return (int16_t)u16Volt; }
+		bool has_adc1() { return u32StoredMask & STORE_ADC1_MASK; }
+		int16_t get_adc1_i16mV() { return int16_t(u16Adc1); }
+		bool has_mag() { return u32StoredMask & STORE_MAG_MASK; }
+		uint8_t get_mag_stat_u8() { return u8MagStat; }
+		uint8_t is_mag_regular_transmit() { return bMagRegularTransmit; }
+		int has_temp() { return u32StoredMask & STORE_VOLT_TEMP; }
+		int16_t get_temp_i16_100xC() { return (int16_t)i16Temp; }
+		int has_humidity() { return (u32StoredMask & STORE_VOLT_HUMID); }
+		uint16_t get_humidity_u16_100xPC() { return (int16_t)u16Humd /*&& (u16Humd <= 10000)*/; }
+
+		TweARIA() : u16Volt(0xFFFF), u16Adc1(0xFFFF), u8MagStat(0xFF), bMagRegularTransmit(0xFF), i16Temp(0), u16Humd(0) {}
+	};
+
 	class TwePacketPal : public TwePacket, public DataPal, public PalEvent, public PalDataInfo {
 		// parse each sensor data and convert into variables.
 		uint32_t store_data(uint8_t u8listct, void** vars,
@@ -336,6 +371,9 @@ namespace TWEFMT {
 				if (e_board == E_PAL_PCB::CUE) {
 					return E_PAL_DATA_TYPE::EX_CUE_STD; // use get_TweCUE()
 				} else
+				if (e_board == E_PAL_PCB::ARIA) {
+					return E_PAL_DATA_TYPE::EX_ARIA_STD; // use get_TweARIA()
+				} else
 				if (has_PalEvent()) {
 					return E_PAL_DATA_TYPE::EVENT_ONLY;
 				}
@@ -381,6 +419,14 @@ namespace TWEFMT {
 		TweCUE& operator >> (TweCUE& out);
 		TweCUE get_TweCUE() {
 			TweCUE out;
+			operator >> (out);
+			return out;
+		}
+
+		// query PalMag data structure
+		TweARIA& operator >> (TweARIA& out);
+		TweARIA get_TweARIA() {
+			TweARIA out;
 			operator >> (out);
 			return out;
 		}

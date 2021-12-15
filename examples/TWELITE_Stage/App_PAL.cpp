@@ -5,9 +5,9 @@
 
 const wchar_t App_PAL::LAUNCH_MSG[] =
 //....+....1....+....2....+....3....+....4| // 16dots 40cols
-L"             \033[4m"
-             L"ＰＡＬビューア\033[0m"
-		                   L"             ""\r\n"
+L"    \033[4m"
+      L"ＰＡＬ/ＣＵＥ/ＡＲＩＡビューア\033[0m"
+		                         L"      ""\r\n"
 L"\r\n"
 L"センサPALから受信したデータを、設定した ""\r\n"
 L"子機ID順に表示します。TWELITEにはPAL親機""\r\n"
@@ -21,7 +21,7 @@ void App_PAL::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	const char* fmt_title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m PALﾋﾞｭｰｱ\033[0m : %s";
+	const char* fmt_title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m PAL/CUE/ARIAﾋﾞｭｰｱ\033[0m : %s";
 	the_screen_t << printfmt(fmt_title, "---"); // accepts UTF-8 codes
 	pkt_data.init_screen(fmt_title);
 
@@ -300,14 +300,14 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 			switch (pal.get_PalDataType()) {
 				case E_PAL_DATA_TYPE::EVENT_ONLY:
 				{
-					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_RED) << "イベント" << TermAttr(TERM_ATTR_OFF) << ':';
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_RED) << "通知PAL" << TermAttr(TERM_ATTR_OFF) << ':';
 					_trm << " イベント=" << int(pal.get_PalEvent().u8event_id);
 				}
 				break;
 
 				case E_PAL_DATA_TYPE::MAG_STD:
 				{
-					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_CYAN) << "開閉" << TermAttr(TERM_ATTR_OFF) << ':';
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_CYAN) << "開閉PAL" << TermAttr(TERM_ATTR_OFF) << ':';
 
 					// generate pal board specific data structure.
 					PalMag mag = pal.get_PalMag();
@@ -325,7 +325,7 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 
 				case E_PAL_DATA_TYPE::AMB_STD:
 				{
-					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "環境" << TermAttr(TERM_ATTR_OFF) << ':';
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "環境PAL" << TermAttr(TERM_ATTR_OFF) << ':';
 
 					// generate pal board specific data structure.
 					PalAmb amb = pal.get_PalAmb();
@@ -334,13 +334,13 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 					_trm << printfmt(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)amb.i16Temp / 100.0);
 					_trm << TermAttr(TERM_ATTR_OFF);
 
-					_trm << ' ';
+					//_trm << ' ';
 
 					_trm << TermAttr(TERM_COLOR_FG_BLUE | TERM_BOLD);
 					_trm << printfmt(_bwide ? "湿度=%02d%%" : "%02d%%", (amb.u16Humd + 50) / 100);
 					_trm << TermAttr(TERM_ATTR_OFF);
 
-					_trm << ' ';
+					//_trm << ' ';
 
 					_trm << TermAttr(TERM_COLOR_FG_YELLOW | TERM_BOLD);
 					_trm << printfmt(_bwide ? "照度=%4d" : "L%4d", amb.u32Lumi > 9999 ? 9999 : amb.u32Lumi);
@@ -350,7 +350,7 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 
 				case E_PAL_DATA_TYPE::MOT_STD:
 				{
-					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "加速" << TermAttr(TERM_ATTR_OFF) << ':';
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "動作PAL" << TermAttr(TERM_ATTR_OFF) << ':';
 
 					// generate pal board specific data structure.
 					PalMot mot = pal.get_PalMot();
@@ -417,6 +417,61 @@ void App_PAL::pkt_data_and_view::update_term(spTwePacket pal_upd, bool update_al
 					if (pal.is_data_source_timer()) {
 						_trm << " ﾀｲﾏｰ";
 					}
+				}
+				break;
+
+				case E_PAL_DATA_TYPE::EX_ARIA_STD:
+				{
+					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN) << "ARIA" << TermAttr(TERM_ATTR_OFF) << ':';
+
+					TweARIA aria = pal.get_TweARIA();
+//					if (ev) {
+//						_trm << printfmt(" EV:%d", ev.u8event_id);
+//					}
+
+					if (aria.has_vcc()) {
+						(void)aria.get_vcc_i16mV(); // do not print
+					}
+
+					if (aria.has_adc1()) {
+						(void)aria.get_adc1_i16mV(); // do not print
+					}
+
+					if (aria.has_temp()) {
+						_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
+						_trm << printfmt(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)aria.i16Temp / 100.0);
+						_trm << TermAttr(TERM_ATTR_OFF);
+					}
+
+					if (aria.has_humidity()) {
+						if(!_bwide) _trm << ',';
+						_trm << TermAttr(TERM_COLOR_FG_BLUE | TERM_BOLD);
+						_trm << printfmt(_bwide ? "湿度=%02d%%" : "%02d%%", (aria.u16Humd + 50) / 100);
+						_trm << TermAttr(TERM_ATTR_OFF);
+					}
+
+					if (aria.has_mag()) {
+						TermAttr TB(TERM_COLOR_BG_BLUE | TERM_COLOR_FG_YELLOW | TERM_BOLD);
+						TermAttr TR(TERM_COLOR_BG_RED | TERM_COLOR_FG_YELLOW | TERM_BOLD);
+						TermAttr TY(TERM_COLOR_FG_YELLOW | TERM_BOLD);
+						TermAttr TC(TERM_ATTR_OFF);
+
+						if (_bwide) {
+							_trm << TY << "開閉=" << TC;
+						}
+						else {
+							_trm << ",";
+						}
+						switch (aria.get_mag_stat_u8() & 0x7F) {
+						case 0: _trm << TY << L"OPEN" << TC; break;
+						case 1: _trm << TR << L"CLOSE(N)" << TC; break;
+						case 2: _trm << TB << L"CLOSE(S)" << TC; break;
+						}
+					}
+
+//					if (pal.is_data_source_timer()) {
+//						_trm << " ﾀｲﾏｰ";
+//					}
 				}
 				break;
 

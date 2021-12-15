@@ -113,7 +113,7 @@ void print_pal(spTwePacket pkt) {
 			// generate TWELITE CUE standard data
 			TweCUE cue = pal.get_TweCUE();
 
-			std::cout << "PAL_CUE";
+			std::cout << "TWELITE_CUE";
 
 			// extended header
 			std::cout << ":EX(" << int(pal.u8data_type) << "," << int(pal.u8_data_cause) << "," << int(pal.u8_data_cause) << ")";
@@ -154,6 +154,53 @@ void print_pal(spTwePacket pkt) {
 					std::cout << "," << cue.get_accel_Z_i16mG(i);
 					std::cout << ")";
 				}
+			}
+		} break;
+
+		case E_PAL_DATA_TYPE::EX_ARIA_STD:
+		{
+			// generate TWELITE ARIA standard data
+			TweARIA aria = pal.get_TweARIA();
+
+			std::cout << "TWELITE_ARIA";
+
+			// extended header
+			std::cout << ":EX(" << int(pal.u8data_type) << "," << int(pal.u8_data_cause) << "," << int(pal.u8_data_cause) << ")";
+
+			// event data
+			if (ev) std::cout << ":EVENT=" << int(ev.u8event_id);
+
+			// volt
+			if (aria.has_vcc()) {
+				std::cout << ":VCC=" << int(aria.get_vcc_i16mV());
+			}
+
+			// adc1
+			if (aria.has_adc1()) {
+				std::cout << ":AD1=" << int(aria.get_adc1_i16mV());
+			}
+
+			// mag
+			if (aria.has_mag()) {
+				std::cout << ":MAG=";
+				std::cout << "(";
+				switch (aria.get_mag_stat_u8() & 0x7F) {
+				case 0: std::cout << "NO MANGET"; break;
+				case 1: std::cout << "N POLE"; break;
+				case 2: std::cout << "S POLE"; break;
+				}
+				std::cout << ")";
+			}
+
+			// temp
+			if (aria.has_temp()) {
+				std::cout << ":TEMP=" << (aria.get_temp_i16_100xC() / 100.0) << "C";
+				
+			}
+
+			// humid
+			if (aria.has_humidity()) {
+				std::cout << ":HUMID=" << (aria.get_humidity_u16_100xPC() / 100.0) << "%";
 			}
 		} break;
 	}

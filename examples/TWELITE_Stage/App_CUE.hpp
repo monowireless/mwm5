@@ -86,17 +86,23 @@ private:
 
 	// simple screen
 	void hndr_basic(event_type ev, arg_type arg = 0);
+	void hndr_aria_basic(event_type ev, arg_type arg = 0);
 	void hndr_help(event_type ev, arg_type arg = 0);
 
 public:
 	struct PAGE_ID {
 		static const uint8_t PAGE_BASIC = 0x00;
+		static const uint8_t PAGE_ARIA_BASIC = 0x01;
 		static const uint8_t PAGE_HELP = 0x7F;
 	};
 
 	// Opening screen data context 
 	struct SCR_BASIC;
 	friend struct SCR_BASIC;
+
+	// Opening screen data context 
+	struct SCR_ARIA_BASIC;
+	friend struct SCR_ARIA_BASIC;
 
 	// Opening screen data context 
 	struct SCR_HELP;

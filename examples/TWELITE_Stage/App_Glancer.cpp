@@ -305,9 +305,11 @@ const static ts_PktID_to_Name3 asPktIdToName3[] {
 
 static const int E_PAL_DERIVED_EVT = 0;
 static const int E_PAL_DERIVED_CUE = 1;
+static const int E_PAL_DERIVED_ARIA = 2;
 static const wchar_t wstr_Name3_PALderived[][4]{
 	L"EVT",
-	L"CUE"
+	L"CUE",
+	L"ARA"
 };
 
 /**
@@ -391,6 +393,7 @@ void App_Glancer::pkt_data_and_view::print_obj(spTwePacket& spobj) {
 			switch (pal.get_PalDataType()) {
 			case E_PAL_DATA_TYPE::EVENT_ONLY: pAppName = wstr_Name3_PALderived[E_PAL_DERIVED_EVT]; break;
 			case E_PAL_DATA_TYPE::EX_CUE_STD: pAppName = wstr_Name3_PALderived[E_PAL_DERIVED_CUE]; break;
+			case E_PAL_DATA_TYPE::EX_ARIA_STD: pAppName = wstr_Name3_PALderived[E_PAL_DERIVED_ARIA]; break;
 			default: break;
 			}
 		}

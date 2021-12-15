@@ -444,6 +444,7 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_NOTICE_0x01.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_Opening.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_aria_basic.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_basic.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_help.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer.cpp" />

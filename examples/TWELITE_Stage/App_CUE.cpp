@@ -5,11 +5,11 @@
 
 const wchar_t App_CUE::LAUNCH_MSG[] =
 //....+....1....+....2....+....3....+....4| // 16dots 40cols
-L"         \033[4m"
-         L"TWELIE CUE キュー\033[0m"
-	                      L"          ""\r\n"
+L" \033[4m"
+   L"TWELIE CUE キュー/TWELITE ARIA アリア\033[0m"
+	                      L" ""\r\n"
 L"\r\n"
-L"TWELITE CUE からの電文を解釈します。""\r\n"
+L"TWELITE CUE/TWELITE ARIA からの電文を解釈します。""\r\n"
 L"※MOT/MAGﾓｰﾄﾞのﾊﾟｹｯﾄは対応しません。""\r\n"
 ;
 
@@ -38,6 +38,7 @@ void App_CUE::setup() {
 
 	// add tab
 	_tabs.add(L"TWELITE CUE", &App_CUE::hndr_basic);
+	_tabs.add(L"TWELITE ARIA", &App_CUE::hndr_aria_basic);
 	_tabs.add(L"解説", &App_CUE::hndr_help);
 	_tabs.update_view();
 
@@ -167,7 +168,7 @@ void App_CUE::set_nav_bar(const char *msg) {
 
 // set title bar
 void App_CUE::set_title_bar(int page_id) {
-	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m CUEﾋﾞｭｰｱ\033[0m";
+	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m CUE/ARIAﾋﾞｭｰｱ\033[0m";
 
 	the_screen_t.clear_screen();
 
