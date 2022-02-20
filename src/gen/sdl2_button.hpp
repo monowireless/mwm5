@@ -100,11 +100,18 @@ public:
 	// * shall be called after SDL_Renderer generation.
 	void setup(SDL_Renderer* renderer);
 
-	void redraw();
+	void redraw(bool force=false);
 
 	// called every SDL events
 	bool update(SDL_Event& e);
 	bool update_core(SDL_Event& e);
+
+	void show_button(int mode) {
+		_nButtonOver = mode;
+		_nButtonState = mode;
+		redraw(true);
+		start_timer1();
+	}
 
 private:
 	static uint32_t callbackTimer1(uint32_t interval, void* param);

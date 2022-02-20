@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+﻿/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #if (defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__))
@@ -14,6 +14,12 @@
 # define _DEBUG_MESSAGE
 #endif
 
+// game controller (set enabled on Windows as default)
+#if (defined(_MSC_VER) || defined(__MINGW32__))
+# if !defined(MWM5_USE_GAMECONTROLLER)
+#  define MWM5_USE_GAMECONTROLLER 1
+# endif
+#endif
 
 /*****************************************************************
  * HEADER FILES
@@ -909,6 +915,109 @@ struct app_core_sdl {
 			}
 		}
 
+#if MWM5_USE_GAMECONTROLLER == 1
+		{
+			// game controller attached
+			if (e.type == SDL_CONTROLLERDEVICEADDED) {
+				int id = e.cdevice.which;
+
+				if (SDL_IsGameController(id)) {
+					SDL_GameController* pad = SDL_GameControllerOpen(id);
+
+					if (pad) {
+						SDL_Joystick* joy = SDL_GameControllerGetJoystick(pad);
+						int instanceID = SDL_JoystickInstanceID(joy);
+
+						// You can add to your own map of joystick IDs to controllers here.
+						// YOUR_FUNCTION_THAT_CREATES_A_MAPPING(id, pad);
+					}
+				}
+			}
+
+			if (e.type == SDL_CONTROLLERDEVICEREMOVED) {
+			}
+
+			/*
+			 * e.jbuton.button
+			 * A:0 B:1 X:2 Y:3 SELECT:4 START:6 LB:9 RB:10
+			 * UP:11 DOWN:12 LEFT:13 RIGHT:14
+			 */
+			static uint32_t u32bmask = 0;
+			static uint32_t u32timestamp_button_down[16];
+			
+			const uint32_t JOY_BTN_A = 0;
+			const uint32_t JOY_BTN_B = 1;
+			const uint32_t JOY_BTN_X = 2;
+			const uint32_t JOY_BTN_Y = 3;
+			const uint32_t JOY_BTN_SELECT = 4;
+			const uint32_t JOY_BTN_START = 6;
+			const uint32_t JOY_BTN_LB = 9;
+			const uint32_t JOY_BTN_RB = 10;
+			const uint32_t JOY_BTN_UP = 11;
+			const uint32_t JOY_BTN_DOWN = 12;
+			const uint32_t JOY_BTN_LEFT = 13;
+			const uint32_t JOY_BTN_RIGHT = 14;
+			const uint32_t MAX_BUTTON_NUMBER = 14;
+			
+			if (e.type == SDL_CONTROLLERBUTTONDOWN) {
+				auto b = e.jbutton.button;
+				if (b <= MAX_BUTTON_NUMBER) {
+					u32timestamp_button_down[b] = e.jbutton.timestamp;
+					u32bmask |= (1UL << b);
+				}
+
+				switch (b) {
+				case JOY_BTN_UP: the_keyboard_sdl2.push(KeyInput::KEY_UP); break;
+				case JOY_BTN_DOWN: the_keyboard_sdl2.push(KeyInput::KEY_DOWN); break;
+				case JOY_BTN_LEFT: the_keyboard_sdl2.push(KeyInput::KEY_ESC); break;
+				case JOY_BTN_RIGHT: the_keyboard_sdl2.push(KeyInput::KEY_ENTER); break;
+					// M5.BtnB._press = true; sp_btn_B->show_button((int)twe_wid_button::E_BTN_STATE::BTNDOWN); break;
+				case JOY_BTN_Y: the_keyboard_sdl2.push(KeyInput::KEY_ESC); break;
+				}
+
+				return;
+			}
+
+			if (e.type == SDL_CONTROLLERBUTTONUP) {
+				auto b = e.jbutton.button;
+				if (b <= MAX_BUTTON_NUMBER) {
+					uint32_t tdiff = e.jbutton.timestamp - u32timestamp_button_down[e.jbutton.button];
+					bool b_long_press = false;
+					// check if it's long press or not
+					if (u32bmask & (1UL << b)
+						&& (tdiff > 700 && tdiff < 10000))
+					{
+						b_long_press = true;
+					}
+					u32bmask &= ~(1UL << b); // clear the bit
+
+					if (b_long_press) {
+						switch (b) {
+						case JOY_BTN_A: M5.BtnB._lpress = true; sp_btn_B->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); true; break;
+						case JOY_BTN_B: M5.BtnC._lpress = true; sp_btn_C->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); true; break;
+						case JOY_BTN_X: M5.BtnA._lpress = true; sp_btn_A->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); true; break;
+						default: break;
+						}
+					}
+					else {
+						switch (b) {
+						case JOY_BTN_A: M5.BtnB._press = true; sp_btn_B->show_button((int)twe_wid_button::E_BTN_STATE::BTNDOWN); break;
+						case JOY_BTN_B: M5.BtnC._press = true; sp_btn_C->show_button((int)twe_wid_button::E_BTN_STATE::BTNDOWN); break;
+						case JOY_BTN_X: M5.BtnA._press = true; sp_btn_A->show_button((int)twe_wid_button::E_BTN_STATE::BTNDOWN); break;
+						
+						default: break;
+						}
+					}
+				}
+				return;
+			}
+
+			if (e.type == SDL_CONTROLLERAXISMOTION) {
+				return;
+			}
+		}
+#endif
+
 		// just test
 		if (e.type == SDL_TEXTEDITING) {
 			if (e.text.text[0] == 0) {
@@ -1718,7 +1827,11 @@ static void s_init() {
 static void s_init_sdl() {
 	SDL_SetMainReady();
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER 
+#if MWM5_USE_GAMECONTROLLER == 1
+				                | SDL_INIT_GAMECONTROLLER // game device
+#endif
+	            ) < 0) {
 		exit_err("SDL_Init() [%s]");
 	}
 

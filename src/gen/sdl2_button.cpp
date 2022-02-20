@@ -1,5 +1,7 @@
-/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
+
+#include <iostream>
 
 #if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
 
@@ -33,7 +35,7 @@ twe_wid_button::~twe_wid_button() {
 	_mTexture = nullptr;
 }
 
-void twe_wid_button::redraw() {
+void twe_wid_button::redraw(bool b_force) {
 	const char fmtbtn[][16] = {
 		"", // NONE
 		"", // HOVER
@@ -41,16 +43,17 @@ void twe_wid_button::redraw() {
 		"\033[36;7m", // button up
 		"\033[35;7m" // button up w/ long hold
 	};
-
 	if (_nButtonState < 0 || _nButtonState >= (int)E_BTN_STATE::NO_MORE_ENTRY) {
 		_nButtonState = 0;
 		_b_render_texture = true;
 	}
 
+	if (b_force) _b_render_texture = true;
+
 	if (_pScr) {
 		auto& t = *_pScr;
 
-		t << "\033[2J"; // clear the line
+		t.clear_screen();
 		
 		t << fmtbtn[_nButtonState];
 

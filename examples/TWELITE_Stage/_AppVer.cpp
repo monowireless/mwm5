@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include <mwm5.h>
@@ -6,4 +6,4 @@
 MWM5_DECL_APP_NAME("TWELITE STAGE");
 MWM5_DECL_APP_VERSION_MAIN(1);
 MWM5_DECL_APP_VERSION_SUB(0);
-MWM5_DECL_APP_VERSION_VAR(9);
+MWM5_DECL_APP_VERSION_VAR(10);
