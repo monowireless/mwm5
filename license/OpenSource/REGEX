@@ -1,0 +1,29 @@
+ * regex - Regular expression pattern matching  and replacement
+ *
+ * By:  Ozan S. Yigit (oz)
+ *      Dept. of Computer Science
+ *      York University
+ *
+ * These routines are the PUBLIC DOMAIN equivalents of regex
+ * routines as found in 4.nBSD UN*X, with minor extensions.
+ *
+ * These routines are derived from various implementations found
+ * in software tools books, and Conroy's grep. They are NOT derived
+ * from licensed/restricted software.
+ * For more interesting/academic/complicated implementations,
+ * see Henry Spencer's regexp routines, or GNU Emacs pattern
+ * matching module.
+ * Modification history:
+ *
+ * $Log: regex.c,v $
+ * Revision 1.4  1991/10/17  03:56:42  oz
+ * miscellaneous changes, small cleanups etc.
+ *
+ * Revision 1.3  1989/04/01  14:18:09  oz
+ * Change all references to a dfa: this is actually an nfa.
+ *
+ * Revision 1.2  88/08/28  15:36:04  oz
+ * Use a complement bitmap to represent NCL.
+ * This removes the need to have seperate
+ * code in the pmatch case block - it is
+ * just CCL code now.
