@@ -15,8 +15,8 @@
 namespace TWECUI {
 	class TWE_ListView {
 	public:
-		typedef int8_t index_type;
-		typedef uint8_t count_type;
+		typedef int16_t index_type;
+		typedef uint16_t count_type;
 		typedef uint8_t bool_type;
 		typedef std::pair<TWEUTILS::SmplBuf_WChar&, TWEUTILS::SmplBuf_WChar&> pair_type;
 
@@ -44,8 +44,9 @@ namespace TWECUI {
 		index_type _n_view_start;
 		index_type _n_view_selected;
 		index_type _n_view_selected_on_button_down; // last selected item by button down
-		count_type _n_view_rows;
-		count_type _n_view_cols;
+		count_type _n_view_rows;                    // rows count for the view.
+		count_type _n_view_row_start;               // starting line of the listView (0.., where 0 is the top of the screen)
+		count_type _n_view_cols;					// cols count for the view.
 		count_type _n_view_rows_disp;
 
 		uint32_t _tick_selected; // millis when selection is performed.
@@ -70,7 +71,7 @@ namespace TWECUI {
 			, _pterm(nullptr)
 			, _n_view_start(0)
 			, _n_view_selected(0), _n_view_selected_on_button_down(0)
-			, _n_view_rows(0)
+			, _n_view_rows(0), _n_view_row_start(0)
 			, _n_view_cols(0)
 			, _n_view_rows_disp(0)
 			, _b_enabled(true)
@@ -93,7 +94,11 @@ namespace TWECUI {
 		 * @param [in,out]	trm			The trm.
 		 * @param 		  	b_status	True to have status line
 		 */
-		void attach_term(TWETERM::ITerm& trm, bool b_status = false);
+		void attach_term(TWETERM::ITerm& trm, bool b_status = false) {
+			attach_term(trm, 0, trm.get_rows(), b_status);
+		}
+
+		void attach_term(TWETERM::ITerm& trm, uint8_t row_start, uint8_t rows, bool b_status = false);
 
 		/* ITEMS */		
 		template <typename T1>
@@ -143,6 +148,14 @@ namespace TWECUI {
 
 		inline index_type get_selected_index() {
 			return _n_selected;
+		}
+
+		inline index_type get_index_of_view() {
+			return _n_view_selected;
+		}
+
+		inline index_type get_first_index_of_view() {
+			return _n_view_start;
 		}
 
 		inline pair_type get(index_type i) {
@@ -211,6 +224,18 @@ namespace TWECUI {
 			}
 
 			update_view(true);
+		}
+
+		/**
+		 * prepare view with selecting item.
+		 * 
+		 * \param idx
+		 */
+		void set_view_with_select_item(index_type idx) {
+			int page = idx / _n_view_rows;
+			int idx_on_page = idx % _n_view_rows;
+
+			set_view(page * _n_view_rows, idx_on_page);
 		}
 
 		/* SELECTION */

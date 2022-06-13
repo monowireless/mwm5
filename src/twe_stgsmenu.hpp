@@ -72,13 +72,14 @@ namespace TWE {
 
 	public:
 		TweStgsMenu(uint8_t COUNT = 32, uint8_t STRBUF = 64, uint8_t CUSTDEF = 4)
-			: u8buf{}
-			, _file{}, _file_title{}
+			: u8buf()
+			, _file(), _file_title()
 			, stg(COUNT,STRBUF,CUSTDEF)
 			, _u8AppKind(0)
 			, _u8AppSlot(0)
 			, _MAX_SLOT_NUMBER(1)
 			, _SetList(nullptr)
+			, _tblFuncs(nullptr)
 			{}
 
 		~TweStgsMenu() {}

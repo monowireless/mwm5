@@ -1,9 +1,9 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_CUE.hpp"
 
-struct App_CUE::SCR_BASIC : public APP_HANDLR_DC {
+struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 	static const int CLS_ID = App_CUE::PAGE_ID::PAGE_BASIC;
 	int get_class_id() { return CLS_ID; }
 
@@ -16,10 +16,10 @@ struct App_CUE::SCR_BASIC : public APP_HANDLR_DC {
 	ITerm& the_screen_b;
 	IParser& parse_ascii;
 
-	SCR_BASIC(App_CUE& app) : _app(app), _btns(*this, app.the_screen), _pkt_rcv_ct(0)
+	SCR_CUE_BASIC(App_CUE& app) : _app(app), _btns(*this, app.the_screen), _pkt_rcv_ct(0)
 			, the_screen(app.the_screen), the_screen_b(app.the_screen_b), parse_ascii(app.parse_ascii)
 			, APP_HANDLR_DC(CLS_ID) {}
-	~SCR_BASIC() {}
+	~SCR_CUE_BASIC() {}
 
 	void Btn_Press(int id, uint32_t opt = 0) {
 		_app._tabs.select(opt);
@@ -157,8 +157,8 @@ struct App_CUE::SCR_BASIC : public APP_HANDLR_DC {
 				// put information
 				the_screen_b
 					<< printfmt(":Lq=%d:Ad=%08X", pal.u8lqi, pal.u32addr_src)
-					<< ":PAL=" << int(pal.u8palpcb)
-					<< ":ID=" << int(pal.u8addr_src)
+					<< ":PAL=" << printfmt("%d", pal.u8palpcb)
+					<< ":ID=" << printfmt("%d", pal.u8addr_src)
 					<< crlf
 					;
 
@@ -271,24 +271,17 @@ struct App_CUE::SCR_BASIC : public APP_HANDLR_DC {
 			}
 		}
 	}
-};
 
-// Screen def: opening
-void App_CUE::hndr_basic(event_type ev, arg_type arg) {
-	// renew object
-	auto&& dc = APP_HNDLR::use<SCR_BASIC>();
-
-	switch (ev) {
-	case EV_SETUP:
+	void setup() {
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
-		set_title_bar(PAGE_ID::PAGE_BASIC);
-		set_nav_bar();
-		dc.show_message();
-		break;
+		_app.set_title_bar(PAGE_ID::PAGE_BASIC);
+		_app.set_nav_bar();
+		show_message();
+	}
 
-	case EV_LOOP:
-		dc._btns.check_events();
+	void loop() {
+		_btns.check_events();
 
 		do {
 			int c = the_keyboard.read();
@@ -311,12 +304,15 @@ void App_CUE::hndr_basic(event_type ev, arg_type arg) {
 		do {
 			int c = the_uart_queue.read();
 
-			if (c >= 0) dc.parse_a_byte(c);
+			if (c >= 0) parse_a_byte(c);
 
 		} while (the_uart_queue.available());
-		break;
-
-	case EV_EXIT:
-		break;
 	}
-}
+
+	void on_close() {
+		; // do nothing
+	}
+};
+
+// generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods)
+void App_CUE::hndr_SCR_CUE_BASIC(event_type ev, arg_type arg) { hndr<SCR_CUE_BASIC>(ev, arg); }

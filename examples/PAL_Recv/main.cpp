@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include <mwm5.h>
@@ -130,7 +130,7 @@ struct pkt_data_and_view {
 		snPrintf(buff, sizeof(buff), "[%d/%d]", _page + 1, max_page + 1);
 
 		_trm_status.clear_screen();
-		_trm_status << printfmt(_fmt_status, buff);
+		_trm_status << format(_fmt_status, buff);
 	}
 
 	/**
@@ -186,8 +186,8 @@ struct pkt_data_and_view {
 
 			// show IDs at head.
 			if (update_all || (spobj && spobj == pal_upd)) {
-				_trm << printfmt("\033[%d;1H\033[K", i - idx_start + 1) // move cursor and clear the line
-					<< printfmt("%2d:", i); // ID:
+				_trm << format("\033[%d;1H\033[K", i - idx_start + 1) // move cursor and clear the line
+					<< format("%2d:", i); // ID:
 			}
 
 			// skip when the corresponding ID is not updated.
@@ -225,24 +225,24 @@ struct pkt_data_and_view {
 					PalAmb amb = pal.get_PalAmb();
 
 					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN);
-					_trm << printfmt("環境", pal.u8addr_src);
+					_trm << format("環境", pal.u8addr_src);
 					_trm << TermAttr(TERM_ATTR_OFF);
 					_trm << ":";
 
 					_trm << TermAttr(TERM_COLOR_FG_RED | TERM_BOLD);
-					_trm << printfmt(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)amb.i16Temp / 100.0);
+					_trm << format(_bwide ? "温度=%02.1f℃" : "%02.1fC", (double)amb.i16Temp / 100.0);
 					_trm << TermAttr(TERM_ATTR_OFF);
 
 					_trm << ' ';
 
 					_trm << TermAttr(TERM_COLOR_FG_BLUE | TERM_BOLD);
-					_trm << printfmt(_bwide ? "湿度=%02d%%" : "%02d%%", (amb.u16Humd + 50) / 100);
+					_trm << format(_bwide ? "湿度=%02d%%" : "%02d%%", (amb.u16Humd + 50) / 100);
 					_trm << TermAttr(TERM_ATTR_OFF);
 
 					_trm << ' ';
 
 					_trm << TermAttr(TERM_COLOR_FG_YELLOW | TERM_BOLD);
-					_trm << printfmt(_bwide ? "照度=%4d" : "L%4d", amb.u32Lumi > 9999 ? 9999 : amb.u32Lumi);
+					_trm << format(_bwide ? "照度=%4d" : "L%4d", amb.u32Lumi > 9999 ? 9999 : amb.u32Lumi);
 					_trm << TermAttr(TERM_ATTR_OFF);
 				} break;
 
@@ -252,12 +252,12 @@ struct pkt_data_and_view {
 					PalMot mot = pal.get_PalMot();
 
 					_trm << TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_GREEN);
-					_trm << printfmt("加速", pal.u8addr_src);
+					_trm << "加速";
 					_trm << TermAttr(TERM_ATTR_OFF);
 					_trm << ":";
 
 					if (mot.u8samples > 0) {
-						_trm << printfmt(_bwide ? "X=%5d Y=%5d Z=%5d" : "%5d,%5d,%5d", mot.i16X[0], mot.i16Y[0], mot.i16Z[0]);
+						_trm << format(_bwide ? "X=%5d Y=%5d Z=%5d" : "%5d,%5d,%5d", mot.i16X[0], mot.i16Y[0], mot.i16Z[0]);
 					}
 					else {
 						_trm << "n.a.";
@@ -304,10 +304,10 @@ void parse_a_byte(char_t u8b) {
 
 			// put information
 			the_screen_b
-				<< printfmt(":Lq=%d:Ad=%08X", pal.u8lqi, pal.u32addr_src)
-				<< ":PAL=" << int(pal.u8palpcb)
-				<< ":ID=" << int(pal.u8addr_src)
-				<< ":Dat=" << int(pal.u8sensors)
+				<< format(":Lq=%d:Ad=%08X", pal.u8lqi, pal.u32addr_src)
+				<< format(":PAL=%d", int(pal.u8palpcb))
+				<< format(":ID=%d", int(pal.u8addr_src))
+				<< format(":Dat=%d", int(pal.u8sensors))
 				;
 
 			// store data into `pal_data'
@@ -383,7 +383,7 @@ void setup() {
 
 	// put a init message
 	const char* fmt_title = "\033[1mTWELITE PAL Receiver\033[0m : %s";
-	the_screen_t << printfmt(fmt_title, "---"); // accepts UTF-8 codes
+	the_screen_t << format(fmt_title, "---"); // accepts UTF-8 codes
 	pkt_data.init_screen(fmt_title);
 
 	// button navigation

@@ -68,6 +68,7 @@ namespace TWECUI {
 
 	class TWE_WidSet_Tabs {
 		TWEUTILS::SimpleBuffer<upTWE_Button> _tabs;
+		TWEUTILS::SimpleBuffer<upTWE_Button> _btns_dialogue; // for dialogue button.
 		
 		TWETERM::ITerm& _trm;
 		std::unique_ptr<ITWE_WidEv_Tab> _upapp;
@@ -76,12 +77,27 @@ namespace TWECUI {
 		int8_t _selected_index;
 		uint8_t _col_end;
 
+		uint8_t _b_dialogue;
+
 	public:
 		template <class T>
-		TWE_WidSet_Tabs(T& app, TWETERM::ITerm& trm) : _upapp(new TWE_WidEv_Tab<T>(app)), _trm(trm), _col_end(2), _selected_index(0), _selection_request(-1)
+		TWE_WidSet_Tabs(T& app, TWETERM::ITerm& trm) 
+			: _upapp(new TWE_WidEv_Tab<T>(app))
+			, _trm(trm), _col_end(2), _selected_index(0), _selection_request(-1)
+			, _b_dialogue(false)
 		{
 			_tabs.reserve(16);
 			static_cast<TWE_WidEv_Tab<T>*>(_upapp.get())->_hndlrs.reserve(16);
+
+			_btns_dialogue.reserve(2);
+			_btns_dialogue.push_back(TWECUI::upTWE_Button(new TWE_Button(trm.get_cols() - 12, 0, L"[YES]")));
+			_btns_dialogue.push_back(TWECUI::upTWE_Button(new TWE_Button(trm.get_cols() - 5, 0, L"[NO]")));
+
+			_btns_dialogue[0]->attach_term(_trm);
+			_btns_dialogue[0]->set_mouse_down_to_selcomp();
+
+			_btns_dialogue[1]->attach_term(_trm);
+			_btns_dialogue[1]->set_mouse_down_to_selcomp();
 		}
 		~TWE_WidSet_Tabs() {}
 
@@ -154,60 +170,21 @@ namespace TWECUI {
 		 *
 		 * @returns	True if it captures press event.
 		 */
-		bool check_events() {
-			// if tab selection request is placed, switch here.
-			if (_selection_request >= 0) {
-				if (_selection_request >= 0 && _selection_request < (int)_tabs.size()) {
-					_selected_index = _selection_request;
-					_upapp->call_ev_tab_press(_selection_request);
-					update_view();
-				}
+		bool check_events();
 
-				_selection_request = -1;
-			}
+		/**
+		 * update screen object.
+		 * 
+		 */
+		void update_view();
 
-			// event loop
-			bool ret = false;
-			bool b_exit_loop = true;
-
-			do {
-				int c = TWE::the_keyboard.peek_a_byte();
-
-				for (unsigned i = 0; i < _tabs.size(); i++) {
-					if (_tabs[i] && _tabs[i]->key_event(c)) {
-						b_exit_loop = false; // `c' is used!
-						if (_tabs[i]->is_selection_completed()) {
-							// tab pressed
-							if (_selected_index != i) {
-								_selected_index = i;
-
-								_upapp->call_ev_tab_press(i);
-
-								ret = true;
-								update_view();
-							}
-						}
-					}
-				}
-
-				if (c != -1 && !b_exit_loop) { // still looping
-					TWE::the_keyboard.get_a_byte(); // skip this byte
-					c = TWE::the_keyboard.peek_a_byte(); // next byte
-				}
-
-				if (c == -1) break;
-			} while (!b_exit_loop);
-
-			return ret;
-		}
-
-		void update_view() {
-			_trm.clear_line(0);
-
-			for (unsigned i = 0; i < _tabs.size(); i++) {
-				_tabs[i]->set_color_code_normal((i == _selected_index) ? 7 : 255, (i == _selected_index) ? 1 : 255);
-				_tabs[i]->update_view();
-			}
+		/**
+		 * returns tab columns count.
+		 * 
+		 * \return  tab columns count.
+		 */
+		unsigned size() {
+			return _tabs.size();
 		}
 	};
 }

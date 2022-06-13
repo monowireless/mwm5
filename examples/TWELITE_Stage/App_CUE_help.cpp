@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_CUE.hpp"
@@ -39,6 +39,19 @@ static const wchar_t HELP_MSG[][384] =
 		L"      動かし方によって反対の極も検出されます。" L"\r\n"
 		L"  加速度  : 受信した10ｻﾝﾌﾟﾙのうち先頭8ｻﾝﾌﾟﾙの平均" L"\r\n"
 		L"      単位はmG(ﾐﾘG, 1G=9.8m/s²=1000mG)です。" L"\r\n"
+		,
+	//   "0....+....1....+....2....+....3....+....4....+....5..
+		L"[TWELITE CUE グラフ]" L"\r\n"
+		L"  加速度のグラフ表示を行います。" L"\r\n"
+		L"  ・受信データは log ﾌｫﾙﾀﾞに保存します。" L"\r\n"
+		L"    保存先は(l)ｷｰ。ｸﾞﾗﾌ画面終了までﾌｧｲﾙは開けません。" L"\r\n"
+		L"  ・操作:" L"\r\n"
+		L"    →, ←, ﾏｳｽ左ﾄﾞﾗｯｸﾞ ⇒ 表示位置移動" L"\r\n"
+		L"    ↑, ↓, ﾏｳｽﾎｲｰﾙ     ⇒ 横方向拡大縮小" L"\r\n"
+		L"    ( ), 右クリック     ⇒ 一時停止" L"\r\n"
+		L"    (c) ⇒ 表示位置のデータCSV保存" L"\r\n"
+		L"    (f) ⇒ FFTサンプル数を変更" L"\r\n"
+		L"※ ｻﾝﾌﾟﾙﾚｰﾄ･周波数は受信時刻からの推測値です。" L"\r\n"
 		,
 	//   "0....+....1....+....2....+....3....+....4....+....5..
 		L"[TWELITE ARIA センサー値情報]" L"\r\n"
@@ -102,56 +115,50 @@ struct App_CUE::SCR_HELP : public APP_HANDLR_DC {
 		the_screen(23, 14) << printfmt("%d / %d", _page + 1, MAX_PAGE_NUM + 1);
 		_btns.update_view();
 	}
-};
 
-// Screen def: opening
-void App_CUE::hndr_help(event_type ev, arg_type arg) {
-	// renew object
-	auto&& dc = APP_HNDLR::use<SCR_HELP>();
 
-	switch (ev) {
-	case EV_SETUP:
+	void setup() {
 		// init screen
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
-		set_title_bar(PAGE_ID::PAGE_HELP);
+		_app.set_title_bar(PAGE_ID::PAGE_HELP);
 		//          "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		set_nav_bar("  前TAB/長押:戻る      次ページ/--             次TAB/ﾘｾｯﾄ");
+		_app.set_nav_bar("  前TAB/長押:戻る      次ページ/--             次TAB/ﾘｾｯﾄ");
 
 		// the message
-		dc.show_message(0);
+		show_message(0);
 
 		// add next/prev page buttons
-		dc._btns.add( 2, 14, L"＜前", &SCR_HELP::Btn_Press, SCR_HELP::PAGE_PREV);
-		dc._btns.add(47, 14, L"次＞", &SCR_HELP::Btn_Press, SCR_HELP::PAGE_NEXT);
+		_btns.add(2, 14, L"＜前", &SCR_HELP::Btn_Press, this, SCR_HELP::PAGE_PREV);
+		_btns.add(47, 14, L"次＞", &SCR_HELP::Btn_Press, this, SCR_HELP::PAGE_NEXT);
 
 		// add direct page selection buttons
 		for (int i = 0; i <= MAX_PAGE_NUM; i++) {
 			static const wchar_t LBLS[][2] = { L"1", L"2", L"3", L"4", L"5" };
-			dc._btns.add(8 + i * 2, 14
+			_btns.add(8 + i * 2, 14
 				, i < int(elements_of_array(LBLS)) ? LBLS[i] : L"X"
-				, &SCR_HELP::Btn_Press, i);
+				, &SCR_HELP::Btn_Press, this, i);
 		}
-		break;
+	}
 
-	case EV_LOOP:
-		dc._btns.check_events();
+	void loop() {
+		_btns.check_events();
 
 		do {
 			int c = the_keyboard.read();
 
 			switch (c) {
-			// case KeyInput::KEY_BUTTON_A: break; // captured event check by the parent.
-			// case KeyInput::KEY_BUTTON_C: break; captured event check by the parent.
-			
+				// case KeyInput::KEY_BUTTON_A: break; // captured event check by the parent.
+				// case KeyInput::KEY_BUTTON_C: break; captured event check by the parent.
+
 			case KeyInput::KEY_BUTTON_A_LONG:
 			case KeyInput::KEY_BS:
-				dc._app._tabs.select(PAGE_ID::PAGE_BASIC);
+				_app._tabs.select(PAGE_ID::PAGE_BASIC);
 				break;
 
 			case KeyInput::KEY_BUTTON_B:
 			case ' ': // space
-				dc.show_message(SCR_HELP::PAGE_NEXT);
+				show_message(SCR_HELP::PAGE_NEXT);
 				break;
 
 			default:
@@ -165,9 +172,13 @@ void App_CUE::hndr_help(event_type ev, arg_type arg) {
 			int c = the_uart_queue.read();
 			// do nothing
 		} while (the_uart_queue.available());
-		break;
-
-	case EV_EXIT:
-		break;
 	}
-}
+
+	void on_close() {
+		// do nothing 
+	}
+
+};
+
+// generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods)
+void App_CUE::hndr_SCR_HELP(event_type ev, arg_type arg) { hndr<SCR_HELP>(ev, arg); }

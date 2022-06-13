@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #if (defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__))
@@ -12,13 +12,6 @@
 // output debug message
 #ifdef _DEBUG
 # define _DEBUG_MESSAGE
-#endif
-
-// game controller (set enabled on Windows as default)
-#if (defined(_MSC_VER) || defined(__MINGW32__))
-# if !defined(MWM5_USE_GAMECONTROLLER)
-#  define MWM5_USE_GAMECONTROLLER 1
-# endif
 #endif
 
 /*****************************************************************
@@ -42,6 +35,7 @@
 
 // for thread
 #include <thread>
+#include <mutex>
 
 // for check file content
 #include <regex>
@@ -50,6 +44,10 @@
 #include <iostream>
 #include <fstream>
 
+// read configurations
+#include "sdl2_config.h"
+
+// MWM5 library includes
 #include "mwm50.h"
 #include "M5Stack.h"
 #include "twe_sdl_m5.h"
@@ -82,6 +80,7 @@
 #include "sdl2_button.hpp"
 #include "sdl2_keyb.hpp"
 #include "sdl2_icon.h"
+#include "sdl2_utils.hpp"
 
 // include getopt.c
 #include "../oss/oss_getopt.h"
@@ -126,6 +125,36 @@ SDL_Window* gWindow = nullptr;
 //The window renderer
 SDL_Renderer* gRenderer = nullptr;
 
+// Rendering Mutex - if multi-threaded, use mutex for resource access.
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
+SDL_mutex* gMutex_Render = nullptr;
+#elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 0
+std::mutex gMutex_Render;
+#else
+const bool gMutex_Render = true;
+#endif
+
+volatile bool g_app_busy = false; // if busy flag is set, render darker
+volatile uint32_t g_app_busy_tick = 0; // starting time of busy
+
+void screen_set_busy() {
+	g_app_busy = true;
+	g_app_busy_tick = SDL_GetTicks();
+}
+
+void screen_unset_busy() {
+	g_app_busy = false;
+	g_app_busy_tick = 0;
+}
+
+void screen_hide_cursor() {
+	SDL_ShowCursor(SDL_DISABLE);
+}
+
+void screen_show_cursor() {
+	SDL_ShowCursor(SDL_ENABLE);
+}
+
 // fade effect switch
 #ifndef MWM5_ENABLE_FADE_EFFECT
 # define MWM5_ENABLE_FADE_EFFECT 1
@@ -144,7 +173,11 @@ int SCREEN_POS_Y = 0;
 
 // SCREEN window size preset.
 static const int screen_size_tbl[][2] = {
-	{640,480}, {960,720}, {1280,720}, {1280,960}, {1920,1080}, {320,240}, {-1,-1}
+#if M5_SCREEN_HIRES == 0
+	{ 640,480 }, { 960,720 }, { 1280,720 }, { 1280,960 }, { 1920,1080 }, { 320,240 }, { -1,-1 }
+#elif M5_SCREEN_HIRES == 1
+	{640,480}, {1280, 720}, {1280,960}, {1920,1440}, {2560,1440}, {320,240}, {-1,-1}
+#endif
 };
 
 // console
@@ -213,14 +246,22 @@ TWE_PutChar_CONIO TWE::WrtCon;
 #endif
 
 // the M5 stack instance
+#if M5_SCREEN_HIRES == 0
 static const int M5_LCD_WIDTH = 320;
 static const int M5_LCD_HEIGHT = 240;
+static const int M5_LCD_DIV_FACTOR = 2;
+#elif M5_SCREEN_HIRES == 1
+static const int M5_LCD_WIDTH = 640;
+static const int M5_LCD_HEIGHT = 480;
+static const int M5_LCD_DIV_FACTOR = 1;
+#endif
 M5Stack M5(M5_LCD_WIDTH, M5_LCD_HEIGHT);
 
 // settings from getopt
 struct _gen_preference {
 	int render_engine;    // choose rendering option (osx Metal)
 	int serial_safe_mode; // choose serial safe modes
+	int game_controller;  // 0: not use, 1: use game controller
 } the_pref;
 
 /***********************************************************
@@ -332,6 +373,7 @@ struct app_core_sdl {
 	// fading out when quitting.
 	int quit_loop_count;
 	static const int QUIT_LOOP_COUNT_MAX = 32;
+	int backgound_render_count;
 
 	// fullscreen
 	int _bfullscr;
@@ -362,14 +404,21 @@ struct app_core_sdl {
 		, sub_screen_tr(80, 16, { M5_LCD_SUB_WIDTH / 2, 0, M5_LCD_SUB_WIDTH / 2, M5_LCD_SUB_HEIGHT / 2 }, M5_SUB)
 		, sub_screen_br(80, 16, { M5_LCD_SUB_WIDTH / 2, M5_LCD_SUB_HEIGHT / 2, M5_LCD_SUB_WIDTH / 2, M5_LCD_SUB_HEIGHT / 2 }, M5_SUB)
 		, sub_textediting(80, 1, { 0, 0, M5_LCD_TEXTE_WIDTH, M5_LCD_TEXTE_HEIGHT }, M5_TEXTE)
-		, sp_btn_quit(new twe_wid_button(L"[閉]", { 640 - 64, 0, 64, 32 }))
+#if M5_SCREEN_HIRES == 0
 		, sp_btn_A(new twe_wid_button(L"[  A  ]", { 4, 480 - 32, 208, 32 }))
 		, sp_btn_B(new twe_wid_button(L"[  B  ]", { 4 + 208 + 4, 480 - 32, 208, 32 }))
 		, sp_btn_C(new twe_wid_button(L"[  C  ]", { 4 + 208 + 4 + 208 + 4, 480 - 32, 208, 32 }))
+		, sp_btn_quit(new twe_wid_button(L"[閉]", { 640 - 64, 0, 64, 32 }))
+#elif M5_SCREEN_HIRES == 1
+		, sp_btn_A(new twe_wid_button(L"[  A  ]", { 4, 480 - 24, 208, 24 }))
+		, sp_btn_B(new twe_wid_button(L"[  B  ]", { 4 + 208 + 4, 480 - 24, 208, 24 }))
+		, sp_btn_C(new twe_wid_button(L"[  C  ]", { 4 + 208 + 4 + 208 + 4, 480 - 24, 208, 24 }))
+		, sp_btn_quit(new twe_wid_button(L"[閉]", { 640 - 48, 0, 48, 24 }))
+#endif
 		, M5_SUB(M5_LCD_SUB_WIDTH, M5_LCD_SUB_HEIGHT)
 		, M5_TEXTE(M5_LCD_TEXTE_WIDTH, M5_LCD_TEXTE_HEIGHT)
 		, render_mode_m5_main(0)
-		, quit_loop_count(-1)
+		, quit_loop_count(-1), backgound_render_count(0)
 		, _bfullscr(0)
 		, _nscrsiz(0)
 		, _nTextEdtLen(0)
@@ -623,7 +672,10 @@ struct app_core_sdl {
 		SCREEN_POS_X = rct.x;
 		SCREEN_POS_Y = rct.y;
 
-		M5.Lcd.update_line_all();
+		if (auto l = TWE::LockGuard(gMutex_Render)) {
+			M5.Lcd.update_line_all();
+		}
+		
 		M5_SUB.Lcd.update_line_all();
 		M5_TEXTE.Lcd.update_line_all();
 
@@ -654,32 +706,36 @@ struct app_core_sdl {
 		TWEFONT::createFontShinonome16_full(0x80, 0, 0);
 		TWEFONT::createFontShinonome16_full(0x81, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI);
 		TWEFONT::createFontShinonome16_full(0x82, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+#if M5_SCREEN_HIRES == 0
 		TWEFONT::createFontShinonome16_full(0x83, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+#elif M5_SCREEN_HIRES == 1
+		TWEFONT::createFontMP12_std(0x83, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+#endif
 
 		// help screen (shown by Alt press)
 		sub_screen.set_font(0x80);
 		int cols = sub_screen.get_cols();
 		sub_screen.set_font(0x80, cols - 2);
-		sub_screen.set_color(WHITE, BLACK);
+		sub_screen.set_color(ALMOST_WHITE, BLACK);
 		sub_screen.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 		sub_screen.force_refresh();
 
 		sub_screen_tr.set_font(0x80);
 		cols = sub_screen_tr.get_cols();
 		sub_screen_tr.set_font(0x80, cols - 2);
-		sub_screen_tr.set_color(WHITE, color565(0x00, 0x00, 0x40));
+		sub_screen_tr.set_color(ALMOST_WHITE, color565(0x00, 0x00, 0x40));
 		sub_screen_tr.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 		sub_screen_tr.force_refresh();
 
 		sub_screen_br.set_font(0x80);
 		cols = sub_screen_br.get_cols();
 		sub_screen_br.set_font(0x81, cols - 2);
-		sub_screen_br.set_color(WHITE, color565(0x00, 0x40, 0x00));
+		sub_screen_br.set_color(ALMOST_WHITE, color565(0x00, 0x40, 0x00));
 		sub_screen_br.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 		sub_screen_br.force_refresh();
 
 		sub_textediting.set_font(0x83);
-		sub_textediting.set_color(color565(0x80, 0x80, 0x80), WHITE);
+		sub_textediting.set_color(color565(0x80, 0x80, 0x80), ALMOST_WHITE);
 		sub_textediting.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 		sub_textediting.force_refresh();
 
@@ -833,33 +889,59 @@ struct app_core_sdl {
 
 			// main screen
 			//  push mouse event as KEY INPUT QUEUE
+			static uint32_t t_last_R_clk;
 			if (e.type == SDL_MOUSEBUTTONUP) {
-				if(e.button.button == SDL_BUTTON_RIGHT) {
-					// right click will pass ESC key press
-					the_keyboard_sdl2.push(KeyInput::KEY_ESC);
-					return;
-				} else {
-					int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / 2;
-					int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / 2;
-					
-					// con_screen << printfmt("{MOUSE %d,%d}", x, y);
-					the_keyboard_sdl2.push(KeyInput::MOUSE_UP(x, y));
+				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / M5_LCD_DIV_FACTOR;
+				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / M5_LCD_DIV_FACTOR;
+
+				// con_screen << printfmt("{MOUSE %d,%d}", x, y);
+				if (e.button.clicks == 1 || e.button.clicks == 0) {
+					if (e.button.button == SDL_BUTTON_LEFT) {
+						the_keyboard_sdl2.push(KeyInput::MOUSE_UP(x, y, 0));
+					}
+					if (e.button.button == SDL_BUTTON_RIGHT) {
+						the_keyboard_sdl2.push(KeyInput::MOUSE_UP(x, y, 1));
+					}
+				}
+				else if (e.button.clicks == 2) {
+					if (e.button.button == SDL_BUTTON_RIGHT) {
+						if (e.button.timestamp - t_last_R_clk < 400) {
+							the_keyboard_sdl2.push(KeyInput::KEY_ESC);
+						}
+					}
 				}
 			}
 
 			//  push mouse event as KEY INPUT QUEUE
 			if (e.type == SDL_MOUSEBUTTONDOWN) {
-				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / 2;
-				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / 2;
+				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / M5_LCD_DIV_FACTOR;
+				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / M5_LCD_DIV_FACTOR;
 
 				// con_screen << printfmt("{MOUSE %d,%d}", x, y);
-				the_keyboard_sdl2.push(KeyInput::MOUSE_DOWN(x, y));
+				if (e.button.clicks == 1) {
+					if (e.button.button == SDL_BUTTON_LEFT) {
+						the_keyboard_sdl2.push(KeyInput::MOUSE_DOWN(x, y, 0));
+					}
+					if (e.button.button == SDL_BUTTON_RIGHT) {
+						the_keyboard_sdl2.push(KeyInput::MOUSE_DOWN(x, y, 1));
+						t_last_R_clk = e.button.timestamp;
+					}
+				}
+				else if (e.button.clicks == 2) {
+					if (e.button.button == SDL_BUTTON_LEFT) {
+						the_keyboard_sdl2.push(KeyInput::MOUSE_DOUBLE(x, y, 0));
+					}
+					if (e.button.button == SDL_BUTTON_RIGHT) {
+						//the_keyboard_sdl2.push(KeyInput::KEY_ESC);
+						the_keyboard_sdl2.push(KeyInput::MOUSE_DOUBLE(x, y, 1));
+					}
+				}
 			}
 
 			//  push mouse event as KEY INPUT QUEUE
 			if (e.type == SDL_MOUSEMOTION) {
-				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / 2;
-				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / 2;
+				int x = (e.button.x - ::SCREEN_POS_X) * 640 / ::SCREEN_WIDTH / M5_LCD_DIV_FACTOR;
+				int y = (e.button.y - ::SCREEN_POS_Y) * 480 / ::SCREEN_HEIGHT / M5_LCD_DIV_FACTOR;
 				
 				// con_screen << printfmt("{MOUSE %d,%d}", x, y);
 				the_keyboard_sdl2.push(KeyInput::MOUSE_MOVE(x, y));
@@ -873,11 +955,11 @@ struct app_core_sdl {
 
 			// finger
 			if (e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP || e.type == SDL_FINGERMOTION) {
-				int x_s = int((::SCREEN_POS_X * 2 + ::SCREEN_WIDTH) * e.tfinger.x - ::SCREEN_POS_X);
-				int y_s = int((::SCREEN_POS_Y * 2 + ::SCREEN_HEIGHT) * e.tfinger.y - ::SCREEN_POS_Y);
+				int x_s = int((::SCREEN_POS_X * M5_LCD_DIV_FACTOR + ::SCREEN_WIDTH) * e.tfinger.x - ::SCREEN_POS_X);
+				int y_s = int((::SCREEN_POS_Y * M5_LCD_DIV_FACTOR + ::SCREEN_HEIGHT) * e.tfinger.y - ::SCREEN_POS_Y);
 
-				int x = x_s * 640 / ::SCREEN_WIDTH / 2;
-				int y = y_s * 480 / ::SCREEN_HEIGHT / 2;
+				int x = x_s * 640 / ::SCREEN_WIDTH / M5_LCD_DIV_FACTOR;
+				int y = y_s * 480 / ::SCREEN_HEIGHT / M5_LCD_DIV_FACTOR;
 				
 				switch(e.type) {
 				case SDL_FINGERDOWN:
@@ -895,7 +977,7 @@ struct app_core_sdl {
 		if (e.type == SDL_MOUSEMOTION && _is_get_focus) { // behave only in focus.
 			int d = screen_weight(32);
 
-			if (e.motion.x < d) {
+			if (e.motion.x < d && e.motion.y < d) {
 				if (nAltDown != N_ALTDOWN_ON_KEY) { // when press/release event is happened, set nAltDown as 1.
 					nAltDown = N_ALTDOWN_SHOWN; // set nAltDown flag as help screen is shown
 				}
@@ -915,8 +997,7 @@ struct app_core_sdl {
 			}
 		}
 
-#if MWM5_USE_GAMECONTROLLER == 1
-		{
+		if (the_pref.game_controller) {
 			// game controller attached
 			if (e.type == SDL_CONTROLLERDEVICEADDED) {
 				int id = e.cdevice.which;
@@ -1016,7 +1097,6 @@ struct app_core_sdl {
 				return;
 			}
 		}
-#endif
 
 		// just test
 		if (e.type == SDL_TEXTEDITING) {
@@ -1207,7 +1287,7 @@ struct app_core_sdl {
 					if (e.type == SDL_KEYDOWN) {
 						update_help_desc(L"フルスクリーン画面に設定します。Shift+で、スクリーン最大に拡大します");
 					} else {
-						_bfullscr = !_bfullscr;
+						_bfullscr = (_bfullscr == 0);
 
 						if (_bfullscr && e.key.keysym.mod & (KMOD_SHIFT)) _bfullscr = 2;
 
@@ -1307,14 +1387,14 @@ struct app_core_sdl {
 					} else
 					if (e.key.keysym.mod & (KMOD_SHIFT)) { // KEY UP WITH SHIFT
 						// opens log storing dir
-						if (TweDir::create_dir(make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME).c_str())) {
-							shell_open_default(make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME));
+						if (the_cwd.get_dir_log().length() > 0) {
+							shell_open_default(the_cwd.get_dir_log());
 						}
 						else {
 							SDL_ShowSimpleMessageBox(
 								SDL_MESSAGEBOX_INFORMATION,
 								"TWELITE Stage",
-								"ログファイルを格納するディレクトリが生成できません",
+								"ログファイルを格納するディレクトリが存在しません",
 								gWindow
 							);
 						}
@@ -1349,13 +1429,11 @@ struct app_core_sdl {
 #endif
 							// create filename and fullpath
 							_file_name << LOG_FINENAME << '_' << (const char*)_txt_date.c_str() << '.' << LOG_FILEEXT;
-							_file_fullpath << make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME, _file_name);
+							_file_fullpath << make_full_path(the_cwd.get_dir_log(), _file_name);
 
 							// open log file
 							try {
-								if (!TweDir::create_dir(
-									make_full_path(the_cwd.get_dir_exe(), LOG_DIRNAME).c_str()
-								)) throw nullptr;
+								if (the_cwd.get_dir_log().length() == 0) throw nullptr;
 
 								_file_buf.reset(new std::filebuf());
 								_file_buf->open((const char*)_file_fullpath.c_str(), std::ios::binary |std::ios::app);
@@ -1419,106 +1497,121 @@ struct app_core_sdl {
 		}
 	}
 
-	void render_main_screen() {
+	void render_main_screen(bool b_background = false) {
 		// texture source rect
 		const SDL_Rect* p_srcrect = NULL;
 
 		// the start of texure update by memory update.
 		void* mPixels;
 		int mPitch;
-		SDL_LockTexture( mTexture, NULL, &mPixels, &mPitch );
-			
+		SDL_LockTexture(mTexture, NULL, &mPixels, &mPitch);
+
+		// render
 		if (render_mode_m5_main == 0) {
 			static const SDL_Rect srcrect = { 0, 0, M5_LCD_WIDTH * 2, M5_LCD_HEIGHT * 2 };
 			p_srcrect = &srcrect;
-
-			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-				if (M5.Lcd.update_line(y)) {
-					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
-					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
-
-					for (int x = 0; x < M5_LCD_WIDTH; x++) {
-						auto c = M5.Lcd.get_pt(x, y);
-
-						// RENDER LIKE LCD
-						draw_point(p1, c);
-						draw_point(p1+1, c, 192);
-						draw_point(p2, c, 128);
-						draw_point(p2+1, c, 128);
-
-						p1 += 2;
-						p2 += 2;
-					}
-				}
-			}
-		} else if (render_mode_m5_main == 1) {
+		}
+		else
+		if (render_mode_m5_main == 1) {
 			static const SDL_Rect srcrect = { 0, 0, M5_LCD_WIDTH, M5_LCD_HEIGHT * 2 };
 			p_srcrect = &srcrect;
-
-			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-				if (M5.Lcd.update_line(y)) {
-					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
-					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
-
-					for (int x = 0; x < M5_LCD_WIDTH; x++) {
-						RGBA c = M5.Lcd.get_pt(x, y);
-						
-						draw_point(p1, c);
-						draw_point(p2, c, 128);
-
-						p1 += 1;
-						p2 += 1;
-					}
-				}
-			}
-		} else if (render_mode_m5_main == 2) {
+		}
+		else
+		if (render_mode_m5_main == 2) {
 			static const SDL_Rect srcrect = { 0, 0, M5_LCD_WIDTH, M5_LCD_HEIGHT };
 			p_srcrect = &srcrect;
-
-			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-				if (M5.Lcd.update_line(y)) {
-					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 2);
-					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 1);
-
-					for (int x = 0; x < M5_LCD_WIDTH; x++) {
-						auto c = M5.Lcd.get_pt(x, y);
-
-						// RENDER BLUR
-						draw_point(p1, c);
-						draw_point(p2, c);
-
-						p1 += 1;
-						p2 += 1;
-					}
-				}
-			}
-
-		} else
+		}
+		else
 		if (render_mode_m5_main == 3) {
 			static const SDL_Rect srcrect = { 0, 0, M5_LCD_WIDTH * 2, M5_LCD_HEIGHT * 2 };
 			p_srcrect = &srcrect;
-								
-			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-				if (M5.Lcd.update_line(y)) {
-					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
-					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
+		}
 
-					for (int x = 0; x < M5_LCD_WIDTH; x++) {
-						auto c = M5.Lcd.get_pt(x, y);
+		if (!g_app_busy) {
+			if (auto l = TWE::LockGuard(gMutex_Render)) {
+				if (render_mode_m5_main == 0) {
+					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+						if (M5.Lcd.update_line(y)) {
+							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
+							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
 
-						// RENDER LIKE DIGITAL TEXTURE
-						draw_point(p1, c);
-						draw_point(p1+1, c);
-						draw_point(p2, c);
-						draw_point(p2+1, c);
+							for (int x = 0; x < M5_LCD_WIDTH; x++) {
+								auto c = M5.Lcd.get_pt(x, y);
 
-						p1 += 2;
-						p2 += 2;
+								// RENDER LIKE LCD
+								draw_point(p1, c);
+								draw_point(p1 + 1, c, 192);
+								draw_point(p2, c, 128);
+								draw_point(p2 + 1, c, 128);
+
+								p1 += 2;
+								p2 += 2;
+							}
+						}
+					}
+				}
+				else if (render_mode_m5_main == 1) {
+					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+						if (M5.Lcd.update_line(y)) {
+							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
+							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
+
+							for (int x = 0; x < M5_LCD_WIDTH; x++) {
+								RGBA c = M5.Lcd.get_pt(x, y);
+
+								draw_point(p1, c);
+								draw_point(p2, c, 128);
+
+								p1 += 1;
+								p2 += 1;
+							}
+						}
+					}
+				}
+				else if (render_mode_m5_main == 2) {
+					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+						if (M5.Lcd.update_line(y)) {
+							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 2);
+							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 1);
+
+							for (int x = 0; x < M5_LCD_WIDTH; x++) {
+								auto c = M5.Lcd.get_pt(x, y);
+
+								// RENDER BLUR
+								draw_point(p1, c);
+								draw_point(p2, c);
+
+								p1 += 1;
+								p2 += 1;
+							}
+						}
+					}
+
+				}
+				else if (render_mode_m5_main == 3) {
+					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+						if (M5.Lcd.update_line(y)) {
+							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
+							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
+
+							for (int x = 0; x < M5_LCD_WIDTH; x++) {
+								auto c = M5.Lcd.get_pt(x, y);
+
+								// RENDER LIKE DIGITAL TEXTURE
+								draw_point(p1, c);
+								draw_point(p1 + 1, c);
+								draw_point(p2, c);
+								draw_point(p2 + 1, c);
+
+								p1 += 2;
+								p2 += 2;
+							}
+						}
 					}
 				}
 			}
 		}
-
+		
 		// the end of texture update by memory update
 		SDL_UnlockTexture(mTexture);
 
@@ -1528,12 +1621,30 @@ struct app_core_sdl {
 		//Show rendered to texture
 		const SDL_Rect dstrect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-		if (quit_loop_count >= 0) {
-			uint8 alpha = quit_loop_count * 255 / QUIT_LOOP_COUNT_MAX;
-			SDL_SetTextureColorMod(mTexture, alpha, alpha, alpha);
-		} else {
-			SDL_SetTextureColorMod(mTexture, 0xFF, 0xFF, 0xFF);
+		// calculate mainscreen alpha
+		//  if the app is in bg, render darker.
+		uint8_t alpha = 0xFF;
+		if (b_background) {
+			backgound_render_count = 4;
 		}
+		else {
+			if (backgound_render_count > 0) backgound_render_count--;
+		}
+
+		if (backgound_render_count) alpha = 160;
+
+		// face effect on exit.
+		if (quit_loop_count >= 0) {
+			if (backgound_render_count) backgound_render_count = -1; // keep background alpha (refrain from being lighter again).
+			alpha = quit_loop_count * alpha / QUIT_LOOP_COUNT_MAX;	
+		}
+
+		auto t_now = SDL_GetTicks();
+		if (g_app_busy && t_now - g_app_busy_tick > 1000) {
+			alpha /= 2;
+		}
+
+		SDL_SetTextureColorMod(mTexture, alpha, alpha, alpha);
 		SDL_RenderCopy(gRenderer, mTexture, p_srcrect, &dstrect);
 	}
 
@@ -1634,30 +1745,28 @@ struct app_core_sdl {
 		SDL_Point screenCenter = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
 
 		while (g_quit_sdl_loop == false || quit_loop_count > 0) {
-			_u32tick_sdl_loop_head = SDL_GetTicks();
-			
 			//Event handler
 			while (SDL_PollEvent(&e) != 0) {
-				handle_sdl_event(e);	
+				handle_sdl_event(e);
 			}
 
-			// SKETCH WORKS
-			::s_sketch_loop();
-
+			// if true, render screen
 			bool render = true;
 
 			if (_is_window_hidden) {
 				render = false;
-			} else
-			if (!_is_get_focus) {
+			}
+			else if (!_is_get_focus) {
 				_render_cnt++;
 
 				if (!_is_window_hidden) {
-					render = ((_render_cnt & 15) == 15);
-				} else {
-					render = ((_render_cnt & 63) == 63);
+					render = ((_render_cnt & 15) == 15); // every 4 frames (background)
+				}
+				else {
+					render = ((_render_cnt & 63) == 63); // evert frames (normally, in focus)
 				}
 			}
+
 			if (render) {
 				// Update Alt Screen	
 				static int ser2handle = -1;
@@ -1680,42 +1789,64 @@ struct app_core_sdl {
 				}
 
 				// render M5stack area
-				render_main_screen();
-				
-				/* RENDER ALT SCREEN (HELP, SOME OPERATION) */
-				render_help_screen();
+				render_main_screen(!_is_get_focus);
 
-				// TEXTEDITING box
-				render_texte_box();
-				
-				/* RENDER BOTTONS */
-				sp_btn_A->render_sdl(gRenderer);
-				sp_btn_B->render_sdl(gRenderer);
-				sp_btn_C->render_sdl(gRenderer);
+				if (_is_get_focus) {
+					/* RENDER ALT SCREEN (HELP, SOME OPERATION) */
+					render_help_screen();
 
-				// BUTTON QUIT
-				sp_btn_quit->render_sdl(gRenderer);
+					// TEXTEDITING box
+					render_texte_box();
 
-				// Update screen (wait until VSYNC, if set)
+					/* RENDER BOTTONS */
+					sp_btn_A->render_sdl(gRenderer);
+					sp_btn_B->render_sdl(gRenderer);
+					sp_btn_C->render_sdl(gRenderer);
+
+					// BUTTON QUIT
+					sp_btn_quit->render_sdl(gRenderer);
+				}
+
+				// Wait vsync and render screen.
 				SDL_RenderPresent(gRenderer);
 			}
 
-			// delay for next tick (every 16ms)
-			{
-				const int LOOP_MS = 16;
+			// delay some for next tick.
+			// - if rendered, SDL_RenderPreset() will wait for VSYNC.
+			// - otherwise keep tick close to LOOP_MS.
+			if (!render) {
+				const int LOOP_MS = 15;
 				uint32_t u32tick_now = SDL_GetTicks();
 				int delay = (u32tick_now - _u32tick_sdl_loop_head);
 
 				if (delay >= LOOP_MS) {
 					delay = -1; // already passed LOOP_MS
-				} else if (delay >= 0) {
+				}
+				else if (delay >= 0) {
 					delay = LOOP_MS - delay;
-				} else {
+				}
+				else {
 					delay = LOOP_MS; // error?
 				}
 				if (delay > 0) SDL_Delay(delay);
-				// con_screen << printfmt("[%d]", delay);
 			}
+
+#if 0
+			// DEBUG MESSAGE FOR CHECKING LOOP PERIOD
+			{
+				static uint32_t last_tick;
+				con_screen << printfmt("[%d,%d]", _u32tick_sdl_loop_head - last_tick, SDL_GetTicks() - _u32tick_sdl_loop_head);
+				last_tick = _u32tick_sdl_loop_head;
+			}
+#endif
+
+			// set timing
+			_u32tick_sdl_loop_head = SDL_GetTicks();
+
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 0
+			// RUN SKETCH
+			if (g_quit_sdl_loop == false) ::s_sketch_loop(); // run the app loop in the same thread.
+#endif
 
 			if (quit_loop_count == -1 && g_quit_sdl_loop) {
 				// exitting message
@@ -1735,7 +1866,7 @@ struct app_core_sdl {
 
 				if (quit_loop_count > 0) quit_loop_count--;
 			}
-		}	
+		}
 	}
 };
 std::unique_ptr<app_core_sdl> the_app_core;
@@ -1828,9 +1959,7 @@ static void s_init_sdl() {
 	SDL_SetMainReady();
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER 
-#if MWM5_USE_GAMECONTROLLER == 1
-				                | SDL_INIT_GAMECONTROLLER // game device
-#endif
+				                | (the_pref.game_controller ? SDL_INIT_GAMECONTROLLER : 0)
 	            ) < 0) {
 		exit_err("SDL_Init() [%s]");
 	}
@@ -1892,7 +2021,8 @@ static void s_init_sdl() {
 #endif
 
 	// Renderer
-	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED); // | SDL_RENDERER_PRESENTVSYNC);
+	// gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	if (gRenderer == NULL)
 		exit_err("SDL_CreateRenderer()");
@@ -1901,6 +2031,13 @@ static void s_init_sdl() {
 	if ((g_sdl2_user_event_type = SDL_RegisterEvents(1)) == -1) {
 		exit_err("SDL_RegisterEvents()");
 	}
+
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
+	gMutex_Render = SDL_CreateMutex();
+	if (gMutex_Render == nullptr) {
+		exit_err("SDL_CreateMutex()");
+	}
+#endif
 }
 
 static void s_sketch_setup() {
@@ -1988,6 +2125,7 @@ static void s_sketch_loop() {
 		static int ct = 0; // bulk process counter
 		
 		// more loop
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 0
 		do {
 			if (Serial2.update() > 0) ct++;
 			::loop();
@@ -1997,6 +2135,9 @@ static void s_sketch_loop() {
 				break;
 			}
 		} while (twe_prog.is_protocol_busy());
+#else 
+		::loop();
+#endif
 	}	
 }
 
@@ -2034,8 +2175,10 @@ static void s_ser_hook_on_write(const uint8_t *p, int len) {
  * @param [in,out]	args	If non-null, the arguments.
  */
 static void s_getopt(int argc, char* args[]) {
+	// clear preference data and set defaults
 	memset(&the_pref, 0, sizeof(the_pref));
-	
+	the_pref.game_controller = MWM5_USE_GAMECONTROLLER;
+
 	int opt = 0;
 	ts_opt_getopt* popt = oss_getopt_ref();
 
@@ -2054,6 +2197,11 @@ static void s_getopt(int argc, char* args[]) {
         case 'R': // Render engine (0:default 1:opengl 2:metal)
             the_pref.render_engine = atoi(popt->optarg);
             break;
+
+		case 'J':
+			the_pref.game_controller = 1;
+			break;
+
         default: /* '?' */
             fprintf(stderr, "Usage: %s [-t nsecs] [-n] name\n",
                     args[0]);
@@ -2181,6 +2329,53 @@ int TWESYS::Get_CPU_COUNT() {
 	return n;
 }
 
+
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1
+/**
+ * @fn	static uint32_t callbackTimerApp(uint32_t interval, void* param)
+ *
+ * @brief	Callback timer for application loop.
+ * 			This callback is run on a separate thread.
+ *
+ * @param 		  	interval	The interval.
+ * @param [in,out]	param   	If non-null, the parameter.
+ *
+ * @returns	An uint32_t.
+ */
+static uint32_t callbackTimerApp(uint32_t interval, void* param) {
+	const int T_LOOP = 1000/166; // 166Hz=6ms
+
+	if (g_quit_sdl_loop) return 0;
+
+	uint32_t t_now = SDL_GetTicks();
+	static uint32_t t_last;
+
+	uint32_t t_d = t_now - t_last;
+	t_last = t_now;
+
+	//printf("\n[%02d/%07d]", t_d, t_now);
+
+	if (twe_prog.is_protocol_busy()) {
+		// loop 8 times at once
+		for (int i = 0; i < 8; i++) {
+			if (auto l = TWE::LockGuard(gMutex_Render)) {
+				::s_sketch_loop(); // loop last
+			}
+		}
+		return 1;
+	} else {
+		{
+			auto l = TWE::LockGuard(gMutex_Render);
+			::s_sketch_loop(); // loop last
+		}
+
+		return (t_d == T_LOOP || t_d >= T_LOOP) ? T_LOOP : T_LOOP - t_d;
+	}
+
+	return T_LOOP;
+}
+#endif
+
 /**
  * @fn	int main(int argc, char* args[])
  *
@@ -2212,8 +2407,16 @@ int main(int argc, char* args[]) {
 	// call sketch setup();
 	s_sketch_setup();
 
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1
+	// main loop is invoked by SDL Timer.
+	SDL_AddTimer(10, callbackTimerApp, nullptr);
+#endif
+
 	// SDL MainLoop
 	the_app_core->loop();
+
+	// delete app instance
+	TWE::the_app._destroy_app_instance();
 
 	// force exit
 	auto func = [](uint32_t timeout) {
@@ -2251,6 +2454,7 @@ int main(int argc, char* args[]) {
 #endif
 
 	th_exit.join();
+
 	return 0;
 }
 

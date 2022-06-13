@@ -155,7 +155,7 @@ namespace TWE {
 		 *
 		 * @returns	true: app is registered.
 		 */
-		operator bool() {
+		explicit operator bool() {
 			return _the_app.operator bool();
 		}
 
@@ -168,6 +168,13 @@ namespace TWE {
 		 */
 		APP_DEF* query_appobj() {
 			return _the_app.get();
+		}
+
+		/**
+		 * clean up the instance.
+		 */
+		void _destroy_app_instance() {
+			_the_app.reset(nullptr);
 		}
 	};
 
@@ -182,8 +189,7 @@ namespace TWE {
 	struct APP_HANDLR_DC {
 		const int _class_id;
 		APP_HANDLR_DC(int id) : _class_id(id) {}
-		virtual int get_class_id() = 0;
-		virtual ~APP_HANDLR_DC() {}
+		virtual ~APP_HANDLR_DC() {} // must be virtual, when deleting an instance inherited from APP_HANDLR_DC.
 	};
 
 	/**
@@ -307,14 +313,14 @@ namespace TWE {
 		 *
 		 * @brief	Prepare data context (dc) for each handlers.
 		 *
-		 * @tparam	DC	Generic type parameter.
+		 * @tparam	DC	Structure type derived from APP_HANDLR_DC, which contains dedicated data structure/procedure.
 		 * 				- This class must have int DC::CLS_ID as public scope.  
 		 * 				- Recommended to be friend class to sub-app (derived class of APP_DEF)
 		 *
 		 * @returns	A reference to the data context
 		 */
-		template <class DC>
-		DC& use() {
+		template <class DC, class... Args>
+		DC& use(Args&&... args) {
 			if (_dc && _dc->_class_id == DC::CLS_ID) {
 				// existing object
 				return *static_cast<DC*>(_dc.get());
@@ -322,10 +328,25 @@ namespace TWE {
 			else {
 				// create new DC instance (if obj class id differs)
 				T* papp = static_cast<T*>(this);
-				DC* pdc = new DC(*papp);
+				DC* pdc = new DC(*papp, std::forward<Args&&>(args)...);
 				_dc.reset(pdc);
 				return *pdc;
 			}
 		}
 	};
 }
+
+/** 
+ * template code of handlers for APP_HNDLR.
+ */
+#define EMBED_APP_HNDLR_TEMPLATE_PROCEDURE(FNAME) \
+template <typename T> \
+void FNAME(event_type ev, arg_type arg) { \
+	auto&& dc = APP_HNDLR::use<T>(); \
+	switch (ev) { \
+	case EV_SETUP: dc.setup(); break; \
+	case EV_LOOP: dc.loop(); break; \
+	case EV_EXIT: dc.on_close(); break; \
+	} \
+}
+

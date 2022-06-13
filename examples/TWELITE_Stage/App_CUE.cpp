@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_CUE.hpp"
@@ -37,10 +37,16 @@ void App_CUE::setup() {
 	set_nav_bar();
 
 	// add tab
-	_tabs.add(L"TWELITE CUE", &App_CUE::hndr_basic);
-	_tabs.add(L"TWELITE ARIA", &App_CUE::hndr_aria_basic);
-	_tabs.add(L"解説", &App_CUE::hndr_help);
+	_tabs.add(L"TWELITE CUE", &App_CUE::hndr_SCR_CUE_BASIC);
+	_tabs.add(L"CUEｸﾞﾗﾌ", &App_CUE::hndr_SCR_CUE_FIFO);
+	_tabs.add(L"TWELITE ARIA", &App_CUE::hndr_SCR_ARIA_BASIC);
+	_tabs.add(L"ｾﾝｻｰｸﾞﾗﾌ", &App_CUE::hndr_SCR_WSNS_DB);
+	_tabs.add(L"解説", &App_CUE::hndr_SCR_HELP);
 	_tabs.update_view();
+
+	if (u8tab_selection < _tabs.size()) {
+		_tabs.select(u8tab_selection);
+	}
 
 	// put a init message
 	set_title_bar(PAGE_ID::PAGE_BASIC);
@@ -59,27 +65,31 @@ void App_CUE::loop() {
 		if (c == KeyInput::KEY_BUTTON_A) {
 			_tabs.select_prev();
 		}
-		else
-			if (c == KeyInput::KEY_BUTTON_C) {
-				_tabs.select_next();
-			}
-			else if (c == KeyInput::KEY_BUTTON_A_LONG || c == KeyInput::KEY_ESC) {
+		else if (c == KeyInput::KEY_BUTTON_C) {
+			_tabs.select_next();
+		}
+		else if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
+			// handle double ESC/double right click
+			static uint32_t t_last;
+			uint32_t t_now = millis();
+
+			if (t_now - t_last < 300) {
 				the_app.exit(APP_ID);
 			}
-			else if (c == KeyInput::KEY_BUTTON_C_LONG) {
-				twe_prog.reset_module();
-			}
-#if 0
-			else if (c == 't') {
-				_tabs.select(PAGE_ID::PAGE_TWELITE80);
-			}
-			else if (c == 'n') {
-				_tabs.select(PAGE_ID::PAGE_NOTICE01);
-			}
-#endif
 			else {
-				b_loop = false; // message is not used.
+				b_loop = false;
 			}
+			t_last = t_now;
+		}
+		else if (c == KeyInput::KEY_BUTTON_A_LONG) {
+			the_app.exit(APP_ID);
+		}
+		else if (c == KeyInput::KEY_BUTTON_C_LONG) {
+			twe_prog.reset_module();
+		}
+		else {
+			b_loop = false; // message is not used, pass the event to TAB content.
+		}
 
 		if (b_loop) { // still looping
 			the_keyboard.get_a_byte(); // skip this byte
@@ -99,38 +109,67 @@ void App_CUE::setup_screen() {
 	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
 
+#if M5_SCREEN_HIRES == 0
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 	TWEFONT::createFontMP12(10, 0, 0); // MP11 font
 	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
 
-	// main screen area
+	the_screen_t.set_font(11);
+	the_screen_tab.set_font(1);
 	the_screen.set_font(10);
+	the_screen_b.set_font(1);
+	the_screen_c.set_font(1);
+
+#elif M5_SCREEN_HIRES == 1
+
+	font_IDs.main = 11;
+	font_IDs.smaller = 14;
+	font_IDs.tiny = 1;
+
+	TWEFONT::createFontMP10_std(1, 0, 0);
+
+	TWEFONT::createFontShinonome16(10, 0, 0); // normal font
+
+	TWEFONT::createFontShinonome16_full(font_IDs.main, 4, 2); // MP11 font
+
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+
+	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+
+	TWEFONT::createFontMP12_std(font_IDs.smaller, 0, 0);
+
+	the_screen_t.set_font(13);
+	the_screen_tab.set_font(10);
+	the_screen.set_font(font_IDs.main);
+	the_screen_b.set_font(font_IDs.smaller);
+	the_screen_c.set_font(12);
+
+#endif
+
+	// main screen area
 	the_screen.set_color(default_fg_color, default_bg_color);
 	the_screen.set_cursor(0); // 0: no 1: curosr 2: blink cursor
+	the_screen.set_wraptext(false);
 	the_screen.force_refresh();
 
 	// tab area
-	the_screen_tab.set_font(1);
 	the_screen_tab.set_color(default_bg_color, color565(0x80, 0x80, 0x80));
 	the_screen_tab.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 	the_screen_tab.set_color_table(COLTBL_MAIN);
 	the_screen_tab.force_refresh();
 
 	// bottom area (sub screen)
-	the_screen_b.set_font(1);
 	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
 	the_screen_b.set_cursor(0);
 	the_screen_b.force_refresh();
 
 	// top area
-	the_screen_t.set_font(11);
 	the_screen_t.set_color(default_bg_color, default_fg_color);
 	the_screen_t.set_cursor(0);
 	the_screen_t.force_refresh();
 
 	// nav bar area
-	the_screen_c.set_font(1);
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.force_refresh();

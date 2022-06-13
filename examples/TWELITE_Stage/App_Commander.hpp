@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
@@ -49,11 +49,19 @@ private:
 public:
 	App_Commander()
 		: parse_ascii(256)
+#if M5_SCREEN_HIRES == 0
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
-		, the_screen_tab(64, 20, { 0, 18, 320, 10 }, M5)
+		, the_screen_tab(64, 2, { 0, 18, 320, 10 }, M5)
 		, the_screen(64, 20, { 0, 28, 320, 240 - 18 - 10 -30 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
+#elif M5_SCREEN_HIRES == 1
+		, the_screen_t  (80,  1, { 0,   0, 640,  24 }, M5)
+		, the_screen_tab(80,  2, { 0,  24, 640,  16 }, M5)
+		, the_screen    (56, 16, { 0,  40, 640, 380 }, M5)
+		, the_screen_b  (120,  4, { 0, 420, 640,  36 }, M5)
+		, the_screen_c  (64,  1, { 0, 456, 640,  24 }, M5)
+#endif
 		, default_bg_color(0)
 		, default_fg_color(0)
 		, _tabs(*this, the_screen_tab)

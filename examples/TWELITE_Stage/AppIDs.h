@@ -13,7 +13,7 @@ enum class E_APP_ID {
     ROOT_MENU = 0,
     CONSOLE,
     TWELITE,
-    PAL,
+    //PAL,
     CUE,
     GLANCE,
     COMMANDER,
@@ -26,6 +26,7 @@ enum class E_APP_ID {
     SELECT_PORT,
 #endif
     _END_,
+    PAL, // no use
 };
 
 // if exiting with next_app=FIRM_PROG, this exit_id would show last build menu.

@@ -35,6 +35,7 @@ private:
 	uint16_t default_fg_color;
 
 	// Pakcet Data
+#if M5_SCREEN_HIRES == 0
 	static const uint8_t scr_font_w = 5;
 	static const uint8_t scr_font_w_zoom = 8;
 	static const uint8_t scr_font_h = 10;
@@ -47,6 +48,20 @@ private:
 	static const int16_t scr_h = 240 - 18 - 10;
 	static const int16_t scr_wz = scr_w / scr_font_w * scr_font_w_zoom; // when zoomed, assume 16x8 font
 	static const int16_t scr_hz = scr_h / scr_font_h * scr_font_h_zoom;
+#elif M5_SCREEN_HIRES == 1
+	static const uint8_t scr_font_w = 6;
+	static const uint8_t scr_font_w_zoom = 8;
+	static const uint8_t scr_font_h = 12;
+	static const uint8_t scr_font_h_zoom = 16;
+	static const uint8_t scr_max_cols = 120;
+	static const uint8_t scr_max_rows = 40;
+	static const int16_t scr_x = 0;
+	static const int16_t scr_y = 24;
+	static const int16_t scr_w = 640;
+	static const int16_t scr_h = 480 - 24 - 24;
+	static const int16_t scr_wz = scr_w / scr_font_w * scr_font_w_zoom; // when zoomed, assume 16x8 font
+	static const int16_t scr_hz = scr_h / scr_font_h * scr_font_h_zoom;
+#endif
 	bool bZoom;
 	bool bWrap;
 
@@ -57,10 +72,15 @@ private:
 
 public:
 	App_Console()
+#if M5_SCREEN_HIRES == 0
 		: the_screen(scr_max_cols, scr_max_rows, { scr_x, scr_y, scr_w, scr_h }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
-		// , the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
+#elif M5_SCREEN_HIRES == 1
+		: the_screen(scr_max_cols, scr_max_rows, { scr_x, scr_y, scr_w, scr_h }, M5)
+		, the_screen_t(64, 1, { 0, 0, 640, 24 }, M5)
+		, the_screen_c(64, 1, { 0, 480 - 24, 640, 24 }, M5)
+#endif
 		, bZoom(false), bWrap(true)
 		, default_bg_color(0)
 		, default_fg_color(0)

@@ -185,6 +185,28 @@ namespace TWE {
         return r;
     }
 
+    template <typename T, typename SOUT, int ISSTR>
+    int _make_full_path_is_empty(TWEUTILS::SimpleBuffer<T, SOUT, ISSTR>& fname) {
+        int r = (fname.size() == 0);
+
+        // check if fname is "."(as empty) or ".."(returns -1).
+        if (!r && fname[0] == 0x2e && fname[1] == 0) r = 1;
+        if (!r && fname[0] == 0x2e && fname[1] == 0x2e && fname[2] == 0) r = -1;
+
+        return r;
+    }
+
+    template <typename T, int N, typename SOUT, int ISSTR>
+    int _make_full_path_is_empty(TWEUTILS::SimpleBufferL<T, N, SOUT, ISSTR>& fname) {
+        int r = (fname.size() == 0);
+
+        // check if fname is "."(as empty) or ".."(returns -1).
+        if (!r && fname[0] == 0x2e && fname[1] == 0) r = 1;
+        if (!r && fname[0] == 0x2e && fname[1] == 0x2e && fname[2] == 0) r = -1;
+
+        return r;
+    }
+
     /** @brief parameter pack recursive process, the final call (w/ empty arg)
      *         - remove last PATHSEP char.
      */
@@ -281,12 +303,12 @@ namespace TWE {
         void operator = (const tself &ref) = delete;
 
         // move
-        TweCmdPipe(tself &&ref) : MAX_LINE_CHARS(ref.MAX_LINE_CHARS) {
+        TweCmdPipe(tself &&ref) noexcept : MAX_LINE_CHARS(ref.MAX_LINE_CHARS) {
             _close();
             _fp = ref._fp;
             _exit_code = ref._exit_code;
         }
-        void operator =(tself &&ref) {
+        void operator =(tself &&ref) noexcept {
             _close();
             _fp = ref._fp;
             ref._fp = nullptr;
@@ -303,7 +325,7 @@ namespace TWE {
         {}
 
         ~TweCmdPipe();
-        operator bool() { return available(); } // check if it's opened or not.
+        explicit operator bool() { return available(); } // check if it's opened or not.
         bool available(); // check if it reaches EOF, when reaching EOF, the pipe is closed and set exit code.
         bool readline(TWEUTILS::SmplBuf_Byte& buf); // read line. if having bytes, returns true, otherwise false. (NOTE: false does not mean EOF)
 #if 0
@@ -404,7 +426,7 @@ namespace TWE {
             return true;
         }
 
-        operator bool() { return available(); }
+        explicit operator bool() { return available(); }
         bool available() { return _b_opened; }
         int getchar() {
             char b; int n = 0;
@@ -506,7 +528,7 @@ namespace TWE {
             , _data(u16_chunk_siz)
             , _b_loaded(false)
 #ifdef ESP32
-            , _f{}
+            , _f()
             , _fname(TWE_FILE_NAME_MAX)
 #else
             , _ifs()
@@ -642,6 +664,7 @@ namespace TWE {
 	class TweCwd {
 		TWEUTILS::SmplBuf_WChar _dir_launch;
 		TWEUTILS::SmplBuf_WChar _dir_exe;
+        TWEUTILS::SmplBuf_WChar _dir_log;
         TWEUTILS::SmplBuf_WChar _filename_exe;
 		TWEUTILS::SmplBuf_WChar _dir_cur;
 		TWEUTILS::SmplBuf_WChar _dir_sdk;
@@ -673,6 +696,7 @@ namespace TWE {
 	public:
 		void begin();
 		void change_dir(TWEUTILS::SmplBuf_WChar& dir);
+        TWEUTILS::SmplBuf_WChar& get_dir_log() { return _dir_log; }
 		TWEUTILS::SmplBuf_WChar& get_dir_exe() { return _dir_exe; }
 		TWEUTILS::SmplBuf_WChar& get_filename_exe() { return _filename_exe; }
 		TWEUTILS::SmplBuf_WChar& get_dir_sdk() { return _dir_sdk; }
@@ -686,9 +710,54 @@ namespace TWE {
 
         void set_mwsdk_env(uint8_t n_cpu, bool b_lto_disable);
 	};
+    extern TweCwd the_cwd;
 
-	extern TweCwd the_cwd;
+    // log file
+    class TweLogFile {
+    private:
+        // file export
+        std::unique_ptr<std::filebuf> _file_buf;
+        std::unique_ptr<std::ostream> _file_os;
+        TWEUTILS::SmplBuf_ByteSL<1024> _file_fullpath; // not in wchar_t (for ShellExecureA())
+        TWEUTILS::SmplBuf_ByteSL<128> _file_name; // not in wchar_t (for ShellExecureA())
+        TWEUTILS::SmplBuf_ByteSL<32> _file_base; // not in wchar_t (for ShellExecureA())
+        TWEUTILS::SmplBuf_ByteSL<16> _file_suff; // not in wchar_t (for ShellExecureA())
+        bool _is_opened, _b_add_date;
+        TWESYS::TweLocalTime _time_open;
 
+    public:
+        TweLogFile(const char* file_base, const char* file_suff, bool b_add_date = true)
+            : _file_buf()
+            , _file_os()
+            , _file_fullpath()
+            , _file_name()
+            , _file_base()
+            , _file_suff()
+            , _is_opened(false), _b_add_date(b_add_date)
+            , _time_open()
+        {
+            _file_base << file_base;
+            _file_suff << file_suff;
+        }
+
+        ~TweLogFile() {
+            close();
+        }
+
+        bool open(bool b_append = true);
+
+        void flush();
+        
+        void close();
+
+        void shell_open();
+
+        std::ostream& os() { return *_file_os; }
+
+        explicit operator bool() { return _is_opened; }
+
+        TWESYS::TweLocalTime& get_time_opened() { return _time_open; }
+    };
 
     // lang table
     struct E_TWE_LANG {
@@ -720,7 +789,7 @@ namespace TWE {
         bool load(const wchar_t* descfile, E_TWE_LANG::value_type lang = E_TWE_LANG::JAPANESE);
 
         // if load is success, return true
-        operator bool() { return _bloaded;  }
+        explicit operator bool() { return _bloaded;  }
 
         // getting methods
         TWEUTILS::SmplBuf_WChar& get_title() { return _title; }

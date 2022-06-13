@@ -9,7 +9,6 @@
 
 #include <utility>
 
-
 class App_CUE : public TWE::APP_DEF, public TWE::APP_HNDLR<App_CUE> {
 public:
 	static const int APP_ID = int(E_APP_ID::CUE);
@@ -46,31 +45,48 @@ private:
 	uint8_t u8tab_selection;
 	SimpleBuffer<upTWE_Button> _btns;
 
+	// font IDs
+	struct {
+		uint8_t main;
+		uint8_t smaller;
+		uint8_t tiny;
+	} font_IDs;
+
 public:
-	App_CUE()
+	App_CUE(int exit_id = -1)
 		: parse_ascii(512)
+#if M5_SCREEN_HIRES == 0
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_tab(64, 20, { 0, 18, 320, 10 }, M5)
 		, the_screen(64, 20, { 0, 28, 320, 240 - 18 - 10 - 30 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
+#elif M5_SCREEN_HIRES == 1
+		, the_screen_t(80, 1, { 0,   0, 640,  24 }, M5)
+		, the_screen_tab(80, 2, { 0,  24, 640,  16 }, M5)
+		, the_screen(56, 48, { 0,  40, 640, 400 }, M5)
+		, the_screen_b(120, 2, { 0, 440, 640,  16 }, M5)
+		, the_screen_c(64, 1, { 0, 456, 640,  24 }, M5)
+#endif
 		, default_bg_color(0)
 		, default_fg_color(0)
 		, _tabs(*this, the_screen_tab)
 		, u8tab_selection(255)
+		, font_IDs()
 	{
-		set_appobj((void*)static_cast<ITerm*>(&the_screen_b)); // store app specific obj into APPDEF class storage.
+		if (exit_id != -1) u8tab_selection = exit_id;
+		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 	}
 
 	~App_CUE() {
-		APP_HNDLR::on_close();
+		APP_HNDLR<App_CUE>::on_close();
 	}
 
 	void setup();
 
 	void loop();
 
-
+	
 private:
 	// setup procedure
 	void setup_screen();
@@ -85,26 +101,44 @@ private:
 	void set_nav_bar(const char *msg=nullptr);
 
 	// simple screen
-	void hndr_basic(event_type ev, arg_type arg = 0);
-	void hndr_aria_basic(event_type ev, arg_type arg = 0);
-	void hndr_help(event_type ev, arg_type arg = 0);
-
+	
 public:
 	struct PAGE_ID {
 		static const uint8_t PAGE_BASIC = 0x00;
-		static const uint8_t PAGE_ARIA_BASIC = 0x01;
+		static const uint8_t PAGE_CUE_FIFO = 0x01;
+		static const uint8_t PAGE_ARIA_BASIC = 0x02;
+		static const uint8_t PAGE_WSNS_DB = 0x03;
 		static const uint8_t PAGE_HELP = 0x7F;
 	};
 
+	/**
+	 * template function of subscreen handler (APP_HNDLR).
+	 */
+	EMBED_APP_HNDLR_TEMPLATE_PROCEDURE(hndr);
+
 	// Opening screen data context 
-	struct SCR_BASIC;
-	friend struct SCR_BASIC;
+	struct SCR_CUE_BASIC;
+	friend struct SCR_CUE_BASIC;
+	void hndr_SCR_CUE_BASIC(event_type ev, arg_type arg);
+
+	// Opening screen data context 
+	struct SCR_CUE_FIFO;
+	friend struct SCR_CUE_FIFO;
+	void hndr_SCR_CUE_FIFO(event_type ev, arg_type arg);
 
 	// Opening screen data context 
 	struct SCR_ARIA_BASIC;
 	friend struct SCR_ARIA_BASIC;
+	void hndr_SCR_ARIA_BASIC(event_type ev, arg_type arg);
 
+	// Opening screen data context 
+	struct SCR_WSNS_DB;
+	friend struct SCR_WSNS_DB;
+	void hndr_SCR_WSNS_DB(event_type ev, arg_type arg);
+	
 	// Opening screen data context 
 	struct SCR_HELP;
 	friend struct SCR_HELP;
+	void hndr_SCR_HELP(event_type ev, arg_type arg);
 };
+

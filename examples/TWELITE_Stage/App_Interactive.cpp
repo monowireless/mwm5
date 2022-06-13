@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Interactive.hpp"
@@ -247,11 +247,33 @@ void App_Interactive::setup_screen() {
 	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
 
+#if M5_SCREEN_HIRES == 0
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 	TWEFONT::createFontMP10_std(10, 0, 0); // MP10 font
 	TWEFONT::createFontShinonome16_mini(11, 0, 0); // shinonome 16 font
 	TWEFONT::createFontShinonome16_mini(12, 1, 0); // shinonome 16 font
+
+	the_screen_t.set_font(12);
+	the_screen_c.set_font(1);
+	the_screen_msg.set_font(12);
+
+#elif M5_SCREEN_HIRES == 1
+	TWEFONT::createFontShinonome16(10, 0, 0); // normal font
+	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // zoom font
+
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+
+	// TWEFONT::createFontShinonome16(14, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontShinonome16(14, 5, 3);
+
+	the_screen_t.set_font(13);
+	the_screen_c.set_font(12);
+
+	the_screen_msg.set_font(14);
+#endif
 
 	// main screen area
 	the_screen.set_color(default_fg_color, default_bg_color);
@@ -262,19 +284,16 @@ void App_Interactive::setup_screen() {
 	the_screen.visible(false);
 
 	// bottom area
-	the_screen_c.set_font(1);
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.force_refresh();
 
 	// top area
-	the_screen_t.set_font(12);
 	the_screen_t.set_color(default_bg_color, default_fg_color);
 	the_screen_t.set_cursor(0);
 	the_screen_t.force_refresh();
 
 	// msg area
-	the_screen_msg.set_font(12);
 	the_screen_msg.set_color(default_fg_color, default_bg_color);
 	the_screen_msg.set_cursor(0);
 	the_screen_msg.visible(false); // don't show at the initial

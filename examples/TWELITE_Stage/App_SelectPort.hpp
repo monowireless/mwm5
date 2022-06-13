@@ -42,11 +42,18 @@ private:
 	int _n_arg;
 
 public:
-	App_SelectPort(int n_arg) :
-		the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
+	App_SelectPort(int n_arg)
+#if M5_SCREEN_HIRES == 0
+		: the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
+#elif M5_SCREEN_HIRES == 1
+		: the_screen  (56, 16, { 0,  24, 640, 400 }, M5)
+		, the_screen_t(80,  1, { 0,   0, 640,  24 }, M5)
+		, the_screen_b(120,  2, { 0, 424, 640,  32 }, M5)
+		, the_screen_c(64,  1, { 0, 456, 640,  24 }, M5)
+#endif
 		, default_bg_color(0)
 		, default_fg_color(0)
 		, _listPorts(8) // MAX PORTS = 8

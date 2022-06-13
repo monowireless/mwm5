@@ -34,12 +34,12 @@ void TWEARD::TWETerm_M5_Console::refresh() {
 		clear();
 		set_font(screen_mode);
 
-		u32Dirty = U32DIRTY_FULL;
+		dirtyLine.set_dirty_full();
 		u8OptRefresh = U8OPT_REFRESH_HARDWARE_CLEAR_MASK;
 	}
 
 	// redraw whole screen
-	if (u32Dirty == U32DIRTY_FULL) {
+	if (dirtyLine.is_full()) {
 		if (escseq_attr & 0x80) {
 			_bg = COL_TBL[(escseq_attr >> 4) & 0x07];
 		}
@@ -72,13 +72,13 @@ void TWEARD::TWETerm_M5_Console::refresh() {
 
 	// update the line specified u32Dirty bitmask (bit0 -> line 0, bit1 -> line 1, ...)
 	// save previous cursor pos
-	if (u32Dirty || bUpdateCursor) { // dirty flag or cursor update
+	if (dirtyLine || bUpdateCursor) { // dirty flag or cursor update
 
 		auto font = TWEFONT::queryFont(font_id());
 
-		//Serial.printf("R(%x)", u32Dirty); // DEBUG
+		//Serial.printf("R(%x)", dirtyLine._dirty); // DEBUG
 		for (int i = 0; i <= max_line; i++) {
-			if (((1UL << i) & u32Dirty) || (bUpdateCursor && i == cursor_l)) { // update only necessary line
+			if (dirtyLine.is_dirty(i) || (bUpdateCursor && i == cursor_l)) { // update only necessary line
 				int16_t x, y;
 
 				// find the buffer index at line 'i'.
@@ -104,10 +104,10 @@ void TWEARD::TWETerm_M5_Console::refresh() {
 				unsigned j_start = 0;
 				unsigned j_end = len + 1;
 
-				if (u32Dirty == U32DIRTY_FULL || u8OptRefresh & U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK) {
+				if (dirtyLine.is_full() || u8OptRefresh & U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK) {
 					j_end = max_col + 1; // clear whole columns of the target line.
 				}
-				if (u32Dirty == 0 && bUpdateCursor) {
+				if (!dirtyLine && bUpdateCursor) { // lines are clean but cursor should be updated
 					// only draw cursor
 					j_start = cursor_c;
 					j_end = cursor_c + 1;

@@ -93,11 +93,19 @@ private:
 public:
 	App_FirmProg(int opt=0x0)
 		: parse_ascii(256)
+#if M5_SCREEN_HIRES == 0
 		, the_screen(64, 20, { 0,  18, 320, 144 }, M5)
-		, the_screen_l(64, 20, { 0,  18 + 144, 320, 28 }, M5)
+		, the_screen_l(64, 2, { 0,  18 + 144, 320, 28 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 172, 320, 40 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
+#elif M5_SCREEN_HIRES == 1
+		, the_screen_t(64, 1, { 0,   0, 640,  24 }, M5)
+		, the_screen(80, 25, { 0,  24, 640, 352 }, M5)
+		, the_screen_l(80, 4, { 0, 376, 640,  32 }, M5)
+		, the_screen_b(120, 4, { 0, 408, 640,  48 }, M5)
+		, the_screen_c(64, 1, { 0, 456, 640,  24 }, M5)
+#endif
 		, default_bg_color(0)
 		, default_fg_color(0)
 		, _b_running_tweprog(false)

@@ -1,4 +1,4 @@
-﻿#pragma once 
+#pragma once 
 
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
@@ -169,6 +169,33 @@ namespace TWESYS {
 	 * @returns	The CPU count.
 	 */
 	extern int Get_CPU_COUNT();
+
+
+	// Date information with milliseconds.
+	struct TweLocalTime {
+		int16_t year;
+		int16_t month;
+		int16_t day;
+		int16_t hour;
+		int16_t minute;
+		int16_t second;
+		int16_t ms;
+		uint64_t epoch;
+
+		TweLocalTime() : year(0), month(0), day(0), hour(0), minute(0), second(0), ms(0), epoch() {}
+
+		/** get current epoch */
+		static uint64_t epoch_now();
+
+		/** get current date,time. */
+		uint64_t now();
+
+		/** store unix epoch and update other values. */
+		void set_epoch(uint64_t ep);
+
+		/** getting unix epoch from stored value (ignore ms) */
+		void get_epoch();
+	};
 }
 
 #if defined(ESP32)

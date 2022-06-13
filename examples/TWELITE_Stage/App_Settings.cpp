@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Settings.hpp"
@@ -86,6 +86,8 @@ void App_Settings::loop() {
 }
 
 void App_Settings::setup_screen() {
+
+#if M5_SCREEN_HIRES == 0
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
@@ -96,6 +98,21 @@ void App_Settings::setup_screen() {
 #endif
 	TWEFONT::createFontShinonome16_mini(11, 0, 0); // shinonome 16 font
 
+	the_screen_c.set_font(1);
+	the_screen_t.set_font(11);
+#elif M5_SCREEN_HIRES == 1
+	TWEFONT::createFontShinonome16(10, 0, 0); // normal font
+	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // zoom font
+
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+
+	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+
+	the_screen_c.set_font(12);
+	the_screen_t.set_font(13);
+#endif
+
 	// main screen area
 	the_screen.set_color(ALMOST_WHITE, BLACK);
 	the_screen.set_cursor(2); // 0: no 1: curosr 2: blink cursor
@@ -103,13 +120,11 @@ void App_Settings::setup_screen() {
 	bZoom = true; change_screen_font(); // bZoom is toggled from true to false.
 
 	// bottom area
-	the_screen_c.set_font(1);
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.force_refresh();
 
 	// top area
-	the_screen_t.set_font(11);
 	the_screen_t.set_color(BLACK, ALMOST_WHITE);
 	the_screen_t.set_cursor(0);
 	the_screen_t.force_refresh();

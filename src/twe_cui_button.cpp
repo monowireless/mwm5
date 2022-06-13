@@ -42,6 +42,16 @@ TWE_Button::TWE_Button(uint8_t col, uint8_t lin, const wchar_t* lbl, uint8_t len
 	, _additional_hot_area{0,0,0,0}
 {
 	_len_vis = (len == 0) ? TWEUTILS::strlen_vis(lbl) : len;
+	auto p = lbl;
+	unsigned ct = 0;
+	while (*p != 0) {
+		if (*p == '&') {
+			ct++;
+			break;
+		}
+		p++;
+	}
+	_len_vis -= ct;
 }
 
 
@@ -67,6 +77,26 @@ void TWE_Button::relocate(uint8_t col, uint8_t lin) {
 	update_view();
 }
 
+
+void TWE_Button::set_visible(bool b_vis) {
+	if (!_pterm) return;
+	TWETERM::ITerm& t = *_pterm;
+
+	if (_b_enabled && !b_vis) {
+		// clear the araa
+		t.move_cursor(_c_vis, _l_vis);
+		t << "\033[0m";
+		for (int i = 0; i < _len_vis; i++) t << ' ';
+	}
+	if (!_b_enabled && b_vis) {
+		_b_enabled = true;
+		update_view();
+	}
+
+	_b_enabled = b_vis;
+
+}
+
 void TWE_Button::update_view() {
 	if (!_pterm || !_b_enabled) return;
 
@@ -89,7 +119,24 @@ void TWE_Button::update_view() {
 	}
 
 	// label
-	t << _strlbl;
+	auto p = _strlbl.begin();
+	int pos_underline = -1;
+	int i = 0;
+	while (p != _strlbl.end()) {
+		if (*p == '&') {
+			i++;
+			++p;
+
+			// set underline next char of '&'.
+			auto& c = t.get_char_at_cursor();
+			t << *p;
+			c.attr() |= TWETERM::E_ESCSEQ_UNDERLINE_MASK;
+		}
+		else {
+			t << *p;
+		}
+		++p;
+	}
 
 	// reset attr
 	t << "\033[0m";
@@ -169,7 +216,7 @@ bool TWE_Button::key_event(TWE::keyinput_type keycode) {
 			TWECUI::KeyInput::_MOUSE_EV ev(keycode);
 			
 			// complete selection
-			if (_is_coord_in_range(ev.get_x(), ev.get_y())) {
+			if (ev.is_left_btn() && _is_coord_in_range(ev.get_x(), ev.get_y())) {
 				bHandled = true;
 
 				if ((_b_go_by_mouse_down && TWECUI::KeyInput::MOUSE_DOWN::is_type(keycode))

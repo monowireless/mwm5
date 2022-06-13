@@ -79,7 +79,7 @@ private:
 
 public:
 	twe_wid_button(const wchar_t* lbl, SDL_Rect loc)
-		: _press_event(0), _timer_id{}
+		: _press_event(0), _timer_id()
 		, _label(lbl)
 		, _pM5()
 		, _pScr()

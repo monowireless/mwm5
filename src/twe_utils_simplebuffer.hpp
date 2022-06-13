@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
@@ -415,7 +415,7 @@ namespace TWEUTILS {
 			if (_p && !_sp) {
 				// attaching existing memory region, no change.
 			} else {
-				std::unique_ptr<_SimpleBuffer_Dynamic<T>> buff(new _SimpleBuffer_Dynamic<T>(int(maxlen+is_string_type)));
+				std::unique_ptr<_SimpleBuffer_Dynamic<T>> buff(new _SimpleBuffer_Dynamic<T>(size_type(maxlen+is_string_type)));
 				_u16maxlen = maxlen;
 
 				if (_u16len) {
@@ -549,19 +549,35 @@ namespace TWEUTILS {
 		}
 		
 		inline void push_back(T&& c) { 
-			if (!append(std::forward<T>(c))) {
-				reserve(_u16maxlen == 0 ? 64 : _u16maxlen + 64);
-				append(std::forward<T>(c));
-			}
+			if (_u16len >= _u16maxlen) reserve(_u16maxlen == 0 ? 64 : _u16maxlen + 64);
+			_p[_u16len++] = std::forward<T>(c);
 		}
+
 		inline void push_back(const T& c) {
 			if (!append(c)) {
 				reserve(_u16maxlen == 0 ? 64 : _u16maxlen + 64);
 				append((c));
 			}
 		}
+		
+#if 0
+		template <typename T
+			, typename = typename std::enable_if<
+				std::is_same<SOUT, _SimpleBuffer_DummyStreamOut>::value
+			>::type // enable_if
+		> // template
+		inline self_type& operator << (T&& c) { push_back(c); return *this; }
+
+		template <typename T
+			, typename = typename std::enable_if<
+			std::is_same<SOUT, _SimpleBuffer_DummyStreamOut>::value
+			>::type // enable_if
+		> // template
+		inline self_type& operator << (const T& c) { push_back(c); return *this; }
+#else
 		inline self_type& operator << (T&& c) { push_back(c); return *this; }
 		inline self_type& operator << (const T& c) { push_back(c); return *this; }
+#endif
 
 		// get & remove the last element.
 		inline void pop_back() {
@@ -696,7 +712,7 @@ namespace TWEUTILS {
 		 * @param trm NUL char
 		 * @return const char* 
 		 */
-		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,uint8_t>::value >::type >
+		template <typename T_ = T, typename = typename std::enable_if<is_string_type == 1 && std::is_same<T_,uint8_t>::value >::type >
 		inline const char* c_str(T_ trm=0)
 		{
 			if (_p) {
@@ -707,12 +723,22 @@ namespace TWEUTILS {
 		}
 
 		/**
+		 * convert into const char* if uint8_t type.
+		 * 
+		 * \return 
+		 */
+		template <typename T_ = T, typename = typename std::enable_if<is_string_type == 1 && std::is_same<T_, uint8_t>::value >::type >
+		operator const char* () {
+			return this->c_str();
+		}
+
+		/**
 		 * @brief Get the NUL terminated string (dedicated for wchar_t)
 		 * 
 		 * @param trm NUL char
 		 * @return const wchar_t* 
 		 */
-		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,wchar_t>::value >::type >
+		template <typename T_ = T, typename = typename std::enable_if<is_string_type == 1 && std::is_same<T_,wchar_t>::value >::type>
 		inline const wchar_t* c_str(T_ trm=0)
 		{
 			if (_p) {
@@ -791,7 +817,7 @@ namespace TWEUTILS {
 	 * @tparam	T	Array type
 	 * @tparam	N	Array size
 	 */
-	template <typename T, int N, class SOUT, int STR>
+	template <typename T, int N, class SOUT=_SimpleBuffer_DummyStreamOut, int STR=0>
 	class SimpleBufferL : public SOUT {
 		T _a[N];
 		SimpleBuffer<T, SOUT, STR> _b;
@@ -825,9 +851,9 @@ namespace TWEUTILS {
 		inline void push_back(const T& c) { _b.append(c); }
 		inline T* data() { return _b.data(); }
 		inline size_type size() { return _b.size(); }
-		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,uint8_t>::value >::type >
+		template <typename T_ = T, typename = typename std::enable_if<STR == 1 && std::is_same<T_,uint8_t>::value >::type >
 		inline const char* c_str() { return _b.c_str(); }
-		template <typename T_ = T, typename = typename std::enable_if<std::is_same<T_,wchar_t>::value >::type >
+		template <typename T_ = T, typename = typename std::enable_if<STR == 1 && std::is_same<T_,wchar_t>::value >::type >
 		inline const wchar_t* c_str() { return _b.c_str(); }
 		inline size_type capacity() { return _b.capacity(); }
 		inline T& operator [] (int i) { return _b[i]; }
@@ -839,6 +865,11 @@ namespace TWEUTILS {
 
 		SOUT& write_w(wchar_t c) {
 			return _b.write_w(c);
+		}
+
+		template <typename T_ = T, typename = typename std::enable_if<STR == 1 && std::is_same<T_, uint8_t>::value >::type >
+		operator const char* () {
+			return _b.c_str();
 		}
 	};
 

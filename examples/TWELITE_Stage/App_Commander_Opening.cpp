@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Commander.hpp"
@@ -48,8 +48,8 @@ void App_Commander::hndr_opening(event_type ev, arg_type arg) {
 
 		dc.show_message();
 
-		dc._btns.add(2,  13, L"App_Twelite 0x80ｺﾏﾝﾄﾞ(t)", &SCR_OPEN::Btn_Press, 1);
-		dc._btns.add(27, 13, L"NOTICE PAL LED(n)", &SCR_OPEN::Btn_Press, 2);
+		dc._btns.add(2,  13, L"App_Twelite 0x80ｺﾏﾝﾄﾞ(t)", &SCR_OPEN::Btn_Press, &dc, 1);
+		dc._btns.add(27, 13, L"NOTICE PAL LED(n)", &SCR_OPEN::Btn_Press, &dc, 2);
 		break;
 
 	case EV_LOOP:

@@ -23,7 +23,7 @@ namespace TWE {
         struct termios _options;
 
     public:
-        SerialTermios(size_t bufsize = 2048) : SerialCommon(bufsize), _fd(-1), _options{} {}
+        SerialTermios(size_t bufsize = 2048) : SerialCommon(bufsize), _fd(-1), _options() {}
 
 	private:
         bool _open(const char* devname);

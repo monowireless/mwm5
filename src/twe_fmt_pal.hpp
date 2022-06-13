@@ -143,7 +143,7 @@ namespace TWEFMT {
 		uint32_t u32event_param;	// 24bit length
 
 		// true if stored
-		operator bool() { return !(u8event_source == 0xFF && u8event_id == 0xFF); }
+		explicit operator bool() { return !(u8event_source == 0xFF && u8event_id == 0xFF); }
 
 		PalEvent() : u8event_source(0xFF), u8event_id(0xFF), u32event_param(0) {}
 	};
@@ -186,7 +186,8 @@ namespace TWEFMT {
 		int has_temp() { return u32StoredMask & STORE_VOLT_TEMP; }
 		int16_t get_temp_i16_100xC() { return (int16_t)i16Temp; }
 		int has_humidity() { return (u32StoredMask & STORE_VOLT_HUMID) && !(i16Temp <= -32760); }
-		int16_t get_humidity_i16_100xPC() { return (int16_t)u16Humd && (u16Humd <= 10000); }
+		int16_t get_humidity_i16_100xPC() { return u16Humd <= 10000 ? (int16_t)u16Humd : 10000; }
+		uint16_t get_humidity_u16_100xPC() { return u16Humd <= 10000 ? (int16_t)u16Humd : 10000; }
 		int has_luminance() { return u32StoredMask & STORE_VOLT_LUMI; }
 		uint32_t get_luminance_LUX() { return u32Lumi; }
 
@@ -219,7 +220,7 @@ namespace TWEFMT {
 		int16_t get_accel_Y_i16mG(int i) { return i16Y[i]; }
 		int16_t get_accel_Z_i16mG(int i) { return i16Z[i]; }
 
-		PalMot() : u16Volt(0xFFFF), u8samples(0xFF), u8sample_rate_code(0xFF), i16X{}, i16Y{}, i16Z{} {}
+		PalMot() : u16Volt(0xFFFF), u8samples(0xFF), u8sample_rate_code(0xFF), i16X(), i16Y(), i16Z() {}
 	};
 
 	struct TweCUE : public PalBase {
@@ -290,7 +291,8 @@ namespace TWEFMT {
 		int has_temp() { return u32StoredMask & STORE_VOLT_TEMP; }
 		int16_t get_temp_i16_100xC() { return (int16_t)i16Temp; }
 		int has_humidity() { return (u32StoredMask & STORE_VOLT_HUMID); }
-		uint16_t get_humidity_u16_100xPC() { return (int16_t)u16Humd /*&& (u16Humd <= 10000)*/; }
+		int16_t get_humidity_i16_100xPC() { return u16Humd <= 10000 ? (int16_t)u16Humd : 10000; }
+		uint16_t get_humidity_u16_100xPC() { return u16Humd <= 10000 ? (int16_t)u16Humd : 10000; }
 
 		TweARIA() : u16Volt(0xFFFF), u16Adc1(0xFFFF), u8MagStat(0xFF), bMagRegularTransmit(0xFF), i16Temp(0), u16Humd(0) {}
 	};

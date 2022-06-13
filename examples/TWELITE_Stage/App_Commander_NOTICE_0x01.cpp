@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Commander.hpp"
@@ -122,25 +122,25 @@ void App_Commander::hndr_notice_pal_0x01(event_type ev, arg_type arg) {
 			// add buttons
 			dc._btns.clear();
 
-			dc._btns.add(20-3, 3, L"(I)▽", &SCR_NOTICE1::id_dn);
-			dc._btns.add(30, 3, L"△(i)", &SCR_NOTICE1::id_up);
+			dc._btns.add(20-3, 3, L"(I)▽", &SCR_NOTICE1::id_dn, &dc);
+			dc._btns.add(30, 3, L"△(i)", &SCR_NOTICE1::id_up, &dc);
 
-			dc._btns.add(20-3, 5, L"(C)▽", &SCR_NOTICE1::col_dn);
-			dc._btns.add(30, 5, L"△(c)", &SCR_NOTICE1::col_up);
+			dc._btns.add(20-3, 5, L"(C)▽", &SCR_NOTICE1::col_dn, &dc);
+			dc._btns.add(30, 5, L"△(c)", &SCR_NOTICE1::col_up, &dc);
 
-			dc._btns.add(20-3, 7, L"(B)▽", &SCR_NOTICE1::bri_dn);
-			dc._btns.add(30, 7, L"△(b)", &SCR_NOTICE1::bri_up);
+			dc._btns.add(20-3, 7, L"(B)▽", &SCR_NOTICE1::bri_dn, &dc);
+			dc._btns.add(30, 7, L"△(b)", &SCR_NOTICE1::bri_up, &dc);
 			
-			dc._btns.add(20-3, 9, L"(P)▽", &SCR_NOTICE1::pat_dn);
-			dc._btns.add(30, 9, L"△(p)", &SCR_NOTICE1::pat_up);
+			dc._btns.add(20-3, 9, L"(P)▽", &SCR_NOTICE1::pat_dn, &dc);
+			dc._btns.add(30, 9, L"△(p)", &SCR_NOTICE1::pat_up, &dc);
 
-			dc._btns.add(20-3, 11, L"(D)▽", &SCR_NOTICE1::dur_dn);
-			dc._btns.add(30, 11, L"△(d)", &SCR_NOTICE1::dur_up);
+			dc._btns.add(20-3, 11, L"(D)▽", &SCR_NOTICE1::dur_dn, &dc);
+			dc._btns.add(30, 11, L"△(d)", &SCR_NOTICE1::dur_up, &dc);
 
-			dc._btns.add(20, 13, L"消灯(x)", &SCR_NOTICE1::turn_off);
-			dc._btns.add(30, 13, L"点灯(SPACE)", &SCR_NOTICE1::turn_on);
+			dc._btns.add(20, 13, L"消灯(x)", &SCR_NOTICE1::turn_off, &dc);
+			dc._btns.add(30, 13, L"点灯(SPACE)", &SCR_NOTICE1::turn_on, &dc);
 #ifndef ESP32
-			dc._btns.add(45, 0, L"ｳｪﾌﾞ(h)", &SCR_NOTICE1::web, 0);
+			dc._btns.add(45, 0, L"ﾍﾙﾌﾟ(h)", &SCR_NOTICE1::web, &dc, 0);
 #endif
 			dc._btns.update_view();
 		}

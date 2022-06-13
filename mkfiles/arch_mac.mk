@@ -16,7 +16,7 @@ MACOS_TARGET?=X86_64_GCC
 
 ### defines 
 ifeq ($(MACOS_TARGET),X86_64_GCC)
-MACOS_COMPILERTYPE=gcc-9
+MACOS_COMPILERTYPE=gcc
 MACOS_ARCH=x86_64
 MWM5_SERIAL_NO_FTDI=0
 $(info ...build for x86_64 system with gcc-9 which may work on older macOS)
@@ -47,11 +47,11 @@ ifeq ($(MACOS_COMPILERTYPE),clang)
 CC = clang
 CXX = clang++
 AR = ar
-else ifeq ($(MACOS_COMPILERTYPE),gcc-9)
+else ifeq ($(MACOS_COMPILERTYPE),gcc)
 # FOR macOS build, use GCC from homebrew package (fomula=gcc@9)
-CC = gcc-9
-CXX = g++-9
-AR = gcc-ar-9
+CC = gcc-11
+CXX = g++-11
+AR = gcc-ar-11
 else
 $(error "MACOS_COMPILERTYPE=$(MACOS_COMPILERTYPE) is not supported.")
 endif
@@ -76,6 +76,7 @@ APPSRC_CXX+=$(OSNAME)/osx_term.cpp
 INCFLAGS += -I$(root_dir)/osx/lib/FTDI
 INCFLAGS += -I$(root_dir)/osx/lib/SDL2/include/SDL2
 INCFLAGS += -I$(root_dir)/osx/lib/SDL2_net/include
+INCFLAGS += -I$(root_dir)/osx/lib/SQLiteCpp/include
 INCFLAGS += -I$(root_dir)/src/$(OSNAME)
 
 #####################################################################
@@ -108,8 +109,14 @@ else
   ifeq ($(MWM5_SERIAL_NO_FTDI),0)
   ADDITIONAL_LIBS += $(root_dir)/osx/lib/FTDI/libftd2xx.a -lpthread -lobjc -framework IOKit -framework CoreFoundation
   endif
+  
   ADDITIONAL_LIBS += $(root_dir)/osx/lib/SDL2/lib/libSDL2.a -lm -liconv -Wl,-framework,CoreAudio -Wl,-framework,AudioToolbox -Wl,-framework,ForceFeedback -lobjc -Wl,-framework,CoreVideo -Wl,-framework,Cocoa -Wl,-framework,Carbon -Wl,-framework,IOKit -Wl,-weak_framework,QuartzCore -Wl,-weak_framework,Metal
+
   # ADDITIONAL_LIBS += $(root_dir)/osx/lib/SDL2_net/lib/libSDL2_net.a
+
+  ADDITIONAL_LIBS += $(root_dir)/osx/lib/SQLiteCpp/lib/libsqlite3.a
+  ADDITIONAL_LIBS += $(root_dir)/osx/lib/SQLiteCpp/lib/libSQLiteCpp.a
+  
 endif
 
 

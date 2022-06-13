@@ -15,3 +15,6 @@ extern void push_window_event(int32_t code, void* data1, void* data2);
 #define SDL2_USERCODE_GET_BYTE1(d) (d & 0xFF)
 #define SDL2_USERCODE_GET_BYTE2(d) (((d) >> 8) & 0xFF)
 #define SDL2_USERCODE_GET_BYTE3(d) (((d) >> 16) & 0xFF)
+
+// M5_SCREEN_HIRES: internal buffer size 1:640x480 0:320x240
+#include "sdl2_config.h"

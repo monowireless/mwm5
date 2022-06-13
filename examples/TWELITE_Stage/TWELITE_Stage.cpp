@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include <mwm5.h>
@@ -176,7 +176,7 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 		break;
 
 	case App_CUE::APP_ID:
-		the_app.new_app<App_CUE>();
+		the_app.new_app<App_CUE>(exit_id);
 		break;
 
 	case App_FirmProg::APP_ID:

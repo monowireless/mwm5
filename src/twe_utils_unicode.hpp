@@ -589,7 +589,11 @@ namespace TWEUTILS {
 	 *
 	 * @returns	The result of the operation.
 	 */
-	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const SmplBuf_WChar& rhs) {
+
+	
+	// static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const SmplBuf_WChar& rhs) {
+	template <typename SOUT, int ISSTR>
+	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const TWEUTILS::SimpleBuffer<wchar_t, SOUT, ISSTR>& rhs) {
 		auto p = rhs.cbegin();
 		auto e = rhs.cend();
 
@@ -601,6 +605,18 @@ namespace TWEUTILS {
 		return lhs;
 	}
 
+	template <typename SOUT, int N, int ISSTR>
+	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const TWEUTILS::SimpleBufferL<wchar_t, N, SOUT, ISSTR>& rhs) {
+		auto p = rhs.cbegin();
+		auto e = rhs.cend();
+
+		while (p != e) {
+			lhs.push_back(*p);
+			++p;
+		}
+
+		return lhs;
+	}
 
 	/**
 	 * @fn	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const wchar_t* rhs)
@@ -736,7 +752,8 @@ namespace TWEUTILS {
 	 *
 	 * @returns	The result of the operation.
 	 */
-	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, SmplBuf_Byte& rhs) {
+	template <typename SOUT, int ISSTR>
+	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, TWEUTILS::SimpleBuffer<uint8_t, SOUT, ISSTR>& rhs) {
 		Unicode_UTF8Converter uc;
 
 		for (auto x : rhs) {
@@ -747,6 +764,17 @@ namespace TWEUTILS {
 		return lhs;
 	}
 
+	template <typename SOUT, int N, int ISSTR>
+	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, TWEUTILS::SimpleBufferL<uint8_t, N, SOUT, ISSTR>& rhs) {
+		Unicode_UTF8Converter uc;
+
+		for (auto x : rhs) {
+			auto w = uc(x);
+			if (w) lhs.push_back(w);
+		}
+
+		return lhs;
+	}
 
 	/**
 	 * @fn	static inline void unicodeMacNormalize(SmplBuf_WChar& str)

@@ -87,6 +87,8 @@ APPSRC_CXX+=esp32/esp32_common.cpp
 APPSRC_CXX+=esp32/esp32_modctrl.cpp
 APPSRC_CXX+=esp32/esp32_lcdconsole.cpp
 APPSRC_CXX+=esp32/esp32_keyb.cpp
+APPSRC_CXX+=esp32/esp32_uart.cpp
+APPSRC_CXX+=esp32/generic_lcd_screen.cpp
 
 APPSRC_CXX+=font/font_Shinonome12.cpp
 APPSRC_CXX+=font/font_Shinonome14.cpp

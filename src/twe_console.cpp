@@ -67,10 +67,10 @@ ITerm& ITerm::write (wchar_t c) {
 				// new line
 				cursor_c = 0;
 				cursor_l = cursor_l + 1;
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				if (cursor_l > max_line) {
 					cursor_l = max_line;
-					u32Dirty |= (1UL << cursor_l);
+					dirtyLine.set_dirty(cursor_l);
 					newline();
 				}
 
@@ -84,7 +84,7 @@ ITerm& ITerm::write (wchar_t c) {
 			}
 
 			// exit here
-			u32Dirty = U32DIRTY_FULL;
+			dirtyLine.set_dirty_full(); // anyway setting full... necessary???
 			wrapchar = -1;
 			return (*this);
 		}
@@ -122,7 +122,7 @@ ITerm& ITerm::write (wchar_t c) {
 				col_v = column_idx_to_vis(cursor_c, calc_line_index(cursor_l));
 				cursor_l -= val1 ? val1 : 1;
 				if (cursor_l < 0) cursor_l = 0;
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				cursor_c = column_vis_to_idx(col_v, calc_line_index(cursor_l));
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 				break;
@@ -132,7 +132,7 @@ ITerm& ITerm::write (wchar_t c) {
 				cursor_l += val1 ? val1 : 1;
 				if (cursor_l > max_line) cursor_l = max_line;
 				cursor_c = column_vis_to_idx(col_v, calc_line_index(cursor_l));
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 
 				break;
@@ -140,14 +140,14 @@ ITerm& ITerm::write (wchar_t c) {
 			case E_ESCSEQ_CURSOR_FWD:
 				cursor_c += val1 ? val1 : 1;
 				if (cursor_c > max_col) cursor_c = max_col;
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 				break;
 
 			case E_ESCSEQ_CURSOR_BWD:
 				cursor_c -= val1 ? val1 : 1;
 				if (cursor_c < 0) cursor_c = 0;
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 				break;
 
@@ -163,7 +163,7 @@ ITerm& ITerm::write (wchar_t c) {
 				if (col_v > max_col) col_v = max_col;
 				cursor_c = column_vis_to_idx(col_v, calc_line_index(cursor_l));
 
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 #endif
 				break;
@@ -174,7 +174,7 @@ ITerm& ITerm::write (wchar_t c) {
 				if (col_v > max_col) col_v = max_col;
 				cursor_c = column_vis_to_idx(col_v, calc_line_index(cursor_l));
 
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 
 				break;
@@ -191,7 +191,7 @@ ITerm& ITerm::write (wchar_t c) {
 			case E_ESCSEQ_ERASE_LINE:
 			{
 				int i = calc_line_index(cursor_l);
-				u32Dirty |= (1UL << cursor_l);
+				dirtyLine.set_dirty(cursor_l);
 				u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 
 				// fill with spaces
@@ -270,8 +270,8 @@ ITerm& ITerm::write (wchar_t c) {
 
 			escseq.s_init(); // init here
 		}
-		if (u32Dirty) {
-			u32Dirty |= (1UL << u8cur_init);
+		if (dirtyLine) {
+			dirtyLine.set_dirty(u8cur_init);
 		}
 		bHandled = true;
 	}
@@ -280,7 +280,7 @@ ITerm& ITerm::write (wchar_t c) {
 	if (c == '\r') {
 		// carrige return
 		cursor_c = 0;
-		u32Dirty |= (1UL) << cursor_l;
+		dirtyLine.set_dirty(cursor_l);
 		bHandled = true;
 	}
 	else if (c == 0x08) {
@@ -293,7 +293,7 @@ ITerm& ITerm::write (wchar_t c) {
 		else {
 			// ' astr_screen(i).Remove(astr_screen(i).Length - 1, 1) // remove tail char
 		}
-		u32Dirty |= (1UL) << cursor_l;
+		dirtyLine.set_dirty(cursor_l);
 		bHandled = true;
 	}
 	else if (c == 0x1B) {
@@ -304,14 +304,14 @@ ITerm& ITerm::write (wchar_t c) {
 	}
 	else if (c == '\n') {
 		cursor_c = 0;
-		u32Dirty |= (1UL) << cursor_l;
+		dirtyLine.set_dirty(cursor_l);
 		cursor_l = cursor_l + 1;
-		u32Dirty |= (1UL) << cursor_l;
+		dirtyLine.set_dirty(cursor_l);
 
 		if (cursor_l > max_line) {
 			cursor_l = max_line;
 			newline();
-			u32Dirty = U32DIRTY_FULL;
+			dirtyLine.set_dirty_full();
 		}
 
 		bHandled = true;
@@ -367,7 +367,7 @@ ITerm& ITerm::write (wchar_t c) {
 				// put a char at the cursor position
 				astr_screen[L][cursor_c] = GChar(c, escseq_attr);
 				cursor_c = cursor_c + 1;
-				u32Dirty |= (1UL) << cursor_l;
+				dirtyLine.set_dirty(cursor_l);
 
 				// on the right end of colomn.
 				c_vis = column_idx_to_vis(cursor_c, L);
@@ -432,7 +432,7 @@ void ITerm::resize_screen(uint8_t u8c, uint8_t u8l) {
 	_init_buff();
 
 	// redraw!
-	u32Dirty = U32DIRTY_FULL;
+	dirtyLine.set_dirty_full();
 }
 
 bool TWETERM::EscSeq::operator<<(uint8_t c) {
@@ -560,18 +560,6 @@ void ITerm::set_screen_buf(GChar* ptr, uint8_t oldcols, uint8_t oldlines) {
 }
 
 
-// clear the line
-void ITerm::clear_line(uint8_t line, bool fill_blank) {
-	int L = calc_line_index(line);
-
-	u32Dirty |= (1UL << line);
-	for (int j = 0; j <= cursor_c; j++) astr_screen[L][j] = GChar(' ', escseq_attr);
-
-	if (fill_blank) {
-		astr_screen[L].redim(max_col + 1);
-	}
-}
-
 // move cursor
 ITerm& ITerm::move_cursor(uint8_t cols, uint8_t lines) {
 	cursor_l = lines;
@@ -584,7 +572,7 @@ ITerm& ITerm::move_cursor(uint8_t cols, uint8_t lines) {
 	if (col_v > max_col) col_v = max_col;
 	cursor_c = column_vis_to_idx(col_v, calc_line_index(cursor_l));
 
-	u32Dirty |= (1UL << cursor_l);
+	dirtyLine.set_dirty(cursor_l);
 	u8OptRefresh |= U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK;
 
 	return *this;

@@ -30,7 +30,7 @@ namespace TWEFMT {
 		const E_PKT _type;
 
 	public:
-		TwePacket(E_PKT ptyp = E_PKT::PKT_ERROR) : _type(ptyp), common{} {}
+		TwePacket(E_PKT ptyp = E_PKT::PKT_ERROR) : _type(ptyp), common() {}
 		virtual E_PKT parse(uint8_t* p, uint16_t len) { return E_PKT::PKT_ERROR; } // parse the packet
 		inline E_PKT get_type() { return _type; }
 		virtual ~TwePacket() {}

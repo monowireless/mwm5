@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019 Mono Wireless Inc. All Rights Reserved.    *
+/* Copyright (C) 2019 Mono Wireless Inc. All Rights Reserved.    *
  * Released under MW-SLA-*J,*E (MONO WIRELESS SOFTWARE LICENSE   *
  * AGREEMENT).                                                   */
 
@@ -140,7 +140,7 @@ public:
 		ITerm(u8c, u8l, pAryLines, pBuff), _of_putchar(of_putchar) {}
 
 	void refresh() {
-		if (u32Dirty) {
+		if (dirtyLine) {
 			const int B = 256;
 			char fmt[B];
 
@@ -642,7 +642,7 @@ struct _pkt_hist {
 	spTwePacket _pkt[16]; // パケットの履歴
 	int _i;
 
-	_pkt_hist() : _i(-1), _pkt{} {}
+	_pkt_hist() : _i(-1), _pkt() {}
 	void add_entry(spTwePacket p) { _pkt[++_i & 0xF] = p; }
 	spTwePacket get_entry(int i) { return _pkt[(i + _i) & 0xF]; }
 } pkt_hist;

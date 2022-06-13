@@ -76,9 +76,11 @@ namespace TWECUI {
 		static const keyinput_type KEY_BS = 0x08;
 		static const keyinput_type KEY_SPACE = 0x20;
 		static const keyinput_type KEY_ESC = 0x1B;
+		static const keyinput_type KEY_PRE_ESC = 0x11B;
 		
 		static const keyinput_type _KEY_MASK_GUI_EVENT = 0x80000000;
-		static const keyinput_type _KEY_MASK_GUI_EVENT_CODE = 0xFF000000;
+		static const keyinput_type _KEY_MASK_GUI_EVENT_CODE = 0x8F000000;
+		static const keyinput_type _KEY_MASK_MOUSE_BUTTON = 0x10000000;
 		static const keyinput_type _KEY_MOUSE_DOWN = _KEY_MASK_GUI_EVENT | 0x01000000;
 		static const keyinput_type _KEY_MOUSE_UP = _KEY_MASK_GUI_EVENT | 0x02000000;
 		static const keyinput_type _KEY_MOUSE_DOUBLE = _KEY_MASK_GUI_EVENT | 0x03000000;
@@ -111,10 +113,13 @@ namespace TWECUI {
 			 *
 			 * @returns	The coordinate.
 			 */
-			static keyinput_type generate_coord(int16_t x, int16_t y) {
+			static keyinput_type generate_coord(int16_t x, int16_t y, uint8_t btn = 0) {
 				uint16_t ux = (x << 4); ux >>= 4; // convert 16bit to 12bit
 				uint16_t uy = (y << 4); uy >>= 4; // convert 16bit to 12bit
-				return ux | (uint32_t(uy) << 12); // store x in 0x00000FFF, y in 0x00FFF000
+
+				if (btn) btn = 0x1;
+				
+				return ux | (uint32_t(uy) << 12) | (uint32_t(btn) << 28); // store x in 0x00000FFF, y in 0x00FFF000, btn in 0x10000000
 			}
 
 			/**
@@ -165,7 +170,27 @@ namespace TWECUI {
 			 * @returns	The y coordinate.
 			 */
 			int16_t get_y() const { return get_y(_ev); }
-			
+
+
+			/**
+			 * @fn	int8_t _MOUSE_EV::get_mouse_btn() const
+			 *
+			 * @brief	Get mouse button
+			 *
+			 * 			note: the x coord is stored in ev(0x10000000) as 1bit.
+			 *
+			 * @returns	Button Code (0: LEFT, 1:RIGHT)
+			 */
+			uint8_t get_mouse_btn() const {
+				return get_mouse_btn(_ev);
+			}
+			static uint8_t get_mouse_btn(keyinput_type ev) {
+				if (ev & _KEY_MASK_MOUSE_BUTTON) return 1;
+				else return 0;
+			}
+			bool is_left_btn() { return get_mouse_btn() == 0; }
+			bool is_right_btn() { return get_mouse_btn() == 1; }
+
 			operator keyinput_type() { return _ev; }
 		};
 
@@ -178,7 +203,7 @@ namespace TWECUI {
 		class MOUSE_UP : public _MOUSE_EV {
 		public:
 			MOUSE_UP(keyinput_type ev) : _MOUSE_EV(ev) {}
-			MOUSE_UP(int16_t x, int16_t y) { _MOUSE_EV::_ev = _KEY_MOUSE_UP | _MOUSE_EV::generate_coord(x, y); }
+			MOUSE_UP(int16_t x, int16_t y, uint8_t btn = 0) { _MOUSE_EV::_ev = _KEY_MOUSE_UP | _MOUSE_EV::generate_coord(x, y, btn); }
 			static bool is_type(keyinput_type ev) { return (ev & _KEY_MASK_GUI_EVENT_CODE) == _KEY_MOUSE_UP; }
 		};
 
@@ -191,8 +216,20 @@ namespace TWECUI {
 		class MOUSE_DOWN : public _MOUSE_EV {
 		public:
 			MOUSE_DOWN(keyinput_type ev) : _MOUSE_EV(ev) {}
-			MOUSE_DOWN(int16_t x, int16_t y) { _MOUSE_EV::_ev = _KEY_MOUSE_DOWN | _MOUSE_EV::generate_coord(x, y); }
+			MOUSE_DOWN(int16_t x, int16_t y, uint8_t btn = 0) { _MOUSE_EV::_ev = _KEY_MOUSE_DOWN | _MOUSE_EV::generate_coord(x, y, btn); }
 			static bool is_type(keyinput_type ev) { return (ev & _KEY_MASK_GUI_EVENT_CODE) == _KEY_MOUSE_DOWN; }
+		};
+
+		/**
+		 * @class	MOUSE_DOWN
+		 *
+		 * @brief	A mouse button down event.
+		 */
+		class MOUSE_DOUBLE : public _MOUSE_EV {
+		public:
+			MOUSE_DOUBLE(keyinput_type ev) : _MOUSE_EV(ev) {}
+			MOUSE_DOUBLE(int16_t x, int16_t y, uint8_t btn = 0) { _MOUSE_EV::_ev = _KEY_MOUSE_DOUBLE | _MOUSE_EV::generate_coord(x, y, btn); }
+			static bool is_type(keyinput_type ev) { return (ev & _KEY_MASK_GUI_EVENT_CODE) == _KEY_MOUSE_DOUBLE; }
 		};
 
 		/**
@@ -219,6 +256,46 @@ namespace TWECUI {
 			MOUSE_WHEEL(int16_t x, int16_t y) { _MOUSE_EV::_ev = _KEY_MOUSE_WHEEL | _MOUSE_EV::generate_coord(0, y); }
 			static bool is_type(keyinput_type ev) { return (ev & _KEY_MASK_GUI_EVENT_CODE) == _KEY_MOUSE_WHEEL; }
 		};
+
+
+		/* short cuts for mouse button */
+		static bool is_mouse_left_up(uint32_t ev) {
+			if (MOUSE_UP::is_type(ev) && _MOUSE_EV(ev).is_left_btn()) return true;
+			else return false;
+		}
+
+		static bool is_mouse_left_down(uint32_t ev) {
+			if (MOUSE_DOWN::is_type(ev) && _MOUSE_EV(ev).is_left_btn()) return true;
+			else return false;
+		}
+
+		static bool is_mouse_right_up(uint32_t ev) {
+			if (MOUSE_UP::is_type(ev) && _MOUSE_EV(ev).is_right_btn()) return true;
+			else return false;
+		}
+
+		static bool is_mouse_right_down(uint32_t ev) {
+			if (MOUSE_DOWN::is_type(ev) && _MOUSE_EV(ev).is_right_btn()) return true;
+			else return false;
+		}
+
+		static bool is_mouse_left_double(uint32_t ev) {
+			if (MOUSE_DOUBLE::is_type(ev) && _MOUSE_EV(ev).is_left_btn()) return true;
+			else return false;
+		}
+
+		static bool is_mouse_right_double(uint32_t ev) {
+			if (MOUSE_DOUBLE::is_type(ev) && _MOUSE_EV(ev).is_right_btn()) return true;
+			else return false;
+		}
+
+		static bool is_mouse_move(uint32_t ev) {
+			return MOUSE_MOVE::is_type(ev);
+		}
+
+		static bool is_mouse_wheel(uint32_t ev) {
+			return MOUSE_WHEEL::is_type(ev);
+		}
 
 		static const keyinput_type KEY_VOID = -1;
 	};

@@ -1,10 +1,13 @@
 #pragma once
 
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_common.hpp"
 #include "twe_serial.hpp"
+
+#include "sdl2_config.h"
+# include "sdl2_utils.hpp" 
 
 namespace TWE {
     class SerialPortEntries {
@@ -50,19 +53,32 @@ namespace TWE {
 						   //   0: no capability (e.g. FTDI bitbang does not work)
 		                   //   1: enabled (e.g. FTDI bitbang is enabled)
 		                   //   2: depends on modctl implementation (e.g. /dev/serial)
-		           
+		
+		// MUTEX
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
+		SDL_mutex* _mtx;
+#elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 0
+		std::mutex _mtx;
+#else
+		const bool _mtx = true;
+#endif
 
     public:
         SerialCommon(size_t bufsize = 2048) : 
-			  _devname{}, _devname_prev{}, _devname_extra_info{}
+			  _devname(), _devname_prev(), _devname_extra_info()
 			, _devname_opened_idx(-1)
             , _que(TWEUTILS::FixedQueue<uint8_t>::size_type(bufsize))
-            , _buf{}
+            , _buf()
             , _buf_len(0)
             , _hook_on_write(nullptr)
             , _session_id(-1)
 			, _modctl_capable(false)
-        {}
+			, _mtx()
+        {
+#if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
+			_mtx = SDL_CreateMutex();
+#endif
+		}
 
 		void _set_modctl_capable(bool n) { _modctl_capable = n; } // may set internally when opened.
 		int get_modctl_capable() { return _modctl_capable; }
@@ -114,7 +130,6 @@ namespace TWE {
 			int devidx = find_idx_by_name(devname);
 			if (devidx == -1) return false;
 
-
 			_modctl_capable = ser_modctl_mode[devidx]; // check if the device name is TWELITE-R (modctl capable)
 
 			// open it (call method by CTRP)
@@ -139,13 +154,13 @@ namespace TWE {
          *
          * @brief	Closes this port
          */
-        void close() { 
+	    void close() { 
 			static_cast<CDER&>(*this)._close();
 			_devname_opened_idx = -1;
 			_session_id = -1;
 			_devname[0] = 0; // clear _devname as well
         }
-
+	
 		/**
 		 * @fn	bool SerialCommon::reopen()
 		 *
@@ -154,7 +169,7 @@ namespace TWE {
 		 * @returns	True if it succeeds, false if it fails.
 		 */
 		bool reopen() {
-			if (is_opened()) {
+			if (_is_opened()) {
 				close();
 			}
 
@@ -171,7 +186,9 @@ namespace TWE {
          * @brief	Flushes TX requests.
          */
         void flush() {
-            static_cast<CDER&>(*this)._flush();
+			if (auto l = TWE::LockGuard(_mtx)) {
+				static_cast<CDER&>(*this)._flush();
+			}
         }
 
 		/**
@@ -181,7 +198,18 @@ namespace TWE {
 		 *
 		 * @returns	True if opened, false if not.
 		 */
-		bool is_opened() { return _session_id != -1; }
+	private:
+		bool _is_opened() {
+			return _session_id != -1;
+		}
+	public:
+		bool is_opened() {
+			bool r = false;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				r = _is_opened();
+			}
+			return r;
+		}
 
         /**
          * @fn	bool SerialCommon::set_baudrate(int baud)
@@ -192,9 +220,14 @@ namespace TWE {
          *
          * @returns	True if it succeeds, false if it fails.
          */
-        bool set_baudrate(int baud) {
-            return static_cast<CDER&>(*this)._set_baudrate(baud);
+	private:
+        bool _set_baudrate(int baud) {
+			return static_cast<CDER&>(*this)._set_baudrate(baud);
         }
+	public:
+		bool set_baudrate(int baud) {
+			return _set_baudrate(baud);
+		}
 
 		/**
 		 * @fn	const char* SerialFtdi::get_devname()
@@ -203,10 +236,19 @@ namespace TWE {
 		 *
 		 * @returns	Null if it fails, else the devname.
 		 */
-		const char* get_devname() {
+	private:
+		const char* _get_devname() {
 			return _devname;
 		}
+	public:
+		const char* get_devname() {
+			const char* r = nullptr;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				r = _get_devname();
+			}
 
+			return  r;
+		}
 		/**
 		 * @fn	int SerialCommon::get_handle()
 		 *
@@ -214,10 +256,20 @@ namespace TWE {
 		 *
 		 * @returns	The handle. (-1:not open, other session id)
 		 */
-		int get_handle() {
+	private:
+		int _get_handle() {
 			return _session_id;
 		}
+	public:
+		int get_handle() {
+			int r = 0;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				r = _get_handle();
+			} 
+			return r;
+		}
 
+	public:
         /**
 		 * @fn	int SerialCommon::_get_last_buf(int i)
 		 *
@@ -229,11 +281,14 @@ namespace TWE {
 		 * @returns	The last buffer.
 		 */
 		int _get_last_buf(int i) {
-			if (i >= 0 && i < _buf_len) {
-				return _buf[i];
+			int r = -1;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				if (i >= 0 && i < _buf_len) {
+					r = _buf[i];
+				}
 			}
 
-			return -1;
+			return r;
 		}
 
         /**
@@ -244,7 +299,11 @@ namespace TWE {
 		 * @returns	True if the queue has some data, false if it's empty.
 		 */
 		bool available() {
-			return !_que.empty();
+			bool r = false;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				r = !_que.empty();
+			}
+			return r;
 		}
 
         /**
@@ -255,14 +314,17 @@ namespace TWE {
 		 * @returns	An int. -1:error
 		 */
 		int read() {
-			if (!_que.empty()) {
-				uint8_t c = _que.front();
-				_que.pop();
+			int r = -1;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				if (!_que.empty()) {
+					uint8_t c = _que.front();
+					_que.pop();
 
-				return c;
+					r = c;
+				}
 			}
 
-			return -1;
+			return r;
 		}
 
         /**
@@ -277,11 +339,15 @@ namespace TWE {
 		 */
 		int write(const uint8_t* p, int len) {
 			int len_written = 0;
+			bool b_hook_use = false;
 
-			if (is_opened()) {
-                len_written = static_cast<CDER&>(*this)._write(p, len);
-				if (_hook_on_write) _hook_on_write(p, len);
+			if (auto l = TWE::LockGuard(_mtx)) {
+				if (_is_opened()) {
+					len_written = static_cast<CDER&>(*this)._write(p, len);		
+					b_hook_use = true;
+				}
 			}
+			if (b_hook_use && _hook_on_write) _hook_on_write(p, len);
 
 			return len_written;
 		}
@@ -294,7 +360,11 @@ namespace TWE {
 		 * @returns	An int. (0>: read bytes)
 		 */
 		int update() {
-            return static_cast<CDER&>(*this)._update();
+			int r = 0;
+			if (auto l = TWE::LockGuard(_mtx)) {
+				r = static_cast<CDER&>(*this)._update();
+			}
+			return r;
         }
 
 		/**
@@ -404,7 +474,7 @@ namespace TWE {
 
 		static const int E_STATE_READ = -4;
 	public:
-		SERSRV_ESC() : _chr_save{}, _chr_save_ct(0), _state(0) {}
+		SERSRV_ESC() : _chr_save(), _chr_save_ct(0), _state(0) {}
 
 		int operator()(int c) {
 			switch (_state) {

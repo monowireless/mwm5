@@ -45,15 +45,15 @@ public:
 void TWETerm_EspConsole::refresh() {
 	if (!visible()) return;
 
-	if (u32Dirty) {
+	if (dirtyLine) {
 		const int B = 256;
 		char fmt[B];
 
-		if (u32Dirty == U32DIRTY_FULL) {
+		if (dirtyLine.is_full()) {
 			WrtCon << "\033[2J\033[H"; // clear all screen and HOME
 		}
 		for (int i = 0; i <= max_line; i++) {
-			if ((1UL << i) & u32Dirty) {
+			if (dirtyLine.is_dirty(i)) {
 				WrtCon << printfmt("\033[%d;%dH", i + 1, 1);
 
 				int j = calc_line_index(i);
@@ -84,7 +84,7 @@ void TWETerm_EspConsole::refresh() {
 		int c_vis = column_idx_to_vis(cursor_c, calc_line_index(cursor_l));
 		WrtCon << printfmt("\033[%d;%dH", cursor_l + 1, c_vis + 1); // move cursor
 	}
-	u32Dirty = 0UL;
+	dirtyLine.clear();
 }
 
 // global instance

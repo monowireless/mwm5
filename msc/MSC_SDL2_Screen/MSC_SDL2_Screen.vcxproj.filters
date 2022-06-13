@@ -60,6 +60,12 @@
     <ClInclude Include="..\..\src\gen\serial_srv_pipe.hpp">
       <Filter>gen</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_config.h">
+      <Filter>gen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gen\sdl2_utils.hpp">
+      <Filter>gen</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\win\msc_term.cpp">

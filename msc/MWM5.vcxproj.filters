@@ -248,6 +248,9 @@
     <ClCompile Include="..\src\twe_fmt_twelite.cpp">
       <Filter>TWELibSrc</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\esp32\generic_lcd_screen.cpp">
+      <Filter>TWELibSrc\esp32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\printf\printf.h">

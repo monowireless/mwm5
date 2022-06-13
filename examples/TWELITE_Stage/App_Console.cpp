@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Console.hpp"
@@ -63,11 +63,26 @@ void App_Console::setup_screen() {
 	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
 
+#if M5_SCREEN_HIRES == 0
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
 	TWEFONT::createFontMP10_std(10, 0, 0); // MP10 font
 	TWEFONT::createFontShinonome16_mini(11, 0, 0); // shinonome 16 font
+
+	the_screen_c.set_font(1);
+	the_screen_t.set_font(11);
+#elif M5_SCREEN_HIRES == 1
+	TWEFONT::createFontShinonome16(11, 0, 0); // normal font
+	TWEFONT::createFontMP12(10, 2, 0); // zoom font
+
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+
+	the_screen_c.set_font(12);
+	the_screen_t.set_font(13);
+#endif
 
 	// main screen area
 	the_screen.set_color(default_fg_color, default_bg_color);
@@ -77,13 +92,11 @@ void App_Console::setup_screen() {
 	bZoom = true; change_screen_font(); // bZoom is toggled from true to false.
 
 	// bottom area
-	the_screen_c.set_font(1);
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.force_refresh();
 
 	// top area
-	the_screen_t.set_font(11);
 	the_screen_t.set_color(default_bg_color, default_fg_color);
 	the_screen_t.set_cursor(0);
 	the_screen_t.force_refresh();
@@ -177,14 +190,20 @@ void App_Console::process_input() {
 		
 		c = virt_scrctl(c);
 
+		static uint32_t tick_last_esc;
+
+		// Right Click Down
+		if (TWECUI::KeyInput::MOUSE_DOWN::is_type(c) && TWECUI::KeyInput::_MOUSE_EV(c).is_right_btn()) {
+			tick_last_esc = millis();
+		}
+
 		// double ESC will leave.
 		if (c == KeyInput::KEY_ESC) {
-			static uint32_t tick_last;
-			if (millis() - tick_last < 300) {
+			if (millis() - tick_last_esc < 300) {
 				the_app.exit(APP_ID);
 				return;
 			}
-			tick_last = millis();
+			tick_last_esc = millis();
 		}
 
 		if (c >= 0 && c <= 0x7F) {

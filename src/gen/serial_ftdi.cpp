@@ -13,10 +13,18 @@ using namespace TWE;
 // implementation
 bool SerialFtdi::_set_baudrate(int baud) {
 	if (_ftHandle != NULL) {
+#ifdef USE_FT_W32_API
+		FTDCB ftDCB;
+		if (FT_W32_GetCommState(_ftHandle, &ftDCB)) {
+			ftDCB.BaudRate = baud;
+			if (FT_W32_SetCommState(_ftHandle, &ftDCB)) return true;
+		}
+#else
 		FT_SetBaudRate(_ftHandle, ULONG(baud));
 		FT_SetDataCharacteristics(_ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
 
 		return true;
+#endif
 	}
 
 	return false;
@@ -28,7 +36,7 @@ int SerialFtdi::_update() {
 		DWORD rxBytes = 0, rxBytesReceived = 0;
 
 		_buf_len = 0;
-
+		
 		FT_GetQueueStatus(_ftHandle, &rxBytes);
 
 		if (rxBytes >= sizeof(_buf)) {
@@ -38,7 +46,16 @@ int SerialFtdi::_update() {
 			rxBytes = DWORD(_que.capacity() - _que.size() - 1);
 		}
 
+#if defined(USE_FT_W32_API)
+		if (FT_W32_ReadFile(_ftHandle, _buf, rxBytes, &rxBytesReceived, NULL)) {
+			_ftStatus = FT_OK;
+		}
+		else {
+			_ftStatus = FT_OTHER_ERROR;
+		}
+#else
 		_ftStatus = FT_Read(_ftHandle, _buf, rxBytes, &rxBytesReceived);
+#endif
 
 		if (_ftStatus == FT_OK) {
 			for (DWORD i = 0; i < rxBytesReceived; i++) {
@@ -136,16 +153,76 @@ bool SerialFtdi::_open(const char* devname) {
 	_session_id = -1; // closed.
 
 	if (!is_opened()) {
+
+#ifdef USE_FT_W32_API
+		_ftHandle = FT_W32_CreateFile(
+			devname,
+			GENERIC_READ | GENERIC_WRITE,
+			0,
+			0,
+			OPEN_EXISTING,
+			FT_OPEN_BY_SERIAL_NUMBER // FILE_ATTRIBUTE_NORMAL | FT_OPEN_BY_SERIAL_NUMBER
+			,
+			0
+		);
+		_ftStatus = _ftHandle != INVALID_HANDLE_VALUE ? FT_STATUS(FT_OK) : FT_STATUS(FT_INVALID_HANDLE);
+#else
 		_ftStatus = FT_OpenEx((void*)devname, FT_OPEN_BY_SERIAL_NUMBER, &_ftHandle);
+#endif
 
 		if (_ftStatus == FT_OK) {
 			// default configuration
-			FT_SetUSBParameters(_ftHandle, 256, 256);
+#ifdef USE_FT_W32_API
+			FT_W32_SetupComm(_ftHandle, 2048, 2048);
+
+			FTDCB ftDCB;
+			if (FT_W32_GetCommState(_ftHandle, &ftDCB)) {
+				ftDCB.BaudRate = 115000;
+				ftDCB.ByteSize = 8;
+				ftDCB.Parity = FT_PARITY_NONE;
+				ftDCB.StopBits = FT_STOP_BITS_1;
+
+				ftDCB.fBinary = TRUE;
+				ftDCB.fOutX = false;
+				ftDCB.fInX = false;
+				ftDCB.fErrorChar = false;
+				ftDCB.fRtsControl = false;
+				ftDCB.fAbortOnError = false;
+
+				if (FT_W32_SetCommState(_ftHandle, &ftDCB))
+					; // FT_W32_SetCommState ok
+				else
+					; // FT_W32_SetCommState failed
+			}
+			else {
+				;
+			}
+
+			/*
+			FTTIMEOUTS ftTS;
+			ftTS.ReadIntervalTimeout = 0;
+			ftTS.ReadTotalTimeoutMultiplier = 0;
+			ftTS.ReadTotalTimeoutConstant = 500;
+			ftTS.WriteTotalTimeoutMultiplier = 0;
+			ftTS.WriteTotalTimeoutConstant = 500;
+			if (FT_W32_SetCommTimeouts(_ftHandle, &ftTS))
+				; // FT_W32_SetCommTimeouts OK
+			else
+				; // FT_W32_SetCommTimeouts failed
+			*/
+
+			FT_W32_PurgeComm(_ftHandle, FT_PURGE_TX | FT_PURGE_RX);
+
+			FT_SetLatencyTimer(_ftHandle, 2); //2ms to 16ms
+#else
+			//FT_SetUSBParameters(_ftHandle, 4096, 4096);
 			FT_SetLatencyTimer(_ftHandle, 2);
 			FT_SetTimeouts(_ftHandle, 500, 0);
 			FT_SetBaudRate(_ftHandle, FT_BAUD_115200);
 			FT_SetFlowControl(_ftHandle, FT_FLOW_NONE, 0, 0);
 			FT_SetDataCharacteristics(_ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
+			FT_Purge(_ftHandle, FT_PURGE_TX | FT_PURGE_RX);
+#endif
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 			strncpy_s(_devname, devname, sizeof(_devname));

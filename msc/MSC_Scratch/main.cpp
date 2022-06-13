@@ -1,4 +1,4 @@
-﻿#include <cstdint>
+#include <cstdint>
 
 #include <filesystem>
 #include <iostream>
@@ -238,7 +238,7 @@ void scratchY() {
 			auto result = std::regex_search(buff, m, re);
 
 			std::cout << '[' << result << ']';
-			for (int i = 0; i < m.size(); i++) {
+			for (unsigned i = 0; i < m.size(); i++) {
 				// m[0]: whole match string m[1]:sub1, m[2]:sub2
 				std::cout << i << ':' << m[i].str();
 			}

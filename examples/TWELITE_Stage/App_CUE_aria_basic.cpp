@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_CUE.hpp"
@@ -69,8 +69,8 @@ struct App_CUE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 				// put information
 				the_screen_b
 					<< printfmt(":Lq=%d:Ad=%08X", pal.u8lqi, pal.u32addr_src)
-					<< ":PAL=" << int(pal.u8palpcb)
-					<< ":ID=" << int(pal.u8addr_src)
+					<< ":PAL=" << printfmt("%d", pal.u8palpcb)
+					<< ":ID=" << printfmt("%d", pal.u8addr_src)
 					<< crlf
 					;
 
@@ -233,24 +233,17 @@ struct App_CUE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 			}
 		}
 	}
-};
 
-// Screen def: opening
-void App_CUE::hndr_aria_basic(event_type ev, arg_type arg) {
-	// renew object
-	auto&& dc = APP_HNDLR::use<SCR_ARIA_BASIC>();
-
-	switch (ev) {
-	case EV_SETUP:
+	void setup() {
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
-		set_title_bar(PAGE_ID::PAGE_BASIC);
-		set_nav_bar();
-		dc.show_message();
-		break;
+		_app.set_title_bar(PAGE_ID::PAGE_BASIC);
+		_app.set_nav_bar();
+		show_message();
+	}
 
-	case EV_LOOP:
-		dc._btns.check_events();
+	void loop() {
+		_btns.check_events();
 
 		do {
 			int c = the_keyboard.read();
@@ -273,12 +266,16 @@ void App_CUE::hndr_aria_basic(event_type ev, arg_type arg) {
 		do {
 			int c = the_uart_queue.read();
 
-			if (c >= 0) dc.parse_a_byte(c);
+			if (c >= 0) parse_a_byte(c);
 
 		} while (the_uart_queue.available());
-		break;
-
-	case EV_EXIT:
-		break;
 	}
-}
+
+	void on_close() {
+		; // do nothing
+	}
+};
+
+// generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods)
+void App_CUE::hndr_SCR_ARIA_BASIC(event_type ev, arg_type arg) { hndr<SCR_ARIA_BASIC>(ev, arg); }
+

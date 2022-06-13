@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 /** @file
@@ -81,6 +81,31 @@ namespace TWE {
 		void do_print(IStreamOut& of) { fctprintf(&_out_fct, (void*)&of, _fmt, _a1, _a2, _a3, _a4); }
 	};
 
+	template <typename T1, typename T2, typename T3, typename T4, typename T5>
+	class _printobj_5 : public _printobj {
+		T1 _a1;
+		T2 _a2;
+		T3 _a3;
+		T4 _a4;
+		T5 _a5;
+	public:
+		_printobj_5(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) : _printobj(fmt), _a1(a1), _a2(a2), _a3(a3), _a4(a4), _a5(a5) {}
+		void do_print(IStreamOut& of) { fctprintf(&_out_fct, (void*)&of, _fmt, _a1, _a2, _a3, _a4, _a5); }
+	};
+
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+	class _printobj_6 : public _printobj {
+		T1 _a1;
+		T2 _a2;
+		T3 _a3;
+		T4 _a4;
+		T5 _a5;
+		T5 _a6;
+	public:
+		_printobj_6(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6) : _printobj(fmt), _a1(a1), _a2(a2), _a3(a3), _a4(a4), _a5(a5), _a6(a6) {}
+		void do_print(IStreamOut& of) { fctprintf(&_out_fct, (void*)&of, _fmt, _a1, _a2, _a3, _a4, _a5, _a6); }
+	};
+
 #if 0
 	class printfmt {
 		std::unique_ptr<_printobj> _pobj;
@@ -112,38 +137,50 @@ namespace TWE {
 	};
 #else
 
-	const size_t MAX_SIZE_PRINTOBJ = sizeof(_printobj_4<double, double, double, double>);
+	const size_t MAX_SIZE_PRINTOBJ = sizeof(_printobj_6<double, double, double, double, double, double>);
 
 	class printfmt {
 		uint8_t _pobj[MAX_SIZE_PRINTOBJ];
 
 	public:
-		printfmt(const char* fmt) {
+		printfmt(const char* fmt) : _pobj() {
 			(void)new ((void*)_pobj) _printobj(fmt);
 		}
 
 		template <typename T1>
-		printfmt(const char* fmt, T1 a1) {
+		printfmt(const char* fmt, T1 a1) : _pobj() {
 			static_assert(sizeof(_printobj_1<T1>(fmt, a1)) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
 			(void)new ((void*)_pobj) _printobj_1<T1>(fmt, a1);
 		}
 
 		template <typename T1, typename T2>
-		printfmt(const char* fmt, T1 a1, T2 a2) {
+		printfmt(const char* fmt, T1 a1, T2 a2) : _pobj() {
 			static_assert(sizeof(_printobj_2<T1, T2>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
 			(void)new ((void*)_pobj) _printobj_2<T1, T2>(fmt, a1, a2);
 		}
 
 		template <typename T1, typename T2, typename T3>
-		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3) {
+		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3) : _pobj() {
 			static_assert(sizeof(_printobj_3<T1, T2, T3>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
 			(void)new ((void*)_pobj) _printobj_3<T1, T2, T3>(fmt, a1, a2, a3);
 		}
 
 		template <typename T1, typename T2, typename T3, typename T4>
-		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4) {
+		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4) : _pobj() {
 			static_assert(sizeof(_printobj_4<T1, T2, T3, T4>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
 			(void)new ((void*)_pobj) _printobj_4<T1, T2, T3, T4>(fmt, a1, a2, a3, a4);
+		}
+
+		template <typename T1, typename T2, typename T3, typename T4, typename T5>
+		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) : _pobj() {
+			static_assert(sizeof(_printobj_5<T1, T2, T3, T4, T5>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
+			(void)new ((void*)_pobj) _printobj_5<T1, T2, T3, T4, T5>(fmt, a1, a2, a3, a4, a5);
+		}
+
+		template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+		printfmt(const char* fmt, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6) : _pobj() {
+			static_assert(sizeof(_printobj_6<T1, T2, T3, T4, T5, T6>) <= MAX_SIZE_PRINTOBJ, "Pre-alloc size overflow. Check MAX_SIZE_PRINTOBJ.");
+			(void)new ((void*)_pobj) _printobj_6<T1, T2, T3, T4, T5, T6>(fmt, a1, a2, a3, a4, a5, a6);
 		}
 
 		IStreamOut& operator ()(IStreamOut& of) {
@@ -151,6 +188,7 @@ namespace TWE {
 			return of;
 		}
 	};
+	using format = printfmt;
 #endif
 
 	/// <summary>
@@ -161,7 +199,7 @@ namespace TWE {
 	/// <summary>
 	/// Integer output
 	/// </summary>
-	inline IStreamOut& operator << (IStreamOut& s, const int i) { return s << printfmt("%d", i); }
+	//inline IStreamOut& operator << (IStreamOut& s, const int i) { return s << printfmt("%d", i); }
 
 	/// <summary>
 	/// Float output

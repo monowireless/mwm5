@@ -31,8 +31,8 @@ namespace TWEARD {
 		uint8_t _font_id;
 		uint8_t _font_width;
 		uint8_t _font_height;
-		uint8_t _off_x;
-		uint8_t _off_y;
+		uint16_t _off_x;
+		uint16_t _off_y;
 
 		// cursor control
 		uint8_t _u8cursor = 0;
@@ -143,12 +143,16 @@ namespace TWEARD {
 			_rect_view.h = h;
 		}
 
-		// set drawing area (should be set font again)
+		// re-set drawing area (call set_font() afterward to calculate view area)
 		void set_draw_area(Rect drawArea) {
 			_rect = drawArea;
 		}
 
+		// get drawing area
+		Rect get_draw_area() { return _rect; }
+
 		void set_font(uint8_t u8id, uint8_t u8col_request = 0, uint8_t u8row_request = 0); // change font and resize screen
+		void set_size(uint8_t u8col_request, uint8_t u8row_request) { set_font(_font_id, u8col_request, u8row_request); }
 		void set_color(uint16_t color, uint16_t bgcolor = 0) { _bg = _bg_def = bgcolor; _fg = _fg_def = color; }
 		void set_color_table(const uint16_t* ptbl) {
 			COL_TBL = ptbl;

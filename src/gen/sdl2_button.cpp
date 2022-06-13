@@ -17,7 +17,7 @@ void twe_wid_button::setup(SDL_Renderer* renderer) {
 
 		t.set_font(0x83, cols, 1);
 		t.set_wraptext(false);
-		t.set_color(WHITE, color565(0x0, 0x40, 0x40));
+		t.set_color(ALMOST_WHITE, color565(0x0, 0x40, 0x40));
 		t.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 		t.force_refresh();
 

@@ -18,6 +18,7 @@
 
 // type definition
 #include <stdint.h> // for type name
+#include <stddef.h>
 typedef char char_t;
 #ifndef NULL
 #define NULL nullptr
@@ -46,7 +47,7 @@ namespace TWE {
 		inline bool is_fail() const { return ((_code & 0x80000000) == 0); }
 		inline uint32_t get_value() const { return _code & 0x7fffffff; }
 		inline operator uint32_t() const { return get_value(); }
-		inline operator bool() const { return is_success(); }
+		inline explicit operator bool() const { return is_success(); }
 	};
 }
 
@@ -55,6 +56,7 @@ namespace TWE {
 # undef TWE_USE_RTTI // you can enable it (but you need to edit platform.txt)
 #elif defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
 #define TWE_USE_RTTI
+#define TWE_USE_STD_FUNCTION
 #endif
 
 // Architecture specific header

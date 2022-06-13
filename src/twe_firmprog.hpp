@@ -362,11 +362,11 @@ namespace TWE {
 
 			sFirm()
 				: file()
-				, buf{}
+				, buf()
 				, len(0)
 				, n_blk(0)
 				, n_blk_e(0)
-				, header{}
+				, header()
 			{}
 		} _firm;
 
@@ -384,7 +384,7 @@ namespace TWE {
 		 * @param [in,out]	bl	The bl.
 		 */
 		TweProg(ITweBlProtocol* bl) : _bl(bl), _state(E_ST_TWEBLP::NONE), _p_st_table(nullptr)
-			, _buf_payload(32), module_info{}, _protocol_cb(nullptr), _u8protocol_busy(0), _firm{} {}
+			, _buf_payload(32), module_info{}, _protocol_cb(nullptr), _u8protocol_busy(0), _firm() {}
 
 		/**
 		 * @fn	void TweProg::add_cb(PF_PROTOCOL_CB pfcb)

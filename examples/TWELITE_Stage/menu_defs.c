@@ -5,6 +5,10 @@
 #include "menu_defs.h"
 #include "menu_info.h"
 
+#ifndef ESP32
+#include "sdl2_config.h"
+#endif
+
 /*!
  * Common settings
  */
@@ -16,10 +20,11 @@ const TWESTG_tsElement TWESTG_STAGE_BASE[] = {
 		  "0は指定なし。 1..はメニュー番号。"
 		},
 		{ E_TWEINPUTSTRING_DATATYPE_HEX, 8, 'a' },
-		{ {.u32 = 0}, {.u32 = 10}, TWESTGS_VLD_u32MinMax, NULL },
+		{ {.u32 = 0}, {.u32 = 0xFF}, TWESTGS_VLD_u32MinMax, NULL },
 	},
 #ifndef ESP32
 	{ E_TWESTG_STAGE_SCREEN_MODE,
+#if M5_SCREEN_HIRES == 0
 		{ TWESTG_DATATYPE_UINT8,  sizeof(uint8),  0, 0, {.u8 = 0x00 }}, 
 		{ "SCM", "画面サイズ・描画方法",
 		  "XYの２桁の文字で指定します(X:画面サイズ Y:描画方法)\r\n"
@@ -27,6 +32,15 @@ const TWESTG_tsElement TWESTG_STAGE_BASE[] = {
 		  "  3:1280x960 4:1920x1080 5:320x240\r\n"
 		  "Y 0:LCD風 1:CRT風 2:ぼやけ 3:ブロック"
 		}, 
+#elif M5_SCREEN_HIRES == 1
+		{ TWESTG_DATATYPE_UINT8,  sizeof(uint8),  0, 0, {.u8 = 0x02 }}, 
+		{ "SCM", "画面サイズ・描画方法",
+		  "XYの２桁の文字で指定します(X:画面サイズ Y:描画方法)\r\n"
+		  "X 0:640x480 1:1280x720 2:1280x960\r\n"
+		  "  3:1920x1440 4:2560x1440 5:320x240\r\n"
+		  "Y 0:LCD風 1:CRT風 2:ぼやけ(拡大時) 3:ブロック"
+		}, 
+#endif
 		{ E_TWEINPUTSTRING_DATATYPE_HEX, 3, 'G' },
 		{ {.u32 = 0}, {.u32 = 0xFF}, TWESTGS_VLD_u32MinMax, NULL },
 	},

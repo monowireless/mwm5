@@ -30,10 +30,10 @@ public:
 
 	oss_regex(int maxnfa = 512)
 		: MAXNFA(maxnfa)
-		, tagstk{}
-		, nfa{}
+		, tagstk()
+		, nfa()
 		, sta(0)
-		, bittab{}
+		, bittab()
 		, chrtyp{
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -49,8 +49,8 @@ public:
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 0, 0, 0, 0, 0}
 		, bol(nullptr)
-		, bopat{}
-		, eopat{}
+		, bopat()
+		, eopat()
 		, _mp(nullptr)
 	{
 		nfa = new CHAR[MAXNFA]{};

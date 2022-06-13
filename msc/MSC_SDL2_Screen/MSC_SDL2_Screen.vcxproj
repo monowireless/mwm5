@@ -48,6 +48,8 @@
     <ClInclude Include="..\..\src\gen\sdl2_common.h" />
     <ClInclude Include="..\..\src\gen\sdl2_icon.h" />
     <ClInclude Include="..\..\src\gen\sdl2_keyb.hpp" />
+    <ClInclude Include="..\..\src\gen\sdl2_config.h" />
+    <ClInclude Include="..\..\src\gen\sdl2_utils.hpp" />
     <ClInclude Include="..\..\src\gen\serial_common.hpp" />
     <ClInclude Include="..\..\src\gen\serial_duo.hpp" />
     <ClInclude Include="..\..\src\gen\serial_ftdi.hpp" />
@@ -171,32 +173,53 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|ARM64'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <IncludePath>$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(IncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -213,9 +236,8 @@
       <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x86\*.dll" "$(OutDir)" /i /s /y
-xcopy "$(SolutionDir)\lib\FTDI\i386\*.dll" "$(OutDir)" /i /s /y
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
@@ -326,6 +348,7 @@ xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
       <AdditionalOptions>/source-charset:utf-8 /execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -334,9 +357,8 @@ xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
       <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x86\*.dll" "$(OutDir)" /i /s /y
-xcopy "$(SolutionDir)\lib\FTDI\i386\*.dll" "$(OutDir)" /i /s /y
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -357,9 +379,8 @@ xcopy "$(SolutionDir)\lib\FTDI\i386\*.dll" "$(OutDir)" /i /s /y
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x64\*.dll" "$(OutDir)" /i /s /y
-xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">

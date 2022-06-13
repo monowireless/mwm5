@@ -18,7 +18,6 @@
 #include "twe_utils.hpp"
 #include "twe_utils_crc8.hpp"
 
-
 namespace TWEUTILS {
 	static const uint8_t u8CRCTable[256] =
 	{
@@ -63,9 +62,9 @@ namespace TWEUTILS {
 	 * \param size    サイズ
 	 * \return        計算されたCRC8値
 	 */
-	uint8_t CRC8_u8Calc(uint8_t* pu8Data, uint8_t size)
+	uint8_t CRC8_u8Calc(uint8_t* pu8Data, size_t size)
 	{
-		uint32_t i;
+		size_t i;
 		uint8_t u8crc = 0;
 
 		for (i = 0; i < size; i++)
@@ -76,14 +75,37 @@ namespace TWEUTILS {
 	}
 
 	/*!
+	 * バイト列からCRC32を計算する
+	 *
+	 * \param pu8Data バイト列
+	 * \param size    サイズ
+	 * \return        計算されたXOR値
+	 */
+	uint32_t CRC32_u32Calc(uint8_t* pu8Data, size_t size) {
+		uint32_t crc = 0xFFFFFFFF;
+
+		for (size_t i = 0; i < size; i++) {
+			uint8_t ch = pu8Data[i];
+			for (size_t j = 0; j < 8; j++) {
+				uint32_t b = (ch ^ crc) & 1;
+				crc >>= 1;
+				if (b) crc = crc ^ 0xEDB88320;
+				ch >>= 1;
+			}
+		}
+
+		return ~crc;
+	}
+
+	/*!
 	 * バイト列からXORを計算する
 	 *
 	 * \param pu8Data バイト列
 	 * \param size    サイズ
 	 * \return        計算されたXOR値
 	 */
-	uint8_t XOR_u8Calc(uint8_t* pu8Data, uint8_t size) {
-		uint32_t i;
+	uint8_t XOR_u8Calc(uint8_t* pu8Data, size_t size) {
+		size_t i;
 		uint8_t u8xor = 0;
 
 		for (i = 0; i < size; i++) {
@@ -100,8 +122,8 @@ namespace TWEUTILS {
 	 * \param size    サイズ
 	 * \return        計算されたXOR値
 	 */
-	uint8_t LRC_u8Calc(uint8_t* pu8Data, uint8_t size) {
-		uint32_t i;
+	uint8_t LRC_u8Calc(uint8_t* pu8Data, size_t size) {
+		size_t i;
 		uint8_t u8lrc = 0;
 
 		for (i = 0; i < size; i++) {

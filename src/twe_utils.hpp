@@ -37,7 +37,7 @@ namespace TWEUTILS {
 	}
 	
 	inline uint16_t G_WORD(const uint8_t*& p) {
-		uint32_t r = *p++;
+		uint16_t r = *p++;
 		r = (r << 8) + *p++;
 		return r;
 	}
@@ -47,6 +47,20 @@ namespace TWEUTILS {
 		r = (r << 8) + *p++;
 		r = (r << 8) + *p++;
 		r = (r << 8) + *p++;
+		return r;
+	}
+
+	inline uint16_t G_LE_WORD(const uint8_t*& p) {
+		uint16_t r = *p++;
+		r |= (*p++ << 8);
+		return r;
+	}
+
+	inline uint32_t G_LE_DWORD(const uint8_t*& p) {
+		uint32_t r = *p++;
+		r |= (*p++ << 8);
+		r |= (*p++ << 16);
+		r |= (*p++ << 24);
 		return r;
 	}
 	
@@ -61,11 +75,25 @@ namespace TWEUTILS {
 		return *q;
 	}
 
+	inline uint8_t& S_LE_WORD(uint8_t*& q, uint16_t c) {
+		*(q) = ((c) & 0xff); (q)++;
+		*(q) = ((c) >> 8) & 0xff; (q)++;
+		return *q;
+	}
+
 	inline uint8_t& S_DWORD(uint8_t*& q, uint32_t c) {
 		*(q) = ((c) >> 24) & 0xff; (q)++;
 		*(q) = ((c) >> 16) & 0xff; (q)++;
 		*(q) = ((c) >>  8) & 0xff; (q)++;
 		*(q) = ((c) & 0xff); (q)++;
+		return *q;
+	}
+
+	inline uint8_t& S_LE_DWORD(uint8_t*& q, uint32_t c) {
+		*(q) = ((c) & 0xff); (q)++;
+		*(q) = ((c) >> 8) & 0xff; (q)++;
+		*(q) = ((c) >> 16) & 0xff; (q)++;
+		*(q) = ((c) >> 24) & 0xff; (q)++;
 		return *q;
 	}
 
@@ -76,7 +104,6 @@ namespace TWEUTILS {
 	inline uint16_t DecodeVolt(uint8_t i) {
 		return (i <= 170 ? (1950+i*5) : (2800+(i-170)*10) );
 	}
-
 
 #if 0
 	/**
@@ -120,7 +147,7 @@ namespace TWEUTILS {
 		_Enum _e;
 		// operator int() = delete;
 	public:
-		enum_wapper() : _e{} {}
+		enum_wapper() : _e() {}
 		enum_wapper(const _Enum e) { _e = e; }
 		
 		inline operator _Enum() const { return _e; }
@@ -198,7 +225,7 @@ namespace TWEUTILS {
 		T _ptr;
 	public:
 		_ptr_wrapper(T ptr) : _ptr(ptr) {}
-		operator bool() { return _ptr != nullptr; }
+		explicit operator bool() { return _ptr != nullptr; }
 		T ref() { return _ptr; }
 	};
 

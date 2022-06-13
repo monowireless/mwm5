@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_RootMenu.hpp"
@@ -16,10 +16,12 @@ void App_RootMenu::setup() {
 		s_bstarted = 1;
 
 		// select autorun app
-		if (sAppData.u8_TWESTG_STAGE_START_APP > 0 && sAppData.u8_TWESTG_STAGE_START_APP < (int)E_APP_ID::_APPS_END_) {
+		uint8_t start_app_id = sAppData.u8_TWESTG_STAGE_START_APP >= 0x10 ? (sAppData.u8_TWESTG_STAGE_START_APP >> 4) : sAppData.u8_TWESTG_STAGE_START_APP;
+		_auto_launch_param = sAppData.u8_TWESTG_STAGE_START_APP >= 0x10 ? sAppData.u8_TWESTG_STAGE_START_APP & 0xF : -1;
+		if (start_app_id > 0 && start_app_id < (int)E_APP_ID::_APPS_END_) {
 			s_bstarted = 2; // launch app on boot
 			_b_appmenu = true;
-			the_keyboard.push('0' + sAppData.u8_TWESTG_STAGE_START_APP);
+			the_keyboard.push('0' + start_app_id);
 		}
 	}
 	else {
@@ -49,7 +51,7 @@ void App_RootMenu::set_listview() {
 
 	if (_b_appmenu) { // アプリ一覧
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
-		_listMenu.set_info_area(L"ｳｪﾌﾞ");
+		_listMenu.set_info_area(L"ﾍﾙﾌﾟ");
 #endif
 		for (int menu_id = 1; menu_id < (int)E_APP_ID::_APPS_END_; menu_id++) {
 			appid[0] = menu_id;
@@ -58,7 +60,7 @@ void App_RootMenu::set_listview() {
 	}
 	else {
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
-		_listMenu.set_info_area(L"ｳｪﾌﾞ");
+		_listMenu.set_info_area(L"ﾍﾙﾌﾟ");
 #endif
 
 		appid[0] = 0;
@@ -166,7 +168,7 @@ void App_RootMenu::loop() {
 						// auto-launch at booting.
 						if (s_bstarted == 2) {
 							s_bstarted = 3;
-							the_app.exit(-1, sel_app_id);
+							the_app.exit(_auto_launch_param, sel_app_id);
 							return;
 						}
 
@@ -174,6 +176,9 @@ void App_RootMenu::loop() {
 						_i_selected_viewer_app = int(sel_app_id);
 
 						// show help screen
+						the_screen.clear();
+						the_screen.force_refresh();
+						the_screen.set_size(40, 12);
 						the_screen.clear_screen();
 						the_screen << query_app_launch_message(sel_app_id);
 
@@ -246,37 +251,54 @@ void App_RootMenu::setup_screen() {
 	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
 
+#if M5_SCREEN_HIRES == 0
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
-	TWEFONT::createFontShinonome16_mini(10, 1, 0); // shinonome 16 font
+	TWEFONT::createFontShinonome16_mini(10, 0, 0); // shinonome 16 font
 	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
 	TWEFONT::createFontMP12_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
 	TWEFONT::createFontMP12_mini(13, 0, 0); // MP10 font
 
-	// main screen area
 	the_screen.set_font(10);
+	the_screen_b.set_font(1);
+	the_screen_c.set_font(1);
+	the_screen_t.set_font(11);
+#elif M5_SCREEN_HIRES == 1
+	// font register (note: to save flash area, don't create too much!)
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
+
+	TWEFONT::createFontShinonome16(10, 5, 3);
+	//TWEFONT::createFontMP12(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontMP12(13, 0, 0);
+
+	the_screen.set_font(10);
+	the_screen_b.set_font(10);
+	the_screen_c.set_font(12);
+	the_screen_t.set_font(11);
+#endif
+
+	// main screen area
 	the_screen.set_color(default_fg_color, default_bg_color);
 	the_screen.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 	the_screen.clear_screen();
 	the_screen.force_refresh();
 
 	// bottom area
-	the_screen_b.set_font(1);
 	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
 	the_screen_b.set_cursor(0);
 	the_screen_b.clear_screen();
 	the_screen_b.force_refresh();
 
 	// bottom area
-	the_screen_c.set_font(1);
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.clear_screen();
 	the_screen_c.force_refresh();
 
 	// top area
-	the_screen_t.set_font(11);
 	the_screen_t.set_color(default_bg_color, default_fg_color);
 	the_screen_t.set_cursor(0);
 	the_screen_t.clear_screen();

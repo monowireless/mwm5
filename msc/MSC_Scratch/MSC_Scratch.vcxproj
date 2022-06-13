@@ -139,38 +139,50 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|ARM64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

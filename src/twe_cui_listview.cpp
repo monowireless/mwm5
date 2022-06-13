@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_cui_listview.hpp"
@@ -24,13 +24,16 @@ public:
 
 const uint8_t keyc_find::TBL_KEYC_TO_INDEX[] {
 	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 
-	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 0 };
+	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 
+	'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+	0 };
 
-void TWECUI::TWE_ListView::attach_term(TWETERM::ITerm& trm, bool b_status) {
+void TWECUI::TWE_ListView::attach_term(TWETERM::ITerm& trm, uint8_t row_start, uint8_t rows, bool b_status) {
 	_pterm = &trm;
 
 	_n_view_cols = trm.get_cols();
-	_n_view_rows = trm.get_rows();
+	_n_view_rows = rows;
+	_n_view_row_start = row_start;
 
 	_b_status_line = b_status;
 
@@ -45,7 +48,7 @@ void TWECUI::TWE_ListView::attach_term(TWETERM::ITerm& trm, bool b_status) {
 		_n_view_rows--;
 
 		// clear the line
-		trm.clear_line(_n_view_rows + 1, true); // erase the line
+		trm.clear_line(_n_view_row_start + _n_view_rows + 1); // erase the line
 
 		// the center column
 		_n_status_line_center_col = _pterm->get_width() / 2 - 1;
@@ -53,7 +56,7 @@ void TWECUI::TWE_ListView::attach_term(TWETERM::ITerm& trm, bool b_status) {
 		const int N_BLANK = 3;
 		_btn_s1.reset(new TWE_Button(
 			  _n_status_line_center_col + 1 + N_BLANK
-			, _n_view_rows
+			, _n_view_row_start + _n_view_rows
 			, ATTR_IN LBL_PGDN ATTR_OUT
 			, TWEUTILS::strlen_vis(LBL_PGUP))
 		);
@@ -62,7 +65,7 @@ void TWECUI::TWE_ListView::attach_term(TWETERM::ITerm& trm, bool b_status) {
 
 		_btn_s2.reset(new TWE_Button(
 			  _n_status_line_center_col - TWEUTILS::strlen_vis(LBL_PGUP) - N_BLANK
-			, _n_view_rows
+			, _n_view_row_start + _n_view_rows
 			, ATTR_IN LBL_PGUP ATTR_OUT
 			, TWEUTILS::strlen_vis(LBL_PGUP))
 		);
@@ -80,11 +83,14 @@ void TWECUI::TWE_ListView::update_view(bool bFull, index_type sel_prev, index_ty
 
 		
 		if (bFull) {
-			t << "\033[2J"; // clear whole area
+			// clear whole area
+			for (int i = 0; i < _n_view_rows; i++) {
+				t.clear_line(i + _n_view_row_start);
+			}
 
 			// need to redraw sub widget
 			if (_b_status_line) {
-				t.clear_line(_n_view_rows + 1, true);
+				t.clear_line(_n_view_row_start + _n_view_rows);
 				if (_btn_s1) _btn_s1->update_view();
 				if (_btn_s2) _btn_s2->update_view();
 			}
@@ -102,7 +108,7 @@ void TWECUI::TWE_ListView::update_view(bool bFull, index_type sel_prev, index_ty
 				int item_idx = _n_view_start + i;
 
 				t << TWE::printfmt("\033[%d;1H" "\033[K" "\033[7m%c\033[0m: "
-							, i + 1 // move cursor
+							, _n_view_row_start + i + 1 // move cursor
 							, keyc_find::TBL_KEYC_TO_INDEX[i]); // shortcut key
 
 				if (i == _n_view_selected) {
@@ -122,14 +128,14 @@ void TWECUI::TWE_ListView::update_view(bool bFull, index_type sel_prev, index_ty
 
 						if (!_btn_r1) {
 							// create a button at right end.
-							_btn_r1.reset(new TWE_Button(c_btn, i, _btn_r1_label.c_str()));
+							_btn_r1.reset(new TWE_Button(c_btn, _n_view_row_start + i, _btn_r1_label.c_str()));
 
 							_btn_r1->set_mouse_down_to_selcomp();
 							_btn_r1->attach_term(t);
 						}
 						else {
 							// move button to the place.
-							_btn_r1->relocate(c_btn, i);
+							_btn_r1->relocate(c_btn, _n_view_row_start + i);
 						}
 					}
 
@@ -138,14 +144,14 @@ void TWECUI::TWE_ListView::update_view(bool bFull, index_type sel_prev, index_ty
 
 						if (!_btn_r2) {
 							// create a button at right end.
-							_btn_r2.reset(new TWE_Button(c_btn, i, _btn_r2_label.c_str()));
+							_btn_r2.reset(new TWE_Button(c_btn, _n_view_row_start + i, _btn_r2_label.c_str()));
 
 							_btn_r2->set_mouse_down_to_selcomp();
 							_btn_r2->attach_term(t);
 						}
 						else {
 							// move button to the place.
-							_btn_r2->relocate(c_btn, i);
+							_btn_r2->relocate(c_btn, _n_view_row_start + i);
 						}
 					}
 
@@ -158,16 +164,16 @@ void TWECUI::TWE_ListView::update_view(bool bFull, index_type sel_prev, index_ty
 
 		// status line
 		if (_b_status_line && (bFull || sel_prev != sel_now)) {
-			t.clear_line(_n_view_rows + 1, true);
+			t.clear_line(_n_view_row_start + _n_view_rows);
 
 			// set display position
-			t << TWE::printfmt("\033[%d;%dH", _n_view_rows + 1, (_n_status_line_center_col + 1) - 2);
+			if (_list.size() > 0) {
+				t << TWE::printfmt("\033[%d;%dH", (_n_view_row_start + _n_view_rows) + 1, (_n_status_line_center_col + 1) - 2);
+				t << TWE::printfmt("%2d/%-2d", (_n_selected < 0 ? 0 : _n_selected) / _n_view_rows + 1, (_list.size() - 1) / _n_view_rows + 1); // page count / max pages
 
-			//t << TWE::printfmt("%2d/%-2d", _n_selected + 1, _list.size()); // item count / max items
-			t << TWE::printfmt("%2d/%-2d", _n_selected / _n_view_rows + 1, (_list.size() - 1) / _n_view_rows + 1); // page count / max pages
-
-			if (_btn_s1) _btn_s1->update_view();
-			if (_btn_s2) _btn_s2->update_view();
+				if (_btn_s1) _btn_s1->update_view();
+				if (_btn_s2) _btn_s2->update_view();
+			}
 		}
 	}
 }
@@ -333,9 +339,9 @@ bool TWECUI::TWE_ListView::key_event(TWE::keyinput_type keycode) {
 				//TWETERM::the_sys_console << TWE::printfmt("{MD:(%d,%d)->(%d,%d)/", ev.get_x(), ev.get_y(), coord.col, coord.lin);
 				//TWETERM::the_sys_console << TWE::printfmt("%d}", _n_view_rows_disp);
 
-				if (coord.lin < _n_view_rows_disp) {
+				if (coord.lin >= _n_view_row_start && coord.lin < _n_view_row_start + _n_view_rows_disp) {
 					index_type i_prev = _n_view_selected; 
-					update_selection(index_type(coord.lin));
+					update_selection(index_type(coord.lin - _n_view_row_start));
 					if (_n_view_selected != i_prev) bHandled = true;
 				}
 			}
@@ -344,25 +350,27 @@ bool TWECUI::TWE_ListView::key_event(TWE::keyinput_type keycode) {
 			TWECUI::KeyInput::MOUSE_DOWN ev(keycode);
 			// complete selection anyway (better with wheel operation.)
 
-			if (auto&& coord = _pterm->get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
-				_n_view_selected_on_button_down = _n_view_selected;
+			if (ev.is_left_btn()) {
+				if (auto&& coord = _pterm->get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
+					_n_view_selected_on_button_down = _n_view_selected;
+				}
 			}
 
 		} else 
 		if (TWECUI::KeyInput::MOUSE_UP::is_type(keycode)) {
 			TWECUI::KeyInput::MOUSE_UP ev(keycode);
 			// complete selection anyway (better with wheel operation.)
+			if (ev.is_left_btn()) {
+				if (auto&& coord = _pterm->get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
+					// TWETERM::the_sys_console << TWE::printfmt("{%d,%d}", coord.lin, _n_view_rows_disp);
 
-			if (auto&& coord = _pterm->get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
-				// TWETERM::the_sys_console << TWE::printfmt("{%d,%d}", coord.lin, _n_view_rows_disp);
-
-				if (_b_status_line && coord.lin == _n_view_rows_disp) {
-					; // ignore click when hit on status line
-				}
-				else
-				if (_n_view_selected != -1 && _n_view_selected == _n_view_selected_on_button_down) {
-					bHandled = true;
-					selection_performed = true;
+					if (_b_status_line && coord.lin == _n_view_row_start + _n_view_rows_disp) {
+						; // ignore click when hit on status line
+					}
+					else if (_n_view_selected != -1 && _n_view_selected == _n_view_selected_on_button_down) {
+						bHandled = true;
+						selection_performed = true;
+					}
 				}
 			}
 		} else

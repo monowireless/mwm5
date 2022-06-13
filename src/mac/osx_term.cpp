@@ -144,15 +144,15 @@ void TWETerm_MacConsole::refresh() {
 		}
 	}
 	
-	if (u32Dirty) {
+	if (dirtyLine) {
 		const int B = 256;
 		char fmt[B];
 
-		if (u32Dirty == U32DIRTY_FULL) {
+		if (dirtyLine.is_full()) {
 			wclear(stdscr);
 		}
 		for (int i = 0; i <= max_line; i++) {
-			if ((1UL << i) & u32Dirty) {
+			if (dirtyLine.is_dirty(i)) {
 				wmove(stdscr, i, 0);
 
 				int j = calc_line_index(i);
@@ -182,21 +182,21 @@ void TWETerm_MacConsole::refresh() {
 	}
 	wrefresh(stdscr);
 
-	u32Dirty = 0UL;
+	dirtyLine.clear();
 #else
 	if (!visible()) {
 		return;
 	}
 	
-	if (u32Dirty) {
+	if (dirtyLine) {
 		const int B = 1024;
 		char fmt[B];
 
-		if (u32Dirty == U32DIRTY_FULL) {
+		if (dirtyLine.is_full()) {
 			fputs("\033[2J\033[H", stdout);
 		}
 		for (int i = 0; i <= max_line; i++) {
-			if ((1UL << i) & u32Dirty) {
+			if (dirtyLine.is_dirty(i)) {
 				snprintf(fmt, sizeof(fmt), "\033[%d;%dH", i + 1, 1); // move cursor
 				fputs(fmt, stdout);
 				
@@ -232,7 +232,7 @@ void TWETerm_MacConsole::refresh() {
 	}
 	fflush(stdout);
 
-	u32Dirty = 0UL;
+	dirtyLine.clear();
 #endif
 }
 

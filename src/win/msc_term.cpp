@@ -41,15 +41,15 @@ void TWETerm_WinConsole::refresh() {
 		}
 	}
 
-	if (u32Dirty) {
+	if (dirtyLine) {
 		const int B = 256;
 		char fmt[B];
 
-		if (u32Dirty == U32DIRTY_FULL) {
+		if (dirtyLine.is_full()) {
 			_cputs("\033[2J\033[H"); // clear all screen and HOME
 		}
 		for (int i = 0; i <= max_line; i++) {
-			if ((1UL << i) & u32Dirty) {
+			if (dirtyLine.is_dirty(i)) {
 				sprintf_s(fmt, "\033[%d;%dH", i + 1, 1); // move cursor
 				_cputs(fmt);
 
@@ -82,7 +82,7 @@ void TWETerm_WinConsole::refresh() {
 		sprintf_s(fmt, "\033[%d;%dH", cursor_l + 1, c_vis + 1); // move cursor
 		_cputs(fmt);
 	}
-	u32Dirty = 0UL;
+	dirtyLine.clear();
 }
 
 void TWETerm_WinConsole::close_term() {

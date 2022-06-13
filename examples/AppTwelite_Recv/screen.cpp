@@ -6,7 +6,9 @@
 
 #include "screen.hpp"
 
+
 // lcd console defs
+#if M5_SCREEN_HIRES == 0
 // top bar (for title)
 TWETerm_M5_Console the_screen_t(64, 1, { 0, 0, 320, 18 }, M5); // init the screen.
 
@@ -18,6 +20,20 @@ TWETerm_M5_Console the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5); // init th
 
 // bottom area (button navigation)
 TWETerm_M5_Console the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5); // init the screen.
+#else M5_SCREEN_HIRES == 1
+// top bar (for title)
+TWETerm_M5_Console the_screen_t(64, 1, { 0, 0, 320 * 2, 18 * 2}, M5); // init the screen.
+
+// main screen (main content)
+TWETerm_M5_Console the_screen(64, 20, { 0, 18 * 2, 320 * 2, (240 - 30 - 18)*2}, M5); // init the screen.
+
+// bottom area (debug information)
+TWETerm_M5_Console the_screen_b(64, 4, { 0, (18 + 192) * 2, 320 * 2, 20 * 2 }, M5); // init the screen.
+
+// bottom area (button navigation)
+TWETerm_M5_Console the_screen_c(64, 1, { 0, (18 + 192 + 20) * 2, 320 * 2, 10 * 2}, M5); // init the screen.
+#endif
+
 
 // default color
 uint16_t default_bg_color = 0;

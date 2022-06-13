@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Commander.hpp"
@@ -132,40 +132,40 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 			dc._btns.clear();
 
 			int idx = 0;
-			idx = dc._btns.add(20 - 3, 3, L"(I)▽", &SCR_TWELITE80::id_dn);
-			idx = dc._btns.add(30, 3, L"△(i)", &SCR_TWELITE80::id_up);
+			idx = dc._btns.add(20 - 3, 3, L"(I)▽", &SCR_TWELITE80::id_dn, &dc);
+			idx = dc._btns.add(30, 3, L"△(i)", &SCR_TWELITE80::id_up, &dc);
 
-			idx = dc._btns.add( 4, 5, L"DI1(1)", &SCR_TWELITE80::di_state, 0);
+			idx = dc._btns.add( 4, 5, L"DI1(1)", &SCR_TWELITE80::di_state, &dc, 0);
 			dc._btns[idx].set_additional_hot_area({4, 5, 9, 1}); // set additional hot area.
-			idx = dc._btns.add(16, 5, L"DI2(2)", &SCR_TWELITE80::di_state, 1);
+			idx = dc._btns.add(16, 5, L"DI2(2)", &SCR_TWELITE80::di_state, &dc, 1);
 			dc._btns[idx].set_additional_hot_area({ 16, 5, 9, 1 });
-			idx = dc._btns.add(28, 5, L"DI3(3)", &SCR_TWELITE80::di_state, 2);
+			idx = dc._btns.add(28, 5, L"DI3(3)", &SCR_TWELITE80::di_state, &dc, 2);
 			dc._btns[idx].set_additional_hot_area({ 28, 5, 9, 1 });
-			idx = dc._btns.add(40, 5, L"DI4(4)", &SCR_TWELITE80::di_state, 3);
+			idx = dc._btns.add(40, 5, L"DI4(4)", &SCR_TWELITE80::di_state, &dc, 3);
 			dc._btns[idx].set_additional_hot_area({ 40, 5, 9, 1 });
 
-			idx = dc._btns.add(4, 6, L"SEL(q)", &SCR_TWELITE80::di_sel, 0);
+			idx = dc._btns.add(4, 6, L"SEL(q)", &SCR_TWELITE80::di_sel, &dc, 0);
 			dc._btns[idx].set_additional_hot_area({ 4, 6, 9, 1 });
-			idx = dc._btns.add(16, 6, L"SEL(w)", &SCR_TWELITE80::di_sel, 1);
+			idx = dc._btns.add(16, 6, L"SEL(w)", &SCR_TWELITE80::di_sel, &dc, 1);
 			dc._btns[idx].set_additional_hot_area({ 16, 6, 9, 1 });
-			idx = dc._btns.add(28, 6, L"SEL(r)", &SCR_TWELITE80::di_sel, 2);
+			idx = dc._btns.add(28, 6, L"SEL(r)", &SCR_TWELITE80::di_sel, &dc, 2);
 			dc._btns[idx].set_additional_hot_area({ 28, 6, 9, 1 });
-			idx = dc._btns.add(40, 6, L"SEL(t)", &SCR_TWELITE80::di_sel, 3);
+			idx = dc._btns.add(40, 6, L"SEL(t)", &SCR_TWELITE80::di_sel, &dc, 3);
 			dc._btns[idx].set_additional_hot_area({ 40, 6, 9, 1 });
 
-			idx = dc._btns.add(4, 8, L"PWM1(a)", &SCR_TWELITE80::pwm, 0);
+			idx = dc._btns.add(4, 8, L"PWM1(a)", &SCR_TWELITE80::pwm, &dc, 0);
 			dc._btns[idx].set_additional_hot_area({ 4, 8, 19, 1 });
-			idx = dc._btns.add(28, 8, L"PWM2(s)", &SCR_TWELITE80::pwm, 1);
+			idx = dc._btns.add(28, 8, L"PWM2(s)", &SCR_TWELITE80::pwm, &dc, 1);
 			dc._btns[idx].set_additional_hot_area({ 28, 8, 19, 1 });
-			idx = dc._btns.add(4, 9, L"PWM3(d)", &SCR_TWELITE80::pwm, 2);
+			idx = dc._btns.add(4, 9, L"PWM3(d)", &SCR_TWELITE80::pwm, &dc, 2);
 			dc._btns[idx].set_additional_hot_area({ 4, 9, 19, 1 });
-			idx = dc._btns.add(28, 9, L"PWM4(f)", &SCR_TWELITE80::pwm, 3);
+			idx = dc._btns.add(28, 9, L"PWM4(f)", &SCR_TWELITE80::pwm, &dc, 3);
 			dc._btns[idx].set_additional_hot_area({ 28, 9, 19, 1 });
 
-			idx = dc._btns.add(40,11, L"送信(SPACE)", &SCR_TWELITE80::fire, 0);
+			idx = dc._btns.add(40,11, L"送信(SPACE)", &SCR_TWELITE80::fire, &dc, 0);
 
 #ifndef ESP32
-			idx = dc._btns.add(45, 0, L"ｳｪﾌﾞ(h)", &SCR_TWELITE80::web, 0);
+			idx = dc._btns.add(45, 0, L"ﾍﾙﾌﾟ(h)", &SCR_TWELITE80::web, &dc, 0);
 #endif
 
 			dc._btns.update_view();

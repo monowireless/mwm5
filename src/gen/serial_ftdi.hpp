@@ -11,6 +11,8 @@
 
 #include <ftd2xx.h>
 
+#undef USE_FT_W32_API
+
 namespace TWE {
 	class SerialFtdi : public ISerial, public SerialCommon<SerialFtdi> {
 		friend class SerialCommon<SerialFtdi>;
@@ -75,7 +77,32 @@ namespace TWE {
 		int _write(const uint8_t* p, int len) {
 			DWORD len_written = 0;
 			if (_ftHandle != NULL) {
+#ifdef USE_FT_W32_API
+				FT_W32_WriteFile(_ftHandle, (LPVOID)p, len, &len_written, NULL);
+#else
+# if 1
 				FT_Write(_ftHandle, (LPVOID)p, (DWORD)len, &len_written);
+# else
+				for (int i = 0; i < len; i++) {
+					FT_Write(_ftHandle, (LPVOID)(p + i), 1, &len_written);
+					delay(1);
+				}
+				len_written = len;
+				/*
+				while (len > 0) {
+					DWORD l = (len > 128) ? 128 : len;
+					DWORD l_w = 0;
+					FT_Write(_ftHandle, (LPVOID)p, (DWORD)l, &l_w);
+
+					len -= 128;
+					p += 128;
+					len_written += l_w;
+					delay(16);
+
+				}
+				*/
+# endif
+#endif
 			}
 
 			return len_written;
@@ -100,7 +127,11 @@ namespace TWE {
 		 */
 		void _close() {
 			if (_ftHandle != NULL) {
+#ifdef USE_FT_W32_API
+				FT_W32_CloseHandle(_ftHandle);
+#else
 				FT_Close(_ftHandle);
+#endif
 
 				_ftHandle = NULL;
 				_devname[0] = 0;

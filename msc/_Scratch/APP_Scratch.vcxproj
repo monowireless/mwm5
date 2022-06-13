@@ -21,7 +21,7 @@
       <Configuration>ESP32(coding only)</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Releas:%e|Win32">
+    <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
@@ -137,40 +137,52 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\x86;$(SolutionDir)\lib\FTDI\i386;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(ProjectDir).;$(SolutionDir)..\src\gen;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\arm64;$(SolutionDir)\lib\FTDI\arm64;$(VC_LibraryPath_arm64);$(WindowsSDK_LibraryPath_arm64);$(NETFXKitsDir)Lib\um\arm64</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\arm64;$(SolutionDir)\lib\FTDI\arm64;$(VC_LibraryPath_arm64);$(WindowsSDK_LibraryPath_arm64);$(NETFXKitsDir)Lib\um\arm64</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)..\examples\_Scratch\build;$(SolutionDir)..\examples\_Scratch\build</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)..\examples\_Scratch\build;$(SolutionDir)..\examples\_Scratch\build</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|ARM64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)..\examples\_Scratch\build;$(SolutionDir)..\examples\_Scratch\build</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\arm64;$(SolutionDir)\lib\FTDI\arm64;$(VC_LibraryPath_arm64);$(WindowsSDK_LibraryPath_arm64);$(NETFXKitsDir)Lib\um\arm64</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)..\examples\_Scratch\build;$(SolutionDir)..\examples\_Scratch\build</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\arm64;$(SolutionDir)\lib\FTDI\arm64;$(VC_LibraryPath_arm64);$(WindowsSDK_LibraryPath_arm64);$(NETFXKitsDir)Lib\um\arm64</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\x64;$(SolutionDir)\lib\FTDI\amd64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <IncludePath>$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
-    <LibraryPath>$(SolutionDir)\lib\SDL2\lib\arm64;$(SolutionDir)\lib\FTDI\arm64;$(VC_LibraryPath_arm64);$(WindowsSDK_LibraryPath_arm64);$(NETFXKitsDir)Lib\um\arm64</LibraryPath>
+    <IncludePath>$(SolutionDir)\lib\SQLiteCpp\include;$(SolutionDir)\MSC_SDL2_Screen;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\lib\FTDI;$(SolutionDir)..\src\printf;$(SolutionDir)..\src\twesettings;$(SolutionDir)..\src\gen;$(SolutionDir)..\src;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\SQLiteCpp\lib\$(Platform)_$(Configuration)\;$(SolutionDir)\lib\SDL2\lib\arm64;$(SolutionDir)\lib\FTDI\arm64;$(VC_LibraryPath_arm64);$(WindowsSDK_LibraryPath_arm64);$(NETFXKitsDir)Lib\um\arm64</LibraryPath>
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -184,11 +196,12 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_staticD.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_staticD.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x86\*.dll" "$(OutDir)" /i /s /y
+xcopy "$(SolutionDir)\lib\FTDI\i386\*.dll" "$(OutDir)" /i /s /y
+</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(SolutionDir)read_version.cmd $(SolutionDir)..\examples\$(ProjectName)\build\Makefile &gt;  $(ProjectDir)version_msc.h</Command>
@@ -206,7 +219,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_static.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_static.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -228,11 +241,13 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ftd2xx.lib;SDL2_staticD.lib;SDL2mainD.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;ftd2xx.lib;SDL2_staticD.lib;SDL2mainD.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x64\*.dll" "$(OutDir)" /i /s /y
+xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
+</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(SolutionDir)read_version.cmd $(SolutionDir)..\examples\$(ProjectName)\build\Makefile &gt;  $(ProjectDir)version_msc.h</Command>
@@ -250,7 +265,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -272,7 +287,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ftd2xx.lib;SDL2_static.lib;SDL2main.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;ftd2xx.lib;SDL2_static.lib;SDL2main.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -294,7 +309,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -315,16 +330,19 @@
       <AdditionalOptions>/source-charset:utf-8 /execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);STR_MWM5_APP_NAME="$(ProjectName)"</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_static.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;imm32.lib;version.lib;setupapi.lib;FTD2XX_static.lib;FTD2XX.lib;SDL2_static.lib;SDL2main.lib;sqlite3.lib
+;SQLiteCpp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x86\*.dll" "$(OutDir)" /i /s /y
+xcopy "$(SolutionDir)\lib\FTDI\i386\*.dll" "$(OutDir)" /i /s /y</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(SolutionDir)read_version.cmd $(SolutionDir)..\examples\$(ProjectName)\build\Makefile &gt;  $(ProjectDir)version_msc.h</Command>
@@ -346,11 +364,13 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ftd2xx.lib;SDL2_static.lib;SDL2main.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;ftd2xx.lib;SDL2_static.lib;SDL2main.lib;imm32.lib;version.lib;setupapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy "$(SolutionDir)\lib\SDL2\lib\x64\*.dll" "$(OutDir)" /i /s /y
+xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
+</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(SolutionDir)read_version.cmd $(SolutionDir)..\examples\$(ProjectName)\build\Makefile &gt;  $(ProjectDir)version_msc.h</Command>
@@ -372,7 +392,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SQLiteCpp.lib;sqlite3.lib;SQLiteCpp.lib;sqlite3.lib;ftd2xx.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>

@@ -62,6 +62,7 @@
     </ClCompile>
     <ClCompile Include="..\src\esp32\esp32_modctrl.cpp" />
     <ClCompile Include="..\src\esp32\esp32_uart.cpp" />
+    <ClCompile Include="..\src\esp32\generic_lcd_screen.cpp" />
     <ClCompile Include="..\src\font\lcd_font_8x6.cpp" />
     <ClCompile Include="..\src\font\font_MP10.cpp" />
     <ClCompile Include="..\src\font\font_MP12.cpp" />
@@ -77,6 +78,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|ARM64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\twesettings\msc_sys.c" />
     <ClCompile Include="..\src\twesettings\twecrc8.c" />
@@ -330,48 +337,66 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\esp32_coding;$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ESP32(coding only)|ARM64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(SolutionDir)\SDL2\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)\</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)\lib\FTDI;$(SolutionDir)\lib\SDL2\include;$(SolutionDir)\..\src\printf;$(SolutionDir)\..\src\twesettings;$(SolutionDir)\..\src\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -517,6 +542,7 @@
       <AdditionalOptions>-wd4819 /source-charset:utf-8 /execution-charset:utf-8 </AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

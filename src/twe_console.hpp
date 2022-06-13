@@ -173,7 +173,30 @@ namespace TWETERM {
 		uint8_t max_term_line;	// maximum line idx
 		uint8_t max_term_col;	// maximum column idx
 
-		uint32_t u32Dirty;		// a flag of redraw necessity.
+		// control dirty flag(needs to redraw) for lines
+		struct _dirtyLine {
+#ifndef ESP32
+			typedef uint64_t bitmap_type;
+			const bitmap_type _DIRTY_FULL = 0xFFFFFFFFFFFFFFFFull;
+			const bitmap_type _BIT = 1;
+#else
+			typedef uint32_t bitmap_type;
+			const bitmap_type _DIRTY_FULL = 0xFFFFFFFFul;
+			const bitmap_type _BIT = 1;
+#endif
+
+			bitmap_type _dirty;
+
+			void set_dirty(unsigned l) { _dirty |= (_BIT << l); }
+			void set_dirty_full() { _dirty = _DIRTY_FULL; }
+			void clear() { _dirty = 0;  }
+			bool is_dirty(unsigned l) { return !!(_dirty & (_BIT << l)); }
+			bool is_full() { return _dirty == _DIRTY_FULL; }
+			operator bool() { return !(_dirty == 0); }
+
+			_dirtyLine() : _dirty(0) {}
+		} dirtyLine;
+
 		const uint32_t U32DIRTY_FULL = 0xFFFFFFFF;
 		uint8_t u8OptRefresh;	// if 1, hardware clear should be applied.
 
@@ -207,7 +230,7 @@ namespace TWETERM {
 			u8OptRefresh(0),
 			escseq_attr(0), escseq_attr_default(0),
 
-			u32Dirty(false), cursor_l(0), cursor_c(0), end_l(u8l - 1),
+			dirtyLine(), cursor_l(0), cursor_c(0), end_l(u8l - 1),
 			escseq(), wrapchar(-1), screen_mode(0), cursor_mode(0),
 			_utf8_stat(0), _utf8_result(0), wrap_mode(1), _bvisible(1)
 		{
@@ -226,7 +249,7 @@ namespace TWETERM {
 			u8OptRefresh(0),
 			escseq_attr(0), escseq_attr_default(0),
 
-			u32Dirty(false), cursor_l(0), cursor_c(0), end_l(u8l - 1),
+			dirtyLine(), cursor_l(0), cursor_c(0), end_l(u8l - 1),
 			escseq(), wrapchar(-1), screen_mode(0), cursor_mode(0),
 			_utf8_stat(0), _utf8_result(0), wrap_mode(1), _bvisible(1)
 		{
@@ -263,7 +286,7 @@ namespace TWETERM {
 
 		// redraw post process (it shall be called from at the end of refresh())
 		inline void post_refresh() {
-			u32Dirty = 0;
+			dirtyLine.clear();
 			u8OptRefresh = 0;
 		}
 		const uint8_t U8OPT_REFRESH_HARDWARE_CLEAR_MASK = 0x01;
@@ -283,7 +306,7 @@ namespace TWETERM {
 			cursor_c = 0;
 			cursor_l = max_line;
 
-			u32Dirty = U32DIRTY_FULL;
+			dirtyLine.set_dirty_full();
 		}
 
 		// calc the buffer index by screen line 'l'.
@@ -355,15 +378,15 @@ namespace TWETERM {
 			escseq_attr_default = escseq_attr; // set default when it's cleared.
 			wrapchar = -1;
 
-			u32Dirty = U32DIRTY_FULL;
+			dirtyLine.set_dirty_full();
 		}
 
 		// cursor set home pos
 		inline void home() {
-			u32Dirty |= (1UL << cursor_l);
+			dirtyLine.set_dirty(cursor_l);
 			cursor_c = 0;
 			cursor_l = 0;
-			u32Dirty |= (1UL << cursor_l);
+			dirtyLine.set_dirty(0);
 		}
 
 		// clear screen
@@ -373,17 +396,22 @@ namespace TWETERM {
 		}
 
 		// clear the line
-		void clear_line(uint8_t line, bool fill_blank = false);
+		void clear_line(uint8_t line) {
+			int L = calc_line_index(line);
+
+			dirtyLine.set_dirty(line);
+			for (int j = 0; j <= max_col; j++) astr_screen[L][j] = GChar(' ', escseq_attr);
+		}
 				
 		// set dirty flag to redraw screen
 		inline void force_refresh(uint8_t opt = 0) {
-			u32Dirty = U32DIRTY_FULL; 
+			dirtyLine.set_dirty_full();
 			u8OptRefresh = U8OPT_REFRESH_HARDWARE_CLEAR_MASK | U8OPT_REFRESH_WHOLE_LINE_REDRAW_MASK | opt;
 			refresh(); // do refresh now!
 		}
 
 		inline void refresh_text() {
-			u32Dirty = U32DIRTY_FULL;
+			dirtyLine.set_dirty_full();
 		}
 
 		// add a unicode to the terminal
@@ -452,8 +480,12 @@ namespace TWETERM {
 		// move cursor position
 		ITerm& move_cursor(uint8_t cols, uint8_t lines);
 
-		ITerm& operator ()(int x, int y) {
-			move_cursor(x, y);
+		GChar& get_char_at_cursor() {
+			return astr_screen[cursor_l][cursor_c];
+		}
+
+		ITerm& operator ()(int col, int row) {
+			move_cursor(col , row);
 			return *this;
 		}
 
@@ -468,7 +500,7 @@ namespace TWETERM {
 			int16_t lin;
 			uint8_t b_in_range;
 
-			operator bool() { return b_in_range; }
+			explicit operator bool() { return b_in_range; }
 		};
 
 		// get terminal col/lines from screen coord.
@@ -568,7 +600,7 @@ namespace TWETERM {
 	inline ITerm& operator << (ITerm& t, const TWEUTILS::SmplBuf_WChar& p) { *static_cast<TWE::IStreamOut*>(&t) << p; return t; }
 
 	// OTHERS
-	inline ITerm& operator << (ITerm& t, int i) { *static_cast<TWE::IStreamOut*>(&t) << i; return t; }
+	inline ITerm& operator << (ITerm& t, int i) { *static_cast<TWE::IStreamOut*>(&t) << TWE::printfmt("%d", i); return t; }
 
 	template <typename TP>
 	inline ITerm& operator << (ITerm& t, std::pair<TP, TP> pair_pt) {

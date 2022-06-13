@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "twe_file.hpp"
@@ -33,6 +33,7 @@ using namespace TWEUTILS;
 
 // defs
 #define STR_FIRM_BIN L"BIN"
+#define STR_LOG L"log"
 #define STR_MWSDK_CHIPLIB L"ChipLib"
 #define STR_ACTSAMPLES L"Act_samples"
 #define STR_ACTEXTRAS L"Act_extras"
@@ -540,18 +541,21 @@ void TweCwd::begin() {
 	PRINT_VAR(_save_profile_name);
 	PRINT_VAR(_dir_cur);
 	PRINT_VAR(_dir_exe);
+	PRINT_VAR(_filename_exe);
 	PRINT_VAR(_dir_launch);
 	PRINT_VAR(_dir_tweapps);
 	PRINT_VAR(_dir_twenet_lib);
 	PRINT_VAR(_dir_wks_acts);
 	PRINT_VAR(_dir_wks_act_extras);
 	PRINT_VAR(_dir_wks_tweapps);
+	PRINT_VAR(_dir_log);
 
 	#ifdef _DEBUG
 	# if defined(_MSC_VER) || defined(__MINGW32__)
-		system("cmd /c set |find \"MWSDK\""); // check env values output to console
+		// system("CMD /C SET |FIND \"MWSDK\""); // check env values output to console
+		system("CMD /c SET |%SystemRoot%\\System32\\find.exe \"MWSDK_\""); // check env values output to console
 	# else 
-		system("env |grep MWSDK"); // check env values output to console
+		system("env |grep MWSDK_"); // check env values output to console
 	# endif
 	#endif
 }
@@ -761,7 +765,7 @@ void TweCwd::_set_sdk_env() {
 	size_t reqct;
 	getenv_s(&reqct, NULL, 0, "PATH"); // check size of env
 	if (reqct > (val.capacity() - TWE::TWE_FILE_NAME_MAX)) {
-		val.reserve(TWE::TWE_FILE_NAME_MAX + reqct); // if excess size, reserve more.
+		val.reserve(SmplBuf_ByteS::size_type(TWE::TWE_FILE_NAME_MAX + reqct)); // if excess size, reserve more.
 	}
 	
 	val << make_full_path(_dir_sdk, "..\\Tools\\MinGW\\msys\\1.0\\bin");
@@ -783,7 +787,7 @@ void TweCwd::_set_sdk_env() {
 		val.append(';');
 
 		getenv_s(&reqct, (char*)val.end().raw_ptr(), reqct, "PATH"); // put data dirctly into Buffer.
-		val.resize_preserving_unused(val.size() + reqct); // expand buffer end without clearing data.
+		val.resize_preserving_unused(SmplBuf_ByteS::size_type(val.size() + reqct)); // expand buffer end without clearing data.
 
 		_putenv_s("PATH", val.c_str());
 		_print_var("PATH", val);
@@ -862,6 +866,13 @@ void TweCwd::_get_wks_dir() {
 	if (!TweDir::is_dir(_dir_tweapps.c_str())) _dir_tweapps = make_full_path(get_dir_sdk(), L"..", STR_FIRM_BIN);
 	if (!TweDir::is_dir(_dir_tweapps.c_str())) _dir_tweapps = make_full_path(get_dir_sdk(), STR_FIRM_BIN);
 	_dir_tweapps.c_str();
+
+	// [ログディレクトリ] as "log"
+	_dir_log = make_full_path(get_dir_launch(), STR_LOG);
+	if (!TweDir::is_dir(_dir_log.c_str())) _dir_log = make_full_path(get_dir_exe(), STR_LOG);
+	if (!TweDir::is_dir(_dir_log.c_str())) _dir_log = make_full_path(get_dir_sdk(), L"..", STR_LOG); // should be STAGE DIR
+	if (!TweDir::is_dir(_dir_log.c_str())) _dir_log = make_full_path(get_dir_sdk(), STR_LOG);
+	_dir_log.c_str();
 
 	// [Actビルド＆書換] firstly searches `Wks_Acts'
 	_dir_wks_acts = make_full_path(get_dir_launch(), STR_WKS_ACTS);
@@ -1253,4 +1264,52 @@ void TWE::shell_open_by_command(TWEUTILS::SmplBuf_WChar&& str, const wchar_t* st
 	}
 }
 
-#endif
+bool TWE::TweLogFile::open(bool b_append) {
+	_time_open.now();
+
+	_file_name << _file_base;
+	if (_b_add_date) {
+		_file_name << TWE::format("%04d%02d%02d-%02d%02d%02d"
+			, _time_open.year
+			, _time_open.month
+			, _time_open.day
+			, _time_open.hour
+			, _time_open.minute
+			, _time_open.second
+		);
+	}
+	_file_name << '.' << _file_suff;
+	_file_fullpath << make_full_path(the_cwd.get_dir_log(), _file_name);
+
+	try {
+		_file_buf.reset(new std::filebuf());
+		_file_buf->open((const char*)_file_fullpath.c_str(), std::ios_base::out | std::ios::binary | (b_append ? std::ios::app : std::ios::trunc));
+		_file_os.reset(new std::ostream(_file_buf.get()));
+		_is_opened = true;
+		return true;
+	}
+	catch (...) {
+		_file_buf.reset();
+		_file_os.reset();
+		_is_opened = false;
+
+		return false;
+	}
+}
+void TWE::TweLogFile::flush() {
+	if (_is_opened) {
+		_file_os->flush();
+	}
+}
+
+void TWE::TweLogFile::shell_open() {
+	shell_open_default(_file_fullpath.c_str());
+}
+
+void TWE::TweLogFile::close() {
+	_file_buf.reset();
+	_file_os.reset();
+	_is_opened = false;
+}
+
+#endif // ESP32

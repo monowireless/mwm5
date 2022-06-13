@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
@@ -242,6 +242,7 @@ void App_SelectPort::setup_screen() {
 	default_bg_color = BLACK; // color565(90, 0, 50); 
 	default_fg_color = ALMOST_WHITE;
 
+#if M5_SCREEN_HIRES == 0
 	// font register (note: to save flash area, don't create too much!)
 	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
 
@@ -250,26 +251,44 @@ void App_SelectPort::setup_screen() {
 	TWEFONT::createFontMP12_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
 	TWEFONT::createFontMP12_mini(13, 0, 0); // MP10 font
 
-	// main screen area
 	the_screen.set_font(10);
+	the_screen_b.set_font(1);
+	the_screen_c.set_font(1);
+	the_screen_t.set_font(11);
+#elif M5_SCREEN_HIRES == 1
+	// font register (note: to save flash area, don't create too much!)
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
+
+	TWEFONT::createFontShinonome16(10, 5, 3);
+	
+	//TWEFONT::createFontMP12(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+	TWEFONT::createFontMP12(13, 0, 0);
+
+	the_screen.set_font(10);
+	the_screen_b.set_font(13);
+	the_screen_c.set_font(12);
+	the_screen_t.set_font(11);
+#endif
+
+	// main screen area
 	the_screen.set_color(default_fg_color, default_bg_color);
 	the_screen.set_cursor(0); // 0: no 1: curosr 2: blink cursor
 	the_screen.force_refresh();
 
 	// bottom area
-	the_screen_b.set_font(1);
 	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
 	the_screen_b.set_cursor(0);
 	the_screen_b.force_refresh();
 
 	// bottom area
-	the_screen_c.set_font(1);
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.force_refresh();
 
 	// top area
-	the_screen_t.set_font(11);
 	the_screen_t.set_color(default_bg_color, default_fg_color);
 	the_screen_t.set_cursor(0);
 	the_screen_t.force_refresh();

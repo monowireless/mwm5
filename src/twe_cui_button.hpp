@@ -13,6 +13,10 @@
 
 #include <utility>
 
+#ifdef TWE_USE_STD_FUNCTION
+# include <functional>
+#endif
+
 namespace TWECUI {
 
 	class TWE_Button : TWE_Widget {
@@ -180,6 +184,23 @@ namespace TWECUI {
 		RectCon& get_additional_hot_area() {
 			return _additional_hot_area;
 		}
+
+
+		/**
+		 * @fn	TWEUTILS::SmplBuf_WChar& TWE_Button::get_label()
+		 *
+		 * @brief	Gets label string.
+		 *
+		 * @returns	Reference to the label data.
+		 */
+		TWEUTILS::SmplBuf_WChar& get_label() { return _strlbl; }
+
+		/**
+		 * set visibility.
+		 * 
+		 * \param b_visible true to visible.
+		 */
+		void set_visible(bool b_visible);
 	};
 
 
@@ -198,13 +219,16 @@ namespace TWECUI {
 	 */
 	class ITWE_WidEv_Button {
 	protected:
-		void* _obj;
+		void* _obj; // the object pointer of the class instance where button callcack functions are defined.
 
 	public:
 		ITWE_WidEv_Button(void *obj) : _obj(obj) {}
 		virtual ~ITWE_WidEv_Button() {}
 		virtual void call_ev_btn_press(int i, int id, uint32_t opt) = 0;
 		virtual void clear() = 0;
+		void* _get_obj_ptr() { return _obj; }
+
+		using func_type = std::function<void(int id, uint32_t opt)>;
 	};
 
 
@@ -215,20 +239,17 @@ namespace TWECUI {
 	 *
 	 * @tparam	T	Generic type parameter.
 	 */
-	template <class T>
-	class TWE_WidEv_Button : public ITWE_WidEv_Button {
-		typedef void (T::* tpf_func_press)(int id, uint32_t opt);
-
+	class TWE_WidEv_Button : public ITWE_WidEv_Button {		
 	public:
+		template <class T>
 		TWE_WidEv_Button(T& app) : ITWE_WidEv_Button((void*)&app) {}
 
 		void call_ev_btn_press(int i, int id, uint32_t opt) {
-			if (_obj && i < int(_hnd_pres.size()) && _hnd_pres[i]) {
-				T* pobj = reinterpret_cast<T*>(_obj);
-				
-				((*pobj).*(_hnd_pres[i]))(id, opt);
+			if (_obj && i < int(_hnd_pres.size())) {
+				auto &f = _hnd_pres[i];
+				f(id, opt);
 			}
-		};
+		}
 
 		void clear() {
 #ifndef ESP32
@@ -238,7 +259,7 @@ namespace TWECUI {
 #endif
 		}
 
-		TWEUTILS::SimpleBuffer<tpf_func_press> _hnd_pres;
+		TWEUTILS::SimpleBuffer<func_type> _hnd_pres;
 	};
 
 	
@@ -247,18 +268,18 @@ namespace TWECUI {
 		// TWEUTILS::SimpleBuffer<void *> _hnd_pres;
 		TWEUTILS::SimpleBuffer<uint32_t> _opt;
 		TWETERM::ITerm& _trm;
-		std::unique_ptr<ITWE_WidEv_Button> _upapp;
+		std::unique_ptr<TWE_WidEv_Button> _upapp;
 		TWE_Button _btn_null;
 		
 	public:
 		template <class T>
 		TWE_WidSet_Buttons(T& app, TWETERM::ITerm& trm) : 
-			_upapp(new TWE_WidEv_Button<T>(app))
+			_upapp(new TWE_WidEv_Button(app))
 			, _trm(trm)
 			, _btn_null(0, 0, L"") // null btn for error handing.
 		{
 			_btns.reserve(16);
-			static_cast<TWE_WidEv_Button<T>*>(_upapp.get())->_hnd_pres.reserve(16);
+			_upapp->_hnd_pres.reserve(16);
 			_opt.reserve(16);
 		}
 		~TWE_WidSet_Buttons() {}
@@ -273,26 +294,25 @@ namespace TWECUI {
 		 *
 		 * @returns	Tab index number (0..MAXTABs-1)
 		 */
-		template <typename T>
-		int add(uint8_t cols, uint8_t lines, const wchar_t* lbl, void (T::* hndlr)(int id, uint32_t opt), uint32_t opt=0) {
-			{
-#ifdef TWE_USE_RTTI
-				// type check (if T is differ, no action)
-				auto papp = dynamic_cast<TWE_WidEv_Button<T>*>(_upapp.get());
-				if (papp) papp->_hnd_pres.push_back(hndlr);
-				else return -1;
-#else
-				static_cast<TWE_WidEv_Button<T>*>(_upapp.get())->_hnd_pres.push_back(hndlr);
-#endif
-			}
-			
+
+		int add(uint8_t cols, uint8_t lines, const wchar_t* lbl, std::function<void(int id, uint32_t opt)> f, uint32_t opt = 0)
+		{
+			_upapp->_hnd_pres.push_back(f); // add an handler
+
 			_btns.push_back(TWECUI::upTWE_Button(new TWE_Button(cols, lines, lbl)));
 			_btns[-1]->attach_term(_trm);
 			_btns[-1]->update_view();
-			
+
 			_opt.push_back(opt);
 
 			return _btns.size() - 1;
+		}
+
+		template <typename T>
+		int add(uint8_t cols, uint8_t lines, const wchar_t* lbl, void (T::* hndlr)(int id, uint32_t opt), T* pobj, uint32_t opt=0)
+		{
+				ITWE_WidEv_Button::func_type f = std::bind(hndlr, pobj, std::placeholders::_1, std::placeholders::_2);
+				return add(cols, lines, lbl, f, opt);
 		}
 
 
@@ -303,6 +323,8 @@ namespace TWECUI {
 		 */
 		void clear() {
 			_btns.clear();
+			_upapp->_hnd_pres.clear();
+			_opt.clear();
 		}
 
 		/**

@@ -1,4 +1,4 @@
-﻿#pragma once 
+#pragma once 
 
 /* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
@@ -120,7 +120,7 @@ namespace TWESERCMD {
 		}
 
 		// return true, if parsing has been completed.
-		inline operator bool() { return u8state == E_TWESERCMD_COMPLETE; }
+		inline explicit operator bool() { return u8state == E_TWESERCMD_COMPLETE; }
 		// get payload length
 		inline uint16_t length() { return payload.length(); }
 		// access payload with array index.

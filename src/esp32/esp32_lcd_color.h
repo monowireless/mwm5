@@ -4,7 +4,7 @@
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
  // define while color (0xFFFF behaves transparent)
-#define ALMOST_WHITE ((30 << 11) | (62 << 5) | 30)
+#define ALMOST_WHITE ((31 << 11) | (62 << 5) | 31)
 #if defined(ESP32)
 #elif defined (_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
 // define color table
