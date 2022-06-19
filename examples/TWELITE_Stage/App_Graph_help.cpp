@@ -1,7 +1,7 @@
 /* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
-#include "App_CUE.hpp"
+#include "App_Graph.hpp"
 
 static const wchar_t HELP_MSG[][384] =
 {
@@ -69,11 +69,11 @@ static const wchar_t HELP_MSG[][384] =
 };
 static const int MAX_PAGE_NUM = int(elements_of_array(HELP_MSG) - 1);
 
-struct App_CUE::SCR_HELP : public APP_HANDLR_DC {
-	static const int CLS_ID = App_CUE::PAGE_ID::PAGE_HELP;
+struct App_Graph::SCR_HELP : public APP_HANDLR_DC {
+	static const int CLS_ID = App_Graph::PAGE_ID::PAGE_HELP;
 	int get_class_id() { return CLS_ID; }
 
-	App_CUE& _app;
+	App_Graph& _app;
 	TWE_WidSet_Buttons _btns;
 
 	// object references to the App_CUE
@@ -85,7 +85,7 @@ struct App_CUE::SCR_HELP : public APP_HANDLR_DC {
 	static const uint32_t PAGE_NEXT = 0x81;
 	static const uint32_t PAGE_PREV = 0x82;
 
-	SCR_HELP(App_CUE& app) : _app(app), _btns(*this, app.the_screen)
+	SCR_HELP(App_Graph& app) : _app(app), _btns(*this, app.the_screen)
 		, the_screen(app.the_screen), the_screen_b(app.the_screen_b)
 		, _page(0)
 		, APP_HANDLR_DC(CLS_ID) {}
@@ -153,7 +153,7 @@ struct App_CUE::SCR_HELP : public APP_HANDLR_DC {
 
 			case KeyInput::KEY_BUTTON_A_LONG:
 			case KeyInput::KEY_BS:
-				_app._tabs.select(PAGE_ID::PAGE_BASIC);
+				_app._tabs.select(PAGE_ID::PAGE_OPEN);
 				break;
 
 			case KeyInput::KEY_BUTTON_B:
@@ -181,4 +181,4 @@ struct App_CUE::SCR_HELP : public APP_HANDLR_DC {
 };
 
 // generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods)
-void App_CUE::hndr_SCR_HELP(event_type ev, arg_type arg) { hndr<SCR_HELP>(ev, arg); }
+void App_Graph::hndr_SCR_HELP(event_type ev, arg_type arg) { hndr<SCR_HELP>(ev, arg); }

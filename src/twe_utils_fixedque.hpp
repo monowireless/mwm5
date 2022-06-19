@@ -35,9 +35,9 @@ namespace TWEUTILS {
 		const bool _mtx;
 		bool LockGuard(const bool b) { return true; }
 #elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
-		SDL_mutex* _mtx;
+		TWE::LockGuard::mutex_type _mtx;
 #elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 0
-		std::mutex _mtx;
+		TWE::LockGuard::mutex_type _mtx;
 #else
 		const bool _mtx = true;
 #endif

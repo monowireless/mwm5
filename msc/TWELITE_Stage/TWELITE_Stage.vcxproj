@@ -462,12 +462,12 @@ xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_NOTICE_0x01.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_Opening.cpp" />
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE.cpp" />
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_aria_basic.cpp" />
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_basic.cpp" />
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_fifo.cpp" />
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_help.cpp" />
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_wsns_db.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer_ARIA_Basic.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Grancer_CUE_Basic.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph_Mot.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph_help.cpp" />
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph_WSnsDb.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\menu_info.cpp" />
     <ClCompile Include="..\..\examples\TWELITE_Stage\_AppVer.cpp" />
@@ -488,7 +488,7 @@ xcopy "$(SolutionDir)\lib\FTDI\amd64\*.dll" "$(OutDir)" /i /s /y
     <ClInclude Include="..\..\examples\TWELITE_Stage\AppIDs.h" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Commander.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Console.hpp" />
-    <ClInclude Include="..\..\examples\TWELITE_Stage\App_CUE.hpp" />
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Graph.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Glancer.hpp" />
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Interactive.hpp" />

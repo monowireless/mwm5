@@ -1,22 +1,24 @@
 /* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
-#include "App_CUE.hpp"
+#include "App_Glancer.hpp"
 
-struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
-	static const int CLS_ID = App_CUE::PAGE_ID::PAGE_BASIC;
+using APP_BASE = App_Glancer;
+
+struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
+	static const int CLS_ID = int(APP_BASE::PAGE_ID::PAGE_SCR_CUE);
 	int get_class_id() { return CLS_ID; }
 
-	App_CUE& _app;
+	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
 	int _pkt_rcv_ct;
 
-	// object references to the App_CUE
+	// object references to the APP_BASE
 	ITerm& the_screen;
 	ITerm& the_screen_b;
 	IParser& parse_ascii;
 
-	SCR_CUE_BASIC(App_CUE& app) : _app(app), _btns(*this, app.the_screen), _pkt_rcv_ct(0)
+	SCR_CUE_BASIC(APP_BASE& app) : _app(app), _btns(*this, app.the_screen), _pkt_rcv_ct(0)
 			, the_screen(app.the_screen), the_screen_b(app.the_screen_b), parse_ascii(app.parse_ascii)
 			, APP_HANDLR_DC(CLS_ID) {}
 	~SCR_CUE_BASIC() {}
@@ -130,8 +132,6 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 			the_screen_b.clear_screen();
 			the_screen_b << "PKT(" << _pkt_rcv_ct++ << ')';
 
-			the_screen.clear_screen();
-
 			// payload
 			auto&& p = parse_ascii.get_payload();
 
@@ -139,20 +139,9 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 			auto&& pkt = newTwePacket(parse_ascii.get_payload());
 			the_screen_b << ":Typ=" << int(identify_packet_type(pkt));
 
-			the_screen.move_cursor(0, 0);
-			the_screen << printfmt("■ パケット (#%04d, 種別:%02d)", _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
-			
 			if (identify_packet_type(pkt) == E_PKT::PKT_PAL) {
 				auto&& pal = refTwePacketPal(pkt);
 				PalEvent ev;
-
-				the_screen << printfmt("  ID=%02d AD=0x%08X LQ=%03d SQ=%04d", pal.u8addr_src, pal.u32addr_src, pal.u8lqi, pal.u16seq);
-
-				// acquire event data.
-				if (pal.has_PalEvent()) {
-					ev = pal.get_PalEvent();
-					print_event(ev, 3); // takes 4lines
-				}
 
 				// put information
 				the_screen_b
@@ -162,50 +151,46 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 					<< crlf
 					;
 
-				switch (pal.get_PalDataType()) {
-					case E_PAL_DATA_TYPE::EVENT_ONLY:
-					{
-						if (ev) the_screen_b << ":EVENT:ID=" << int(ev.u8event_id);
-					}
-					break;
+				if (pal.has_PalEvent()) {
+					ev = pal.get_PalEvent();
+					the_screen_b << ":EVENT=" << int(ev.u8event_id);
+				}
 
+				switch (pal.get_PalDataType()) {
+					// for CUE
 					case E_PAL_DATA_TYPE::EX_CUE_STD:
 					{
 						// generate TWELITE CUE standard data
 						TweCUE cue = pal.get_TweCUE();
 
+						// sub screen.
 						the_screen_b << ":CUE";
-
-						// extended header
 						the_screen_b << ":EX(" << int(pal.u8data_type) << "," << int(pal.u8_data_cause) << "," << int(pal.u8_data_cause) << ")";
 
-						// event data
-						if (ev) the_screen_b << ":EVENT=" << int(ev.u8event_id);
+						// update main screen
+						the_screen.clear_screen();
+						the_screen.move_cursor(0, 0);
+						the_screen << printfmt("■ パケット (#%04d, 種別:%02d)", _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
+						the_screen << printfmt("  ID=%02d AD=0x%08X LQ=%03d SQ=%04d", pal.u8addr_src, pal.u32addr_src, pal.u8lqi, pal.u16seq);
+
+						// acquire event data.
+						if (pal.has_PalEvent()) {
+							ev = pal.get_PalEvent();
+							print_event(ev, 3); // takes 4lines
+						}
 
 						// volt
 						{
-							int ct = 0;
-
 							the_screen.move_cursor(0, 8);
 							the_screen << L"■ 電圧";
 							if (cue.has_vcc()) {
-								ct++;
 								the_screen_b << ":VCC=" << int(cue.get_vcc_i16mV());
 								the_screen << printfmt(" VCC=%04dmV", cue.get_vcc_i16mV());
 							}
-
-#if 0
-							// adc1
-							if (cue.has_adc1()) {
-								ct++;
-								the_screen_b << ":AD1=" << int(cue.get_adc1_i16mV());
-								the_screen << printfmt(" AD1=%04dmV", cue.get_adc1_i16mV());
+							else {
+								the_screen << L" データなし";
 							}
-#endif
-
-							if (ct == 0) the_screen << L" データなし";
 						}
-
 
 						// mag
 						the_screen.move_cursor(0, 10);
@@ -228,7 +213,7 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 							the_screen << L" データなし";
 						}
 
-						// mot
+						// ACCELO
 						the_screen.move_cursor(0, 12);
 						the_screen << L"■ 加速度 ";
 						if (cue.has_accel()) {
@@ -265,6 +250,67 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 					}
 					break;
 
+					// for PAL MOT
+					case E_PAL_DATA_TYPE::MOT_STD:
+					{
+						PalMot dsns = pal.get_PalMot();
+
+						// sub screen.
+						the_screen_b << "MOT";
+						the_screen_b << ":EX(" << int(pal.u8data_type) << "," << int(pal.u8_data_cause) << "," << int(pal.u8_data_cause) << ")";
+
+						// update main screen
+						the_screen.clear_screen();
+						the_screen.move_cursor(0, 0);
+						the_screen << printfmt("■ パケット (#%04d, 種別:%02d)", _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
+						the_screen << printfmt("  ID=%02d AD=0x%08X LQ=%03d SQ=%04d", pal.u8addr_src, pal.u32addr_src, pal.u8lqi, pal.u16seq);
+
+						// volt
+						{
+							the_screen.move_cursor(0, 8);
+							the_screen << L"■ 電圧";
+							if (dsns.has_vcc()) {
+								the_screen_b << ":VCC=" << int(dsns.get_vcc_i16mV());
+								the_screen << printfmt(" VCC=%04dmV", dsns.get_vcc_i16mV());
+							}
+							else {
+								the_screen << L" データなし";
+							}
+						}
+
+						// ACCELO
+						the_screen.move_cursor(0, 12);
+						the_screen << L"■ 加速度 ";
+						if (dsns.has_accel()) {
+							the_screen << printfmt("(ｻﾝﾌﾟﾙ=%02d, ﾚｰﾄID=%02d)", dsns.get_accel_count_u8(), dsns.u8sample_rate_code) << crlf;
+							the_screen_b << "MOT";
+							the_screen_b << ":SAMPLES=" << int(dsns.get_accel_count_u8());
+							the_screen_b << ":SR=" << int(dsns.u8sample_rate_code);
+
+							int ave_x = 0, ave_y = 0, ave_z = 0;
+							if (dsns.get_accel_count_u8() >= 8) {
+								for (int i = 0; i < 8; i++) {
+									ave_x += dsns.get_accel_X_i16mG(i);
+									ave_y += dsns.get_accel_Y_i16mG(i);
+									ave_z += dsns.get_accel_Z_i16mG(i);
+								}
+
+								ave_x >>= 3;
+								ave_y >>= 3;
+								ave_z >>= 3;
+
+								the_screen_b << ":" << "(" << ave_x;
+								the_screen_b << "," << ave_y;
+								the_screen_b << "," << ave_z;
+								the_screen_b << ")";
+
+								the_screen << printfmt("   X=%04dmG", ave_x);
+								the_screen << printfmt(", Y=%04dmG", ave_y);
+								the_screen << printfmt(", Z=%04dmG", ave_z);
+							}
+						}
+					}
+					break;
 					default: break;
 				}
 
@@ -275,7 +321,7 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 	void setup() {
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
-		_app.set_title_bar(PAGE_ID::PAGE_BASIC);
+		_app.set_title_bar(int(PAGE_ID::PAGE_SCR_CUE));
 		_app.set_nav_bar();
 		show_message();
 	}
@@ -315,4 +361,4 @@ struct App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 };
 
 // generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods)
-void App_CUE::hndr_SCR_CUE_BASIC(event_type ev, arg_type arg) { hndr<SCR_CUE_BASIC>(ev, arg); }
+void APP_BASE::hndr_SCR_CUE_BASIC(event_type ev, arg_type arg) { hndr<SCR_CUE_BASIC>(ev, arg); }

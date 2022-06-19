@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Glancer.hpp"
@@ -8,31 +8,560 @@
 # undef min
 #endif
 
-const wchar_t App_Glancer::LAUNCH_MSG[] =
+using APP_BASE = App_Glancer; //! alias to parent class
+
+
+const wchar_t APP_BASE::LAUNCH_MSG[] =
 //....+....1....+....2....+....3....+....4| // 16dots 40cols
 L"            \033[4m"
-            L"Glancer グランサー\033[0m"
-		                      L"          ""\r\n"
+L"簡易確認アプリ\033[0m"
+L"          ""\r\n"
 L"\r\n"
-L"Glancer グランサーは、アスキー形式を解釈""\r\n"
-L"して、送信元IDやﾘﾝｸ品質など表示します。" "\r\n"
-L"リストの中から特定の送信元のみを選択表示""\r\n"
-L"できます。設置した無線子機の電波の飛び具""\r\n"
-L"合いを簡単に調べることができます。"      "\r\n"
-L"TWELITEにはApp_Wingsを書き込みます。"    "\r\n"
+L"無線パケットの到着を簡易的に確認します。" "\r\n"
+L"CUE -> 標準形式のﾊﾟｹｯﾄを解釈します。" "\r\n"
+L"Glancer -> 多くのﾊﾟｹｯﾄを簡易リスト""\r\n"
 ;
 
-void App_Glancer::setup() {
+/*****************************************************************************************
+ * App_Glancer
+ ****************************************************************************************/
+
+// color table
+static uint16_t COLTBL_MAIN[8] = {
+	BLACK,
+	RED,
+	GREEN,
+	YELLOW,
+	BLUE, // color565(127, 127, 255), // BLUE,
+	MAGENTA, //color565(255, 0, 142), // MAGENTA,
+	CYAN,
+	ALMOST_WHITE
+};
+
+void APP_BASE::setup() {
 	// preference
 	the_settings_menu.begin(appid_to_slotid(APP_ID));
-	
+
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 
+	// button navigation
+	set_nav_bar();
+
+	// add tab item by page id order.
+	for (int i = 0; PAGE_ID(i) < PAGE_ID::_PAGE_END_; i++) {
+		switch (PAGE_ID(i)) {
+		case PAGE_ID::PAGE_OPEN: _tabs.add(L"---", &APP_BASE::hndr_SCR_OPEN); break;
+		case PAGE_ID::PAGE_SCR_CUE: _tabs.add(L"CUE", &APP_BASE::hndr_SCR_CUE_BASIC); break;
+		case PAGE_ID::PAGE_SCR_ARIA: _tabs.add(L"ARIA", &APP_BASE::hndr_SCR_ARIA_BASIC); break;
+		case PAGE_ID::PAGE_SCR_GLANCER: _tabs.add(L"Glancer", &APP_BASE::hndr_SCR_GLANCER); break;
+		default: break;
+		}
+	}
+	_tabs.update_view();
+
+	if (u8tab_selection < _tabs.size()) {
+		_tabs.select(u8tab_selection);
+	}
+
+	// put a init message
+	set_title_bar(int(PAGE_ID::PAGE_SCR_CUE));
+}
+
+void APP_BASE::loop() {
+	// tab event handling
+	_tabs.check_events();
+
+	// peek keyevent and perform common event handling.
+	// if the event is not for this controls, APP_HNDLR will take care of.
+	bool b_loop = true;
+	do {
+		int c = the_keyboard.peek_a_byte();
+
+		if (c == KeyInput::KEY_BUTTON_A) {
+			_tabs.select_prev();
+		}
+		else if (c == KeyInput::KEY_BUTTON_C) {
+			_tabs.select_next();
+		}
+		else if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
+			// handle double ESC/double right click
+			static uint32_t t_last;
+			uint32_t t_now = millis();
+
+			if (t_now - t_last < 300) {
+				the_app.exit(APP_ID);
+			}
+			else {
+				b_loop = false;
+			}
+			t_last = t_now;
+		}
+		else if (c == KeyInput::KEY_BUTTON_A_LONG) {
+			the_app.exit(APP_ID);
+		}
+		else if (c == KeyInput::KEY_BUTTON_C_LONG) {
+			twe_prog.reset_module();
+		}
+		else {
+			b_loop = false; // message is not used, pass the event to TAB content.
+		}
+
+		if (b_loop) { // still looping
+			the_keyboard.get_a_byte(); // skip this byte
+			c = the_keyboard.peek_a_byte(); // next byte
+		}
+	} while (b_loop);
+
+	// loop by APP_HNDLR
+	APP_HNDLR::loop();
+
+	// LCD update
+	screen_refresh();
+}
+
+void APP_BASE::setup_screen() {
+	// LCD font color
+	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
+	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
+
+#if M5_SCREEN_HIRES == 0
+	// font register (note: to save flash area, don't create too much!)
+	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
+	TWEFONT::createFontMP12(10, 0, 0); // MP11 font
+	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
+
+	the_screen_t.set_font(11);
+	the_screen_tab.set_font(1);
+	the_screen.set_font(10);
+	the_screen_b.set_font(1);
+	the_screen_c.set_font(1);
+
+#elif M5_SCREEN_HIRES == 1
+	font_IDs.main = 11;
+	font_IDs.smaller = 14;
+	font_IDs.tiny = 1;
+
+	TWEFONT::createFontMP10_std(1, 0, 0);
+
+	TWEFONT::createFontShinonome16(10, 0, 0); // normal font
+
+	TWEFONT::createFontShinonome16_full(font_IDs.main, 4, 2); // MP11 font
+
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
+
+	TWEFONT::createFontShinonome16(13, 0, 0, 0 /* TWEFONT::U32_OPT_FONT_YOKOBAI */);
+
+	TWEFONT::createFontMP12_std(font_IDs.smaller, 0, 0);
+
+	the_screen_t.set_font(13);
+	the_screen_tab.set_font(10);
+	the_screen.set_font(font_IDs.main);
+	the_screen_b.set_font(font_IDs.smaller);
+	the_screen_c.set_font(12);
+#endif
+
+	// main screen area
+	the_screen.set_color(default_fg_color, default_bg_color);
+	the_screen.set_cursor(0); // 0: no 1: curosr 2: blink cursor
+	the_screen.set_wraptext(false);
+	the_screen.force_refresh();
+
+	// tab area
+	the_screen_tab.set_color(default_bg_color, color565(0x80, 0x80, 0x80));
+	the_screen_tab.set_cursor(0); // 0: no 1: curosr 2: blink cursor
+	the_screen_tab.set_color_table(COLTBL_MAIN);
+	the_screen_tab.force_refresh();
+
+	// bottom area (sub screen)
+	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
+	the_screen_b.set_cursor(0);
+	the_screen_b.force_refresh();
+
+	// top area
+	the_screen_t.set_color(default_bg_color, default_fg_color);
+	the_screen_t.set_cursor(0);
+	the_screen_t.force_refresh();
+
+	// nav bar area
+	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
+	the_screen_c.set_cursor(0);
+	the_screen_c.force_refresh();
+}
+
+void APP_BASE::set_nav_bar(const char* msg) {
+	the_screen_c.clear_screen();
+
+	if (msg == nullptr) {
+		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << "  前TAB/長押:戻る            --/--             次TAB/ﾘｾｯﾄ";
+	}
+	else {
+		the_screen_c << msg;
+	}
+}
+
+// set title bar
+void APP_BASE::set_title_bar(int page_id) {
+	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m CUE/ARIAﾋﾞｭｰｱ\033[0m";
+
+	the_screen_t.clear_screen();
+
+	switch (PAGE_ID(page_id)) {
+	case PAGE_ID::PAGE_OPEN:
+		the_screen_t << title << ": ---"; break;
+	case PAGE_ID::PAGE_SCR_CUE:
+		the_screen_t << title << ": CUEパケット確認"; break;
+	case PAGE_ID::PAGE_SCR_GLANCER:
+		the_screen_t << title << ": Glancer ｸﾞﾗﾝｻｰ"; break;
+	default:
+		the_screen_t << title; break;
+	}
+}
+
+void APP_BASE::screen_refresh() {
+	static uint32_t u32mills;
+
+	uint32_t u32now = millis();
+	if (u32now - u32mills > 32) {
+		the_screen.refresh();
+		the_screen_tab.refresh();
+		the_screen_b.refresh();
+		the_screen_c.refresh();
+		the_screen_t.refresh();
+
+		u32mills = u32now;
+	}
+}
+
+
+/*****************************************************************************************
+ * SCREEN OPENING
+ ****************************************************************************************/
+
+struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
+	static const int CLS_ID = int(APP_BASE::PAGE_ID::PAGE_OPEN);
+	int get_class_id() { return CLS_ID; }
+
+	APP_BASE& _app;
+	TWE_WidSet_Buttons _btns;
+
+	SCR_OPEN(APP_BASE& app) : _app(app), _btns(*this, app.the_screen), APP_HANDLR_DC(CLS_ID) {}
+	virtual ~SCR_OPEN() {}
+
+	void show_message() {
+		auto& t = _app.the_screen;
+
+		//     "0....+....1....+....2....+....3....+....4....+....5...
+		t << "TWELITE の無線パケットを簡易確認します。 " << crlf
+			<< "(App_Wingsを書き込んだ親機に接続します)" << crlf
+			<< crlf
+			<< "App_Wingsは様々な種類のTWELITE Apps無線ﾊﾟｹｯﾄに対応し" << crlf
+			<< "ます。親子間の通信設定が一致しないと受信できません。" << crlf
+			<< "(\033[1mｱﾌﾟﾘｹｰｼｮﾝID,無線ﾁｬﾈﾙ,暗号化有無･鍵\033[0m)" << crlf
+			<< crlf
+			<< "ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞで\033[1m親機側(App_Wings)と子機側双方\033[0mの設定を" << crlf
+			<< "確認してください。"
+			;
+	}
+
+	void setup() {
+		_app.the_screen.clear_screen();
+		_app.the_screen_b.clear_screen();
+		_app.set_title_bar(int(PAGE_ID::PAGE_OPEN));
+
+		show_message();
+
+		_btns.add(2, 12, L"Glancer - ｸﾞﾗﾝｻｰ(多種ﾊﾟｹｯﾄ情報確認)"
+			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_SCR_GLANCER)); }
+			, 0
+		);
+
+		_btns.add(2, 14, L"TWELITE CUE 簡易確認"
+			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_SCR_CUE)); }
+			, 0
+		);
+
+		_btns.add(2, 16, L"TWELITE ARIA 簡易確認"
+			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_SCR_ARIA)); }
+			, 0
+		);
+	}
+
+	void loop() {
+		_btns.check_events();
+
+		do {
+			int c = the_keyboard.read();
+
+			switch (c) {
+			case KeyInput::KEY_BUTTON_A:
+				break;
+			case KeyInput::KEY_BUTTON_B:
+				break;
+			case KeyInput::KEY_BUTTON_C:
+				break;
+
+			default:
+				break;
+			}
+
+		} while (the_keyboard.available());
+	}
+
+	void on_close() {
+
+	}
+};
+
+/**
+ * create an instance of hander for SCR_GLANCER.
+ */
+void APP_BASE::hndr_SCR_OPEN(event_type ev, arg_type arg) { hndr<SCR_OPEN>(ev, arg); }
+
+/*****************************************************************************************
+ * SCREEN GLANCER
+ ****************************************************************************************/
+
+// App_CUE::SCR_CUE_BASIC : public APP_HANDLR_DC
+struct APP_BASE::SCR_GLANCER : public APP_HANDLR_DC {
+public:
+	static const int CLS_ID = int(APP_BASE::PAGE_ID::PAGE_SCR_GLANCER);
+	
+	static const int _SORT_KEYS_COUNT = 5;
+
+public:
+	typedef TWEUTILS::SimpleBuffer<spTwePacket> pkt_ary;
+	/**
+	 * @struct	pkt_data
+	 *
+	 * @brief	PAL data management by ID and display them.
+	 */
+	struct pkt_data_and_view {
+		pkt_ary _dat;
+		FixedQueue<spTwePacket> _dat_solo;
+
+		int _page;      // start from 0
+		int _lines;     // lines to display entry
+		int _max_entry; // max ID (1...max)
+		bool _bwide;    // if screen col >= 38, set true
+		bool _bdirty;   // if update all is required
+
+		int _nsel;		// selected entry (1..max_entry)
+
+		bool _bsolo;	// solo display mode
+
+		int _sort_key;  // 0:SID, 1:LID, 2:LQI, 3:VOLT 4:TIME
+
+		struct {
+			uint32_t src_addr;
+			uint32_t n_packets;
+
+			void init() {
+				src_addr = 0;
+				n_packets = 0;
+			}
+		} _solo_info;
+
+		ITerm& _trm;           // screen for main content
+		ITerm& _trm_status;    // status screen
+		const char* _fmt_status; // status message template
+
+		pkt_data_and_view(ITerm& trm, ITerm& trm_status)
+			: _dat(8) // initial reserve
+			, _dat_solo(32)
+			, _page(0)
+			, _lines(0)
+			, _max_entry(0)
+			, _bwide(false), _bdirty(false)
+			, _trm(trm)
+			, _trm_status(trm_status)
+			, _fmt_status(nullptr)
+			, _bsolo(false)
+			, _nsel(0)
+			, _solo_info()
+			, _sort_key(0)
+		{}
+
+		// screen init
+		void init_screen(const char* fmt_status) {
+			_fmt_status = fmt_status;
+			reinit_screen();
+		}
+
+		// re-init screen
+		void reinit_screen();
+
+		// add coming packet entry
+		bool add_entry(spTwePacket spobj);
+
+		// show next page
+		void next_page() {
+			_page++;
+
+			if (_page * _lines + 1 > _max_entry) {
+				_page = 0; // switch to the top
+			}
+
+			if (_nsel < _page * _lines || _nsel >= _page * _lines + _lines) {
+				_nsel = _page * _lines;
+			}
+		}
+
+		// show prev page
+		void prev_page() {
+			_page--;
+
+			if (_page < 0) {
+				_page = (_max_entry - 1) / _lines;
+			}
+
+			if (_nsel < _page * _lines || _nsel >= _page * _lines + _lines) {
+				_nsel = _page * _lines;
+			}
+		}
+
+		// set page
+		void set_page(int entry) {
+			if (entry > 0 && entry <= _max_entry) {
+				_page = (entry - 1) / _lines;
+			}
+		}
+
+		void next_item() {
+			++_nsel;
+
+			if (_nsel > _max_entry) {
+				_nsel = 1;
+			}
+
+			if (_nsel <= _page * _lines || _nsel >= _page * _lines + _lines) {
+				set_page(_nsel);
+			}
+		}
+
+		void prev_item() {
+			--_nsel;
+
+			if (_nsel < 1) {
+				_nsel = _max_entry;
+			}
+
+			if (_nsel <= _page * _lines || _nsel >= _page * _lines + _lines) {
+				set_page(_nsel);
+			}
+		}
+
+		// update status string
+		void update_status();
+
+		// redraw whole screen
+		void update_term() {
+			update_term(spTwePacketPal(), true);
+		}
+
+		// update screen
+		void update_term(spTwePacket pal_upd, bool update_all) {
+			if (_bsolo) update_term_solo(pal_upd, update_all);
+			else update_term_full(pal_upd, update_all);
+		}
+		void update_term_full(spTwePacket pal_upd, bool update_all);
+		void update_term_solo(spTwePacket pal_upd, bool update_all);
+
+		// sort the lists
+		void sort_entries();
+
+		// solo mode
+		void enter_solo_mode();
+
+		// print obj line
+		void print_obj(spTwePacket& spobj);
+	};
+
+private:
+	// Serial Parser
+	AsciiParser parse_ascii;
+
+	// default color
+	uint16_t default_bg_color;
+	uint16_t default_fg_color;
+
+	// packet data management and display
+	pkt_data_and_view pkt_data;
+
+	// timeout to hold screen_b
+	TWESYS::TimeOut _timeout_hold_screen_b;
+	bool _b_hold_screen_b;
+
+	// base app.
+	APP_BASE& _base;
+
+	// top
+	TWETerm_M5_Console& the_screen_t; // init the screen.
+
+	// main screen
+	TWETerm_M5_Console& the_screen; // init the screen.
+
+	// bottom area (for debug information)
+	TWETerm_M5_Console& the_screen_b; // init the screen.
+
+	// bottom area (for debug information)
+	TWETerm_M5_Console& the_screen_c; // init the screen.
+
+
+public:
+	SCR_GLANCER(APP_BASE& app)
+		: APP_HANDLR_DC(CLS_ID)
+		, _base(app)
+		, the_screen_t(app.the_screen_t)
+		, the_screen(app.the_screen)
+		, the_screen_b(app.the_screen_b)
+		, the_screen_c(app.the_screen_c)
+		, parse_ascii(256)
+		, default_bg_color(0)
+		, default_fg_color(0)
+		, pkt_data(app.the_screen, app.the_screen_t)
+		, _timeout_hold_screen_b()
+		, _b_hold_screen_b(false)
+	{
+	}
+
+	virtual ~SCR_GLANCER() {}
+
+	void setup();
+
+	void loop();
+
+	void on_close() {}
+
+private:
+	void parse_a_byte(char_t u8b);
+	void process_input();
+	void check_for_serial();
+
+	// set navigation bar on the bottom
+	void set_nav_bar();
+};
+
+/**
+ * create an instance of hander for SCR_GLANCER.
+ */
+void APP_BASE::hndr_SCR_GLANCER(event_type ev, arg_type arg) { hndr<SCR_GLANCER>(ev, arg); }
+
+
+void APP_BASE::SCR_GLANCER::setup() {
+	// preference
+	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	
 	// put a init message
 	const char* fmt_title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m グランサー\033[0m : %s";
 	the_screen_t << printfmt(fmt_title, "---"); // accepts UTF-8 codes
 	pkt_data.init_screen(fmt_title);
+
+	//     "0....+....1....+....2....+....3....+....4....+....5..
+	the_screen(0, 6)
+		<< "  -- TWELITE Wings で受信したパケット情報を表示します --" << crlf
+		;
 
 	// button navigation
 	set_nav_bar();
@@ -40,7 +569,7 @@ void App_Glancer::setup() {
 
 
 // button navigation
-void App_Glancer::set_nav_bar() {
+void APP_BASE::SCR_GLANCER::set_nav_bar() {
 	the_screen_c.clear_screen();
 
 	if (pkt_data._bsolo) {
@@ -53,7 +582,7 @@ void App_Glancer::set_nav_bar() {
 	}
 }
 
-void App_Glancer::loop() {
+void APP_BASE::SCR_GLANCER::loop() {
 	// reset the hold screen flag of screen_b 
 	if (_timeout_hold_screen_b.available()) _b_hold_screen_b = false;
 
@@ -70,7 +599,7 @@ void App_Glancer::loop() {
 				pkt_data.update_term();
 				set_nav_bar();
 			} else {
-				the_app.exit(App_Glancer::APP_ID);
+				the_app.exit(APP_BASE::APP_ID);
 				return;
 			}
 			break;
@@ -159,102 +688,10 @@ void App_Glancer::loop() {
 
 	// process input data
 	process_input();
-
-	// LCD update
-	screen_refresh();
-}
-
-void App_Glancer::setup_screen() {
-	// LCD font color
-	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
-	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
-
-#if M5_SCREEN_HIRES == 0
-	// font register (note: to save flash area, don't create too much!)
-	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
-
-	TWEFONT::createFontShinonome16_mini(10, 0, 0); // shinonome 16 font
-	TWEFONT::createFontShinonome16_mini(11, 1, 0); // shinonome 16 font
-	TWEFONT::createFontMP12_mini(12, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI | TWEFONT::U32_OPT_FONT_YOKOBAI); // MP10 font
-	TWEFONT::createFontMP12_mini(13, 0, 0); // MP10 font
-
-	the_screen.set_font(10);
-	the_screen_b.set_font(1);
-	the_screen_c.set_font(1);
-	the_screen_t.set_font(11);
-#elif M5_SCREEN_HIRES == 1
-	// font register (note: to save flash area, don't create too much!)
-	TWEFONT::createFontMP10_std(1, 0, 0); // MP10 font
-
-	TWEFONT::createFontShinonome16(10, 5, 3);
-
-	//TWEFONT::createFontMP12(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
-
-	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontMP12(13, 0, 0);
-
-	the_screen_t.set_font(11);
-	the_screen.set_font(10);
-	the_screen_b.set_font(13);
-	the_screen_c.set_font(12);
-#endif
-
-	// main screen area
-	the_screen.set_color(default_fg_color, default_bg_color);
-	the_screen.set_cursor(2); // 0: no 1: curosr 2: blink cursor
-	the_screen.force_refresh();
-
-	// bottom area
-	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
-	the_screen_b.set_cursor(0);
-	the_screen_b.force_refresh();
-
-	// bottom area
-	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
-	the_screen_c.set_cursor(0);
-	the_screen_c.force_refresh();
-
-	// top area
-	the_screen_t.set_color(default_bg_color, default_fg_color);
-	the_screen_t.set_cursor(0);
-	the_screen_t.force_refresh();
-}
-
-// screen refresh timing (every 32ms)
-void App_Glancer::screen_refresh() {
-	static uint32_t u32mills;
-
-	uint32_t u32now = millis();
-	if (u32now - u32mills > 32) {
-		the_screen.refresh();
-		the_screen_b.refresh();
-		the_screen_c.refresh();
-		the_screen_t.refresh();
-
-		u32mills = u32now;
-	}
-}
-
-// change screen font
-void App_Glancer::change_screen_font() {
-	static uint8_t idx = 1;
-	uint8_t modes[] = { 10, 11, 12, 13 }; // toggle screen 10 .. 13
-
-	the_screen.set_font(modes[idx & 0x3]);
-	the_screen.clear_screen();
-	the_screen.force_refresh();
-
-	const auto& font = TWEFONT::queryFont(the_screen.font_id());
-	the_screen_b.clear_screen();
-	TWE::fPrintf(the_screen_b, "\nFont: %s\n      ID=%d H:%d W:%d W_CHRs:%d",
-		font.font_name, font.get_font_code(), font.height, font.width, font.font_wide_count);
-
-	idx++;
 }
 
 // put a byte to parse
-void App_Glancer::parse_a_byte(char_t u8b) {
+void APP_BASE::SCR_GLANCER::parse_a_byte(char_t u8b) {
 	// parse.
 	parse_ascii << u8b;
 
@@ -289,7 +726,7 @@ void App_Glancer::parse_a_byte(char_t u8b) {
 }
 
 // process input
-void App_Glancer::process_input() {
+void APP_BASE::SCR_GLANCER::process_input() {
 	int c;
 
 	// from TWE
@@ -300,7 +737,7 @@ void App_Glancer::process_input() {
 }
 
 // check serial input.
-void App_Glancer::check_for_serial() {
+void APP_BASE::SCR_GLANCER::check_for_serial() {
 	// UART CHECK is DONE at ::loop() procedure.
 	;
 }
@@ -339,7 +776,7 @@ static const wchar_t wstr_Name3_PALderived[][4]{
  * @param	pal_upd   	Coming packet (should be updated in the display)
  * @param	update_all	True to update all lines, other than pal_upd.
  */
-void App_Glancer::pkt_data_and_view::update_term_full(spTwePacket pal_upd, bool update_all) {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::update_term_full(spTwePacket pal_upd, bool update_all) {
 	int idx_start = _page * _lines + 1;
 	int idx_end = idx_start + _lines;
 
@@ -384,7 +821,7 @@ void App_Glancer::pkt_data_and_view::update_term_full(spTwePacket pal_upd, bool 
 	update_status();
 }
 
-void App_Glancer::pkt_data_and_view::print_obj(spTwePacket& spobj) {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::print_obj(spTwePacket& spobj) {
 	// display sensor data
 	E_PKT pkt_type = identify_packet_type(spobj);
 	if (pkt_type != E_PKT::PKT_ERROR) {
@@ -441,7 +878,7 @@ void App_Glancer::pkt_data_and_view::print_obj(spTwePacket& spobj) {
 	}
 }
 
-void App_Glancer::pkt_data_and_view::update_term_solo(spTwePacket pal_upd, bool update_all) {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::update_term_solo(spTwePacket pal_upd, bool update_all) {
 	update_all = true; // always update everything
 
 	if (update_all) {
@@ -488,7 +925,7 @@ void App_Glancer::pkt_data_and_view::update_term_solo(spTwePacket pal_upd, bool 
  * @brief	Updates the status string.
  *
  */
-void App_Glancer::pkt_data_and_view::update_status() {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::update_status() {
 	char buff[16];
 
 	if (_bsolo) {
@@ -509,7 +946,7 @@ void App_Glancer::pkt_data_and_view::update_status() {
  * @brief	Reinitializes the screen, in case the screen size has been changed.
  *
  */
-void App_Glancer::pkt_data_and_view::reinit_screen() {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::reinit_screen() {
 	int scrw = _trm.get_cols();
 	int scrh = _trm.get_rows();
 
@@ -532,7 +969,7 @@ void App_Glancer::pkt_data_and_view::reinit_screen() {
  *
  * @returns	True if it succeeds, false if it fails.
  */
-bool App_Glancer::pkt_data_and_view::add_entry(spTwePacket spobj) {
+bool APP_BASE::SCR_GLANCER::pkt_data_and_view::add_entry(spTwePacket spobj) {
 	if (spobj
 		&& identify_packet_type(spobj) != E_PKT::PKT_ERROR
 		&& spobj->common.src_addr & 0x80000000
@@ -574,7 +1011,7 @@ bool App_Glancer::pkt_data_and_view::add_entry(spTwePacket spobj) {
 	return false;
 }
 
-void App_Glancer::pkt_data_and_view::sort_entries() {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::sort_entries() {
 	switch (_sort_key) {
 	case 0: // LID
 		SmplBuf_Sort(_dat,
@@ -620,7 +1057,7 @@ void App_Glancer::pkt_data_and_view::sort_entries() {
 	if (++_sort_key >= _SORT_KEYS_COUNT) _sort_key = 0;
 }
 
-void App_Glancer::pkt_data_and_view::enter_solo_mode() {
+void APP_BASE::SCR_GLANCER::pkt_data_and_view::enter_solo_mode() {
 	if (_nsel > 0 && _nsel <= int(_dat.size())) {
 		
 		auto obj = _dat[_nsel - 1];

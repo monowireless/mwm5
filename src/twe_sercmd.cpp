@@ -8,6 +8,10 @@
 #include "twe_utils_fixedque.hpp"
 
  // uart input queue
-TWEUTILS::InputQueue<uint8_t> the_uart_queue(512);
+#ifndef ESP32
+TWEUTILS::InputQueue<uint8_t, true> the_uart_queue(4096);
+#else
+TWEUTILS::InputQueue<uint8_t, false> the_uart_queue(512);
+#endif
 
 // nothing implemented so far

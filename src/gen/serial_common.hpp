@@ -56,11 +56,17 @@ namespace TWE {
 		
 		// MUTEX
 #if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
-		SDL_mutex* _mtx;
+		LockGuard::mutex_type _mtx_queue;
+		LockGuard::mutex_type _mtx_rx;
+		LockGuard::mutex_type _mtx_tx;
 #elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 0
-		std::mutex _mtx;
+		LockGuard::mutex_type _mtx_queue;
+		LockGuard::mutex_type _mtx_rx;
+		LockGuard::mutex_type _mtx_tx;
 #else
-		const bool _mtx = true;
+		const bool _mtx_queue = true;
+		const bool _mtx_rx = true;
+		const bool _mtx_tx = true;
 #endif
 
     public:
@@ -73,10 +79,12 @@ namespace TWE {
             , _hook_on_write(nullptr)
             , _session_id(-1)
 			, _modctl_capable(false)
-			, _mtx()
+			, _mtx_queue(), _mtx_rx(), _mtx_tx()
         {
 #if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
-			_mtx = SDL_CreateMutex();
+			_mtx_rx = SDL_CreateMutex();
+			_mtx_tx = SDL_CreateMutex();
+			_mtx_queue = SDL_CreateMutex();
 #endif
 		}
 
@@ -186,7 +194,7 @@ namespace TWE {
          * @brief	Flushes TX requests.
          */
         void flush() {
-			if (auto l = TWE::LockGuard(_mtx)) {
+			if (auto l = TWE::LockGuard(_mtx_tx)) {
 				static_cast<CDER&>(*this)._flush();
 			}
         }
@@ -205,9 +213,7 @@ namespace TWE {
 	public:
 		bool is_opened() {
 			bool r = false;
-			if (auto l = TWE::LockGuard(_mtx)) {
-				r = _is_opened();
-			}
+			r = _is_opened();
 			return r;
 		}
 
@@ -243,9 +249,7 @@ namespace TWE {
 	public:
 		const char* get_devname() {
 			const char* r = nullptr;
-			if (auto l = TWE::LockGuard(_mtx)) {
-				r = _get_devname();
-			}
+			r = _get_devname();
 
 			return  r;
 		}
@@ -263,9 +267,7 @@ namespace TWE {
 	public:
 		int get_handle() {
 			int r = 0;
-			if (auto l = TWE::LockGuard(_mtx)) {
-				r = _get_handle();
-			} 
+			r = _get_handle();
 			return r;
 		}
 
@@ -282,7 +284,7 @@ namespace TWE {
 		 */
 		int _get_last_buf(int i) {
 			int r = -1;
-			if (auto l = TWE::LockGuard(_mtx)) {
+			if (auto l = TWE::LockGuard(_mtx_rx)) {
 				if (i >= 0 && i < _buf_len) {
 					r = _buf[i];
 				}
@@ -300,7 +302,7 @@ namespace TWE {
 		 */
 		bool available() {
 			bool r = false;
-			if (auto l = TWE::LockGuard(_mtx)) {
+			if (auto l = TWE::LockGuard(_mtx_queue)) {
 				r = !_que.empty();
 			}
 			return r;
@@ -315,7 +317,7 @@ namespace TWE {
 		 */
 		int read() {
 			int r = -1;
-			if (auto l = TWE::LockGuard(_mtx)) {
+			if (auto l = TWE::LockGuard(_mtx_queue)) {
 				if (!_que.empty()) {
 					uint8_t c = _que.front();
 					_que.pop();
@@ -341,7 +343,7 @@ namespace TWE {
 			int len_written = 0;
 			bool b_hook_use = false;
 
-			if (auto l = TWE::LockGuard(_mtx)) {
+			if (auto l = TWE::LockGuard(_mtx_tx)) {
 				if (_is_opened()) {
 					len_written = static_cast<CDER&>(*this)._write(p, len);		
 					b_hook_use = true;
@@ -361,7 +363,7 @@ namespace TWE {
 		 */
 		int update() {
 			int r = 0;
-			if (auto l = TWE::LockGuard(_mtx)) {
+			if (auto l = TWE::LockGuard(_mtx_rx)) {
 				r = static_cast<CDER&>(*this)._update();
 			}
 			return r;

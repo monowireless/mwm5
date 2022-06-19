@@ -55,15 +55,7 @@ src/twesettings については、MW-SLA (モノワイヤレスソフトウェ�
 
 
 
-### ESP32(M5stack)
-
-https://github.com/m5stack/M5Stack を参考にしてください。
-
-* TWELITE STAGE のビルドには http://www.pjrc.com/teensy/td_libs_PS2Keyboard.html プロジェクトの成果物が必要になります。esp32/PS2Keyboard.7z のファイルをライブラリに格納してからビルドしてください（日本語キーレイアウトやカーソルキーの取り扱い等で、TWELITE STAGE に合わせた修正を行っています）。
-
-
-
-### Windows10
+### Windows10,11
 
 * Visual Studio 2019 (VC++) を用いています。msc ディレクトリ以下にプロジェクトファイルを用意しています。
 * Sketchフィルター以下にあるプロジェクト (TWELITE_Stageなど) をスタートアッププロジェクトにして、Release/Debug、64bit/32bit を選択してビルドします。
@@ -90,14 +82,15 @@ VC++のみ32bitのビルド定義を用意しています。
 
 macOS 10.14, 10.15 でビルドできます。
 
-* brew にて gcc (gcc-9, g++-9) をインストールしておいてください。
+* brew にて gcc (本バージョンの確認は gcc-11, g++-11) をインストールしておいてください。
   ※ clang によるビルド定義も用意していますが、一部 C++ ライブラリが macOS 15 (Catalina) 以降からの対応となるため、それ以前の macOS ではビルドまたは動作が行えません。
 * XCode に付属する make を利用できるようにしておいてください。
 * examples/???/build ディレクトリ上で make を実行します。
 
 ```
 make オプション
-  OSX_COMPILERTYPE=clang  -> clang でビルド
+  MACOS_TARGET=X86_64_GCC -> Homebrew gcc-11,g++-11 用のビルド
+  MACOS_TARGET=ARM64	  -> Apple Silicon 用のビルド
   DEBUG_BUILD=1           -> デバッグビルド
 ```
 
@@ -111,7 +104,7 @@ make オプション
 
 Ubuntu16.04 18.04 20.04 でビルドできます。
 
-* gcc (gcc-9 g++-9) をインストールしておいてください。
+* gcc (本バージョンの確認は gcc-11, g++-11) をインストールしておいてください。
 * SDL2 (libsdl2-dev パッケージ) をインストールしておいてください。
 * examples/???/build ディレクトリ上で make を実行します。
 
@@ -134,6 +127,22 @@ make オプション
 
 * SDL2 ソース、ライブラリ
 * FTDI D2XX ドライバ
+* sqlite3, SQLiteCpp
+
+
+
+### macOS
+
+* ライブラリのコンパイラ
+
+    * Intel版は homebrew よりインストールした gcc-9,g++-9 または gcc-11, g++-11 でビルド
+
+    * Apple Silicon 版は clang でビルド
+
+
+
+### Linux
+
 * sndio (SDL2に依存しているがスタティックリンクできないため)
 
 

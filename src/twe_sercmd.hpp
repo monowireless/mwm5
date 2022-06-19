@@ -177,4 +177,8 @@ namespace TWESERCMD {
 #endif
 }
 
-extern TWEUTILS::InputQueue<uint8_t> the_uart_queue;
+#ifndef ESP32
+extern TWEUTILS::InputQueue<uint8_t, true> the_uart_queue;
+#else
+extern TWEUTILS::InputQueue<uint8_t, false> the_uart_queue;
+#endif

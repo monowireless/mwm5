@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <SQLiteCpp/SQLiteCpp.h>
 
 #if M5_SCREEN_HIRES == 0
 static TWETerm_M5_Console scr(40, 24, { 0, 0, 320, 240 }, M5);

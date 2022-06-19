@@ -11,6 +11,7 @@
 #elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 0
 #include <thread>
 #include <mutex>
+#include <chrono>
 #endif
 
 namespace TWE {
@@ -21,12 +22,12 @@ namespace TWE {
 	public:
 		using mutex_type = SDL_mutex*;
 
-		explicit LockGuard(mutex_type& m) : _mtx(m) {
-			Lock(_mtx);
+		explicit LockGuard(mutex_type& m, uint32_t timeout_ms = 3000) : _mtx(m) {
+			SDL_LockMutex(_mtx);
 		}
 
 		~LockGuard() noexcept {
-			Unlock(_mtx);
+			SDL_UnlockMutex(_mtx);
 		}
 
 		explicit operator bool() { return true; }
@@ -51,18 +52,26 @@ namespace TWE {
 
 	// critical section using C++11
 	class LockGuard {
+		bool _b_success_lock;
 	public:
-		using mutex_type = std::mutex;
+		using mutex_type = std::timed_mutex;
 
-		LockGuard(mutex_type& m) : _mtx(m) {
-			_mtx.lock();
+		LockGuard(mutex_type& m, uint32_t timeout_ms = 0) : _mtx(m), _b_success_lock(true) {
+			if (timeout_ms == 0) {
+				_mtx.lock();
+			}
+			else if(!_mtx.try_lock_for(std::chrono::milliseconds(timeout_ms))) {
+				_b_success_lock = false;
+			}
 		}
 
 		~LockGuard() noexcept {
-			_mtx.unlock();
+			if (_b_success_lock) {
+				_mtx.unlock();
+			}
 		}
 
-		explicit operator bool() { return true; }
+		explicit operator bool() { return _b_success_lock; }
 
 		LockGuard(const LockGuard&) = delete;
 		LockGuard& operator=(const LockGuard&) = delete;

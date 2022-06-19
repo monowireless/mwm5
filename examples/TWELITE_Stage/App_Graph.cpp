@@ -1,16 +1,18 @@
 /* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
-#include "App_CUE.hpp"
+#include "App_Graph.hpp"
 
-const wchar_t App_CUE::LAUNCH_MSG[] =
+using APP_BASE = App_Graph;
+
+const wchar_t App_Graph::LAUNCH_MSG[] =
 //....+....1....+....2....+....3....+....4| // 16dots 40cols
 L" \033[4m"
-   L"TWELIE CUE キュー/TWELITE ARIA アリア\033[0m"
+   L"グラフ表示\033[0m"
 	                      L" ""\r\n"
 L"\r\n"
-L"TWELITE CUE/TWELITE ARIA からの電文を解釈します。""\r\n"
-L"※MOT/MAGﾓｰﾄﾞのﾊﾟｹｯﾄは対応しません。""\r\n"
+L"TWELITE からの電文を解釈してグラフを" "\r\n"
+L"表示します" "\r\n"
 ;
 
 // color table
@@ -25,8 +27,7 @@ static uint16_t COLTBL_MAIN[8] = {
 	ALMOST_WHITE
 };
 
-
-void App_CUE::setup() {
+void App_Graph::setup() {
 	// preference
 	the_settings_menu.begin(appid_to_slotid(APP_ID));
 
@@ -37,22 +38,23 @@ void App_CUE::setup() {
 	set_nav_bar();
 
 	// add tab
-	_tabs.add(L"TWELITE CUE", &App_CUE::hndr_SCR_CUE_BASIC);
-	_tabs.add(L"CUEｸﾞﾗﾌ", &App_CUE::hndr_SCR_CUE_FIFO);
-	_tabs.add(L"TWELITE ARIA", &App_CUE::hndr_SCR_ARIA_BASIC);
-	_tabs.add(L"ｾﾝｻｰｸﾞﾗﾌ", &App_CUE::hndr_SCR_WSNS_DB);
-	_tabs.add(L"解説", &App_CUE::hndr_SCR_HELP);
+	for (int i = 0; i < PAGE_ID::_PAGE_END_; i++) {
+		switch (i) {
+		case PAGE_ID::PAGE_OPEN: _tabs.add(L"---", &App_Graph::hndr_SCR_OPEN); break;
+		case PAGE_ID::PAGE_CUE_FIFO: _tabs.add(L"CUEｸﾞﾗﾌ", &App_Graph::hndr_SCR_CUE_FIFO); break;
+		case PAGE_ID::PAGE_WSNS_DB: _tabs.add(L"ｾﾝｻｰｸﾞﾗﾌ", &App_Graph::hndr_SCR_WSNS_DB); break;
+		case PAGE_ID::PAGE_HELP: _tabs.add(L"解説", &App_Graph::hndr_SCR_HELP); break;
+		default: break;
+		}
+	}
 	_tabs.update_view();
 
 	if (u8tab_selection < _tabs.size()) {
 		_tabs.select(u8tab_selection);
 	}
-
-	// put a init message
-	set_title_bar(PAGE_ID::PAGE_BASIC);
 }
 
-void App_CUE::loop() {
+void App_Graph::loop() {
 	// tab event handling
 	_tabs.check_events();
 
@@ -104,7 +106,7 @@ void App_CUE::loop() {
 	screen_refresh();
 }
 
-void App_CUE::setup_screen() {
+void App_Graph::setup_screen() {
 	// LCD font color
 	default_bg_color = color565(sAppData.u32_TWESTG_STAGE_BG_COLOR); // color565(90, 0, 50); 
 	default_fg_color = color565(sAppData.u32_TWESTG_STAGE_FG_COLOR);
@@ -135,7 +137,7 @@ void App_CUE::setup_screen() {
 
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 
-	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, 0 /* TWEFONT::U32_OPT_FONT_YOKOBAI */);
 
 	TWEFONT::createFontMP12_std(font_IDs.smaller, 0, 0);
 
@@ -176,7 +178,7 @@ void App_CUE::setup_screen() {
 }
 
 // screen refresh timing (every 32ms)
-void App_CUE::screen_refresh() {
+void App_Graph::screen_refresh() {
 	static uint32_t u32mills;
 
 	uint32_t u32now = millis();
@@ -192,7 +194,7 @@ void App_CUE::screen_refresh() {
 }
 
 // button navigation
-void App_CUE::set_nav_bar(const char *msg) {
+void App_Graph::set_nav_bar(const char *msg) {
 	the_screen_c.clear_screen();
 
 	if (msg == nullptr) {
@@ -204,23 +206,98 @@ void App_CUE::set_nav_bar(const char *msg) {
 	}
 }
 
-
 // set title bar
-void App_CUE::set_title_bar(int page_id) {
+void App_Graph::set_title_bar(int page_id) {
 	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m CUE/ARIAﾋﾞｭｰｱ\033[0m";
 
 	the_screen_t.clear_screen();
 
 	switch (page_id) {
-	case PAGE_ID::PAGE_BASIC:
-		the_screen_t << title << ":---"; break;
-#if 0
-	case PAGE_ID::PAGE_TWELITE80:
-		the_screen_t << title << ":TWELITE"; break;
-	case PAGE_ID::PAGE_NOTICE01:
-		the_screen_t << title << ":NOTICE"; break;
-#endif
+	case PAGE_ID::PAGE_CUE_FIFO:
+		the_screen_t << title << ":加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ"; break;
+	case PAGE_ID::PAGE_WSNS_DB:
+		the_screen_t << title << ":センサーグラフ"; break;
 	default:
 		the_screen_t << title; break;
 	}
 }
+
+
+/*****************************************************************************************
+ * SCREEN OPENING
+ ****************************************************************************************/
+
+struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
+	static const int CLS_ID = int(APP_BASE::PAGE_ID::PAGE_OPEN);
+	int get_class_id() { return CLS_ID; }
+
+	APP_BASE& _app;
+	TWE_WidSet_Buttons _btns;
+
+	SCR_OPEN(APP_BASE& app) : _app(app), _btns(*this, app.the_screen), APP_HANDLR_DC(CLS_ID) {}
+	~SCR_OPEN() {}
+
+	void show_message() {
+		auto& t = _app.the_screen;
+
+		//     "0....+....1....+....2....+....3....+....4....+....5...
+		t << "TWELITEから受信した無線ﾊﾟｹｯﾄをｸﾞﾗﾌ表示します。" << crlf
+			<< "(App_Wingsを書き込んだ親機に接続します)" << crlf
+			<< crlf
+			<< "App_Wingsと子機ｱﾌﾟﾘ(TWELITE標準ｱﾌﾟﾘやPALｱﾌﾟﾘ)の設定" << crlf
+			<< "(\033[7;41mｱﾌﾟﾘｹｰｼｮﾝID,無線ﾁｬﾈﾙ,暗号化有無･鍵\033[0m)が同じで" << crlf
+			<< "ないと無線通信しないようになっています。" << crlf
+			<< crlf
+			<< "ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞで\033[41;7m親機側(App_Wings)と子機側双方\033[0mの設定を" << crlf
+			<< "確認してください。"
+			;
+	}
+
+	void setup() {
+		_app.the_screen.clear_screen();
+		_app.the_screen_b.clear_screen();
+		_app.set_title_bar(int(PAGE_ID::PAGE_OPEN));
+
+		show_message();
+
+		_btns.add(2, 13, L"加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ"
+			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_CUE_FIFO)); }
+			, 0
+		);
+
+		_btns.add(2, 15, L"センサーグラフ"
+			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_WSNS_DB)); }
+			, 0
+		);
+	}
+
+	void loop() {
+		_btns.check_events();
+
+		do {
+			int c = the_keyboard.read();
+
+			switch (c) {
+			case KeyInput::KEY_BUTTON_A:
+				break;
+			case KeyInput::KEY_BUTTON_B:
+				break;
+			case KeyInput::KEY_BUTTON_C:
+				break;
+
+			default:
+				break;
+			}
+
+		} while (the_keyboard.available());
+	}
+
+	void on_close() {
+
+	}
+};
+
+/**
+ * create an instance of hander for SCR_GLANCER.
+ */
+void APP_BASE::hndr_SCR_OPEN(event_type ev, arg_type arg) { hndr<SCR_OPEN>(ev, arg); }

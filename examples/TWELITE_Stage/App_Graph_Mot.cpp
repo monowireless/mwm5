@@ -4,7 +4,9 @@
 #include <complex>
 #include <cmath>
 
-#include "App_CUE.hpp"
+#include "App_Graph.hpp"
+
+using APP_BASE = App_Graph;
 
 #define BUFFER_COUNT 4          // max supported nodes
 #define HISTORY_SIZE (512*10)   // length of history
@@ -315,11 +317,11 @@ private:
 /**
  * The Screen definition of App CUE Graph.
  */
-struct App_CUE::SCR_CUE_FIFO : public APP_HANDLR_DC {
-	static const int CLS_ID = App_CUE::PAGE_ID::PAGE_CUE_FIFO; // used by APP_HANDLER_DC
+struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
+	static const int CLS_ID = APP_BASE::PAGE_ID::PAGE_CUE_FIFO; // used by APP_HANDLER_DC
 	int get_class_id() { return CLS_ID; } // used by APP_HANDLER_DC
 
-	App_CUE& _app;					// reference to parent class App_CUE (friend relationship)
+	APP_BASE& _app;					// reference to parent class App_CUE (friend relationship)
 	TWE_WidSet_Buttons _btns;		// button array.
 	int _pkt_rcv_ct;				// total count of incoming packets.
 
@@ -568,7 +570,7 @@ struct App_CUE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	} _id_btns;
 
 	// CONSTRUCTOR
-	SCR_CUE_FIFO(App_CUE& app) : APP_HANDLR_DC(CLS_ID)
+	SCR_CUE_FIFO(APP_BASE& app) : APP_HANDLR_DC(CLS_ID)
 		, _app(app), _btns(*this, app.the_screen), _pkt_rcv_ct(0)
 		, the_screen(app.the_screen), the_screen_b(app.the_screen_b), parse_ascii(app.parse_ascii)
 		, _d(), _i_view_current(0)
@@ -906,7 +908,7 @@ struct App_CUE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 			the_screen(0, row) << "[FFT INFO](推定値)" << crlf; // move cursor
 			_fft.cHz = t_period ? 100 * 1024 * 1000 / t_period : 0;
 
-			the_screen << printfmt("\033[K 周  期: %3d.%02dHz", _fft.cHz / 100, _fft.cHz % 100) << crlf;
+			the_screen << printfmt("\033[K 周波数: %3d.%02dHz", _fft.cHz / 100, _fft.cHz % 100) << crlf;
 			the_screen << "\033[K ピーク:" << crlf;
 
 			uint32_t cHz = _fft.cHz * n_fft_max_x / _fft.n_fft;
@@ -1887,4 +1889,4 @@ struct App_CUE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 /**
  * generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods).
  */
-void App_CUE::hndr_SCR_CUE_FIFO(event_type ev, arg_type arg) { hndr<SCR_CUE_FIFO>(ev, arg); }
+void APP_BASE::hndr_SCR_CUE_FIFO(event_type ev, arg_type arg) { hndr<SCR_CUE_FIFO>(ev, arg); }

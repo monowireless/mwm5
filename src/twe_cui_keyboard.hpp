@@ -13,12 +13,19 @@
 #include "twesettings/tweinteractive_keycode.h"
 
 namespace TWECUI {
-	class KeyInput : public TWEUTILS::InputQueue<TWE::keyinput_type>, public TWE::IStreamIn {
+#ifndef ESP32
+	using __keyinput_inputqueue_type = TWEUTILS::InputQueue<TWE::keyinput_type, true>;
+#else
+	using inputq_type = TWEUTILS::InputQueue<TWE::keyinput_type, false>;
+#endif
+
+	class KeyInput : public __keyinput_inputqueue_type, public TWE::IStreamIn {
 	public:
 		typedef TWE::keyinput_type keyinput_type;
+		using inputq_type = __keyinput_inputqueue_type;
 
 	public:
-		KeyInput(int qsz = 32) : TWEUTILS::InputQueue<keyinput_type>(qsz) {}
+		KeyInput(int qsz = 32) : inputq_type(qsz) {}
 
 		/**
 		 * @fn	virtual void KeyInput::setup() = 0;
@@ -42,7 +49,7 @@ namespace TWECUI {
 		 * @returns read byte, -1: error
 		 */
 		int get_a_byte() {
-			return TWEUTILS::InputQueue<keyinput_type>::pop_front();
+			return inputq_type::pop_front();
 		}
 
 		/**
@@ -53,8 +60,8 @@ namespace TWECUI {
 		 * @returns	An -1: no key data available, else key/event code
 		 */
 		int peek_a_byte() {
-			if (TWEUTILS::InputQueue<keyinput_type>::available()) {
-				return TWEUTILS::InputQueue<keyinput_type>::peek();
+			if (inputq_type::available()) {
+				return inputq_type::peek();
 			}
 			else return -1;
 		}

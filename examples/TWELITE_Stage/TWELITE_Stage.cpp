@@ -9,7 +9,7 @@
 #include "App_PAL.hpp"
 #include "App_Glancer.hpp"
 #include "App_Commander.hpp"
-#include "App_CUE.hpp"
+#include "App_Graph.hpp"
 #include "App_FirmProg.hpp"
 #include "App_Interactive.hpp"
 #include "App_Console.hpp"
@@ -175,8 +175,8 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 		the_app.new_app<App_Commander>();
 		break;
 
-	case App_CUE::APP_ID:
-		the_app.new_app<App_CUE>(exit_id);
+	case App_Graph::APP_ID:
+		the_app.new_app<App_Graph>(exit_id);
 		break;
 
 	case App_FirmProg::APP_ID:
@@ -235,8 +235,8 @@ const wchar_t* query_app_launch_message(int n_appsel) {
 		return App_Commander::LAUNCH_MSG;
 		break;
 
-	case App_CUE::APP_ID:
-		return App_CUE::LAUNCH_MSG;
+	case App_Graph::APP_ID:
+		return App_Graph::LAUNCH_MSG;
 		break;
 		
 	default:

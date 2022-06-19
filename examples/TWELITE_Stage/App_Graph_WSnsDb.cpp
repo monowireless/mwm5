@@ -1,7 +1,8 @@
 /* Copyright (C) 2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
-#include "App_CUE.hpp"
+#include "App_Graph.hpp"
+using APP_BASE = App_Graph;
 
 #include <memory>
 #include <functional>
@@ -317,6 +318,16 @@ public:
             _db->exec("CREATE TABLE IF NOT EXISTS sensor_last ("
                 "  sid INTEGER PRIMARY KEY" // module serial ID
                 ", ts INTEGER not null"     // timestamp of last data.
+                ", lid INTEGER"             // Logical ID
+                ", lqi INTEGER"             // LQI value (0..255)
+                ", pkt_type INTEGER not null" // Corresponds to the sensor type included in the packet data.
+                ", value REAL not null"     // primary sensor data
+                ", value1 REAL"             // 2nd
+                ", value2 REAL"             // 3rd
+                ", value3 REAL"             // 4th
+                ", val_vcc_mv INTEGER"      // Vcc
+                ", val_dio"
+                ", ev_id"
                 ")"
             );
 
@@ -481,15 +492,25 @@ public:
      * \param desc
      * \return EXIT_SUCCESS for success, EXIT_FAILURE for failure.
      */
-    int sensor_last_add_or_update(uint32_t sid, DB_TIMESTAMP ts) {
+    int sensor_last_add_or_update(uint32_t sid, SENSOR_DATA& d) {
         auto scrbuzy = SCREEN_BUSY();
 
         // replace latest ts of SID
         try {
             auto stmnt = sql_statement(
-                "REPLACE INTO sensor_last VALUES (?,?)"
+                "REPLACE INTO sensor_last VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
                 , DB_INTEGER(int32_t(sid))
-                , DB_TIMESTAMP(TWESYS::TweLocalTime::epoch_now())
+                , d.ts
+                , d.lid
+                , d.lqi
+                , d.pkt_type
+                , d.value
+                , d.value1
+                , d.value2
+                , d.value3
+                , d.val_vcc_mv
+                , d.val_dio
+                , d.ev_id
             );
 
             stmnt.exec();
@@ -594,7 +615,7 @@ public:
         }
 
         // upate latest tick count
-        if (sensor_last_add_or_update(*d.sid, *d.ts) != EXIT_SUCCESS) {
+        if (sensor_last_add_or_update(*d.sid, d) != EXIT_SUCCESS) {
             return EXIT_FAILURE;
         }
 
@@ -1394,12 +1415,12 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////
 // SCR_WSNS_DB
 ////////////////////////////////////////////////////////////////////////////////////////
-struct App_CUE::SCR_WSNS_DB : public APP_HANDLR_DC, public TWE::APP_HNDLR<App_CUE::SCR_WSNS_DB> {
+struct APP_BASE::SCR_WSNS_DB : public APP_HANDLR_DC, public TWE::APP_HNDLR<APP_BASE::SCR_WSNS_DB> {
 public:
     
-	static const int CLS_ID = App_CUE::PAGE_ID::PAGE_WSNS_DB;
+	static const int CLS_ID = APP_BASE::PAGE_ID::PAGE_WSNS_DB;
 
-	App_CUE& _app;
+	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
 	int _pkt_rcv_ct;
 
@@ -4059,9 +4080,9 @@ public:
                 SmplBuf_WCharSL<64> opt;
                 lbl << format("%08X", sid);
                 int64_t t_dif = tl.epoch - ts;
-                if (t_dif >= 86400) opt << format("%d", (t_dif + 43200) / 86400) << L"日";
-                else if (t_dif >= 3600) opt << format("%d", (t_dif + 1800) / 3600) << L"時間";
-                else if (t_dif >= 60) opt << format("%d", (t_dif + 30) / 60) << L"分";
+                if (t_dif >= 86400) opt << format("%d", (t_dif + 43200) / 86400) << L"日前";
+                else if (t_dif >= 3600) opt << format("%d", (t_dif + 1800) / 3600) << L"時間前";
+                else if (t_dif >= 60) opt << format("%d", (t_dif + 30) / 60) << L"分前";
                 else if (t_dif >= 20) opt << L"\033[37mNEW!\033[130m";
                 else if (t_dif >= 10) opt << L"\033[35mNEW!\033[130m";
                 else                  opt << L"\033[31mNEW!\033[130m";
@@ -5709,7 +5730,7 @@ public:
 
         // other screen area
 		the_screen_b.clear_screen();
-		_app.set_title_bar(PAGE_ID::PAGE_BASIC);
+		_app.set_title_bar(PAGE_ID::PAGE_WSNS_DB);
 		_app.set_nav_bar();
 
         // time stamp
@@ -5780,7 +5801,7 @@ public:
      * 
      * \param app       base application object (App_CUE)
      */
-    SCR_WSNS_DB(App_CUE& app)
+    SCR_WSNS_DB(APP_BASE& app)
         : _app(app)
         , APP_HANDLR_DC(CLS_ID)
         , _btns(*this, app.the_screen)
@@ -5809,4 +5830,4 @@ public:
 };
 
 // generate handler instance (SCR_XXX needs to have setup(), loop(), on_close() methods)
-void App_CUE::hndr_SCR_WSNS_DB(event_type ev, arg_type arg) { hndr<SCR_WSNS_DB>(ev, arg); }
+void APP_BASE::hndr_SCR_WSNS_DB(event_type ev, arg_type arg) { hndr<SCR_WSNS_DB>(ev, arg); }

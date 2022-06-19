@@ -70,22 +70,22 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Commander_TWELITE80.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE.cpp">
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_basic.cpp">
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph_help.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_help.cpp">
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph_Mot.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_aria_basic.cpp">
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Graph_WSnsDb.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_fifo.cpp">
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Grancer_CUE_Basic.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_CUE_wsns_db.cpp">
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer_ARIA_Basic.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
   </ItemGroup>
@@ -141,7 +141,7 @@
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Commander.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\examples\TWELITE_Stage\App_CUE.hpp">
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Graph.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,163 +7,15 @@
 #include <M5Stack.h>
 #include "common.h"
 
-class App_Glancer : public TWE::APP_DEF {
+
+class App_Glancer : public TWE::APP_DEF, public TWE::APP_HNDLR<App_Glancer> {
 public:
 	static const int APP_ID = int(E_APP_ID::GLANCE);
+
 	static const wchar_t LAUNCH_MSG[];
 
-	int get_APP_ID() { return APP_ID; }
 	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
-
-	static const int _SORT_KEYS_COUNT = 5;
-
-public:
-	typedef TWEUTILS::SimpleBuffer<spTwePacket> pkt_ary;
-	/**
-	 * @struct	pkt_data
-	 *
-	 * @brief	PAL data management by ID and display them.
-	 */
-	struct pkt_data_and_view {
-		pkt_ary _dat;
-		FixedQueue<spTwePacket> _dat_solo;
-
-		int _page;      // start from 0
-		int _lines;     // lines to display entry
-		int _max_entry; // max ID (1...max)
-		bool _bwide;    // if screen col >= 38, set true
-		bool _bdirty;   // if update all is required
-
-		int _nsel;		// selected entry (1..max_entry)
-
-		bool _bsolo;	// solo display mode
-
-		int _sort_key;  // 0:SID, 1:LID, 2:LQI, 3:VOLT 4:TIME
-
-		struct {
-			uint32_t src_addr;
-			uint32_t n_packets;
-
-			void init() {
-				src_addr = 0;
-				n_packets = 0;
-			}
-		} _solo_info;
-
-		ITerm& _trm;           // screen for main content
-		ITerm& _trm_status;    // status screen
-		const char* _fmt_status; // status message template
-
-		pkt_data_and_view(ITerm& trm, ITerm& trm_status) 
-			: _dat(8) // initial reserve
-			, _dat_solo(32)
-			, _page(0)
-			, _lines(0)
-			, _max_entry(0)
-			, _bwide(false), _bdirty(false)
-			, _trm(trm)
-			, _trm_status(trm_status)
-			, _fmt_status(nullptr)
-			, _bsolo(false)
-			, _nsel(0)
-			, _solo_info()
-			, _sort_key(0)
-		{}
-
-		// screen init
-		void init_screen(const char* fmt_status) {
-			_fmt_status = fmt_status;
-			reinit_screen();
-		}
-
-		// re-init screen
-		void reinit_screen();
-
-		// add coming packet entry
-		bool add_entry(spTwePacket spobj);
-
-		// show next page
-		void next_page() {
-			_page++;
-
-			if (_page * _lines + 1 > _max_entry) {
-				_page = 0; // switch to the top
-			}
-
-			if (_nsel < _page * _lines || _nsel >= _page *_lines + _lines) {
-				_nsel = _page * _lines;
-			}
-		}
-
-		// show prev page
-		void prev_page() {
-			_page--;
-
-			if (_page < 0) {
-				_page = (_max_entry - 1) / _lines;
-			}
-
-			if (_nsel < _page * _lines || _nsel >= _page *_lines + _lines) {
-				_nsel = _page * _lines;
-			}
-		}
-
-		// set page
-		void set_page(int entry) {
-			if (entry > 0 && entry <= _max_entry) {
-				_page = (entry - 1) / _lines;
-			}
-		}
-
-		void next_item() {
-			++_nsel;
-
-			if (_nsel > _max_entry) {
-				_nsel = 1;
-			}
-
-			if (_nsel <= _page * _lines || _nsel >= _page *_lines + _lines) {
-				set_page(_nsel);
-			}
-		}
-
-		void prev_item() {
-			--_nsel;
-
-			if (_nsel < 1) {
-				_nsel = _max_entry;
-			}
-
-			if (_nsel <= _page * _lines || _nsel >= _page *_lines + _lines) {
-				set_page(_nsel);
-			}
-		}
-
-		// update status string
-		void update_status();
-
-		// redraw whole screen
-		void update_term() {
-			update_term(spTwePacketPal(), true);
-		}
-
-		// update screen
-		void update_term(spTwePacket pal_upd, bool update_all) {
-			if (_bsolo) update_term_solo(pal_upd, update_all);
-			else update_term_full(pal_upd, update_all);
-		}
-		void update_term_full(spTwePacket pal_upd, bool update_all);
-		void update_term_solo(spTwePacket pal_upd, bool update_all);
-				
-		// sort the lists
-		void sort_entries();
-
-		// solo mode
-		void enter_solo_mode();
-
-		// print obj line
-		void print_obj(spTwePacket &spobj);
-	};
+	int get_APP_ID() { return APP_ID; }
 
 private:
 	// Serial Parser
@@ -171,6 +23,10 @@ private:
 
 	// top bar
 	TWETerm_M5_Console the_screen_t; // init the screen.
+
+	// tab bar
+	TWETerm_M5_Console the_screen_tab; // init the screen.
+	TWE_WidSet_Tabs _tabs;
 
 	// main screen
 	TWETerm_M5_Console the_screen; // init the screen.
@@ -185,58 +41,97 @@ private:
 	uint16_t default_bg_color;
 	uint16_t default_fg_color;
 
-	// packet data management and display
-	pkt_data_and_view pkt_data;
+	// Components
+	uint8_t u8tab_selection;
+	SimpleBuffer<upTWE_Button> _btns;
 
-	// timeout to hold screen_b
-	TWESYS::TimeOut _timeout_hold_screen_b;
-	bool _b_hold_screen_b;
+	// font IDs
+	struct {
+		uint8_t main;
+		uint8_t smaller;
+		uint8_t tiny;
+	} font_IDs;
 
 public:
-	App_Glancer()
-		: parse_ascii(256)
+	App_Glancer(int exit_id = -1)
+		: parse_ascii(512)
 #if M5_SCREEN_HIRES == 0
-		, the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
+		, the_screen_tab(64, 20, { 0, 18, 320, 10 }, M5)
+		, the_screen(64, 20, { 0, 28, 320, 240 - 18 - 10 - 30 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
 #elif M5_SCREEN_HIRES == 1
-		, the_screen(56, 16, { 0,  24, 640, 400 }, M5)
 		, the_screen_t(80, 1, { 0,   0, 640,  24 }, M5)
-		, the_screen_b(120, 2, { 0, 424, 640,  32 }, M5)
+		, the_screen_tab(80, 2, { 0,  24, 640,  16 }, M5)
+		, the_screen(56, 48, { 0,  40, 640, 400 }, M5)
+		, the_screen_b(120, 2, { 0, 440, 640,  16 }, M5)
 		, the_screen_c(64, 1, { 0, 456, 640,  24 }, M5)
 #endif
 		, default_bg_color(0)
 		, default_fg_color(0)
-		, pkt_data(the_screen, the_screen_t)
-		, _timeout_hold_screen_b()
-		, _b_hold_screen_b(false)
+		, _tabs(*this, the_screen_tab)
+		, u8tab_selection(255)
+		, font_IDs()
 	{
+		if (exit_id != -1) u8tab_selection = exit_id;
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 	}
 
-	~App_Glancer() {}
+	~App_Glancer() {
+		APP_HNDLR<App_Glancer>::on_close();
+	}
 
 	void setup();
 
 	void loop();
 
-
 private:
-	void parse_a_byte(char_t u8b);
-	void process_input();
-	void check_for_serial();
-
 	// setup procedure
 	void setup_screen();
 
 	// update screen
 	void screen_refresh();
 
-	// change screen font of `the_screen'
-	void change_screen_font();
+	// set title bar 
+	void set_title_bar(int page_id);
 
 	// set navigation bar on the bottom
-	void set_nav_bar();
-};
+	void set_nav_bar(const char* msg = nullptr);
 
+	// simple screen
+
+public:
+	enum PAGE_ID {
+		PAGE_OPEN,
+		PAGE_SCR_GLANCER,
+		PAGE_SCR_CUE,
+		PAGE_SCR_ARIA,
+		_PAGE_END_
+	};
+
+	/**
+	 * template function of subscreen handler (APP_HNDLR).
+	 */
+	EMBED_APP_HNDLR_TEMPLATE_PROCEDURE(hndr);
+
+	// Opening screen data context 
+	struct SCR_GLANCER;
+	friend struct SCR_GLANCER;
+	void hndr_SCR_GLANCER(event_type ev, arg_type arg);
+
+	// Opening screen data context 
+	struct SCR_CUE_BASIC;
+	friend struct SCR_CUE_BASIC;
+	void hndr_SCR_CUE_BASIC(event_type ev, arg_type arg);
+
+	// Opening screen data context 
+	struct SCR_ARIA_BASIC;
+	friend struct SCR_ARIA_BASIC;
+	void hndr_SCR_ARIA_BASIC(event_type ev, arg_type arg);
+
+	// Opening screen data context 
+	struct SCR_OPEN;
+	friend struct SCR_OPEN;
+	void hndr_SCR_OPEN(event_type ev, arg_type arg);
+};

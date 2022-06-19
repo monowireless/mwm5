@@ -82,15 +82,15 @@ void TWETerm_LinuxConsole::refresh() {
 		return;
 	}
 	
-	if (u32Dirty) {
+	if (dirtyLine) {
 		const int B = 1024;
 		char fmt[B];
 
-		if (u32Dirty == U32DIRTY_FULL) {
+		if (dirtyLine.is_full()) {
 			fputs("\033[2J\033[H", stdout);
 		}
 		for (int i = 0; i <= max_line; i++) {
-			if ((1UL << i) & u32Dirty) {
+			if (dirtyLine.is_dirty(i)) {
 				snprintf(fmt, sizeof(fmt), "\033[%d;%dH", i + 1, 1); // move cursor
 				fputs(fmt, stdout);
 				
@@ -126,7 +126,7 @@ void TWETerm_LinuxConsole::refresh() {
 	}
 	fflush(stdout);
 
-	u32Dirty = 0UL;
+	dirtyLine.clear();
 }
 
 void TWETERM_vInitVSCON(TWE_tsFILE* fp, TWE::IStreamOut *winconsole, TWE::IStreamIn *winkeyb) {

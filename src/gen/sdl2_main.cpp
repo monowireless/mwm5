@@ -127,9 +127,9 @@ SDL_Renderer* gRenderer = nullptr;
 
 // Rendering Mutex - if multi-threaded, use mutex for resource access.
 #if MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 1
-SDL_mutex* gMutex_Render = nullptr;
+LockGuard::mutex_type gMutex_Render = nullptr;
 #elif MWM5_SDL2_USE_MULTITHREAD_RENDER == 1 && MWM5_USE_SDL2_MUTEX == 0
-std::mutex gMutex_Render;
+LockGuard::mutex_type gMutex_Render;
 #else
 const bool gMutex_Render = true;
 #endif
@@ -672,7 +672,12 @@ struct app_core_sdl {
 		SCREEN_POS_X = rct.x;
 		SCREEN_POS_Y = rct.y;
 
-		if (auto l = TWE::LockGuard(gMutex_Render)) {
+		if (auto l = TWE::LockGuard(gMutex_Render, 32)) {
+			M5.Lcd.update_line_all();
+		}
+		else {
+			WrtCon << "!";
+			// may corrupt display, anyway try to do.
 			M5.Lcd.update_line_all();
 		}
 		
@@ -1497,6 +1502,89 @@ struct app_core_sdl {
 		}
 	}
 
+	void _render_main_screen_copy_buffer(void* mPixels) {
+		if (render_mode_m5_main == 0) {
+			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+				if (M5.Lcd.update_line(y)) {
+					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
+					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
+
+					for (int x = 0; x < M5_LCD_WIDTH; x++) {
+						auto c = M5.Lcd.get_pt(x, y);
+
+						// RENDER LIKE LCD
+						draw_point(p1, c);
+						draw_point(p1 + 1, c, 192);
+						draw_point(p2, c, 128);
+						draw_point(p2 + 1, c, 128);
+
+						p1 += 2;
+						p2 += 2;
+					}
+				}
+			}
+		}
+		else if (render_mode_m5_main == 1) {
+			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+				if (M5.Lcd.update_line(y)) {
+					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
+					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
+
+					for (int x = 0; x < M5_LCD_WIDTH; x++) {
+						RGBA c = M5.Lcd.get_pt(x, y);
+
+						draw_point(p1, c);
+						draw_point(p2, c, 128);
+
+						p1 += 1;
+						p2 += 1;
+					}
+				}
+			}
+		}
+		else if (render_mode_m5_main == 2) {
+			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+				if (M5.Lcd.update_line(y)) {
+					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 2);
+					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 1);
+
+					for (int x = 0; x < M5_LCD_WIDTH; x++) {
+						auto c = M5.Lcd.get_pt(x, y);
+
+						// RENDER BLUR
+						draw_point(p1, c);
+						draw_point(p2, c);
+
+						p1 += 1;
+						p2 += 1;
+					}
+				}
+			}
+
+		}
+		else if (render_mode_m5_main == 3) {
+			for (int y = 0; y < M5_LCD_HEIGHT; y++) {
+				if (M5.Lcd.update_line(y)) {
+					uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
+					uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
+
+					for (int x = 0; x < M5_LCD_WIDTH; x++) {
+						auto c = M5.Lcd.get_pt(x, y);
+
+						// RENDER LIKE DIGITAL TEXTURE
+						draw_point(p1, c);
+						draw_point(p1 + 1, c);
+						draw_point(p2, c);
+						draw_point(p2 + 1, c);
+
+						p1 += 2;
+						p2 += 2;
+					}
+				}
+			}
+		}
+	}
+
 	void render_main_screen(bool b_background = false) {
 		// texture source rect
 		const SDL_Rect* p_srcrect = NULL;
@@ -1528,87 +1616,13 @@ struct app_core_sdl {
 		}
 
 		if (!g_app_busy) {
-			if (auto l = TWE::LockGuard(gMutex_Render)) {
-				if (render_mode_m5_main == 0) {
-					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-						if (M5.Lcd.update_line(y)) {
-							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
-							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
-
-							for (int x = 0; x < M5_LCD_WIDTH; x++) {
-								auto c = M5.Lcd.get_pt(x, y);
-
-								// RENDER LIKE LCD
-								draw_point(p1, c);
-								draw_point(p1 + 1, c, 192);
-								draw_point(p2, c, 128);
-								draw_point(p2 + 1, c, 128);
-
-								p1 += 2;
-								p2 += 2;
-							}
-						}
-					}
-				}
-				else if (render_mode_m5_main == 1) {
-					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-						if (M5.Lcd.update_line(y)) {
-							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
-							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
-
-							for (int x = 0; x < M5_LCD_WIDTH; x++) {
-								RGBA c = M5.Lcd.get_pt(x, y);
-
-								draw_point(p1, c);
-								draw_point(p2, c, 128);
-
-								p1 += 1;
-								p2 += 1;
-							}
-						}
-					}
-				}
-				else if (render_mode_m5_main == 2) {
-					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-						if (M5.Lcd.update_line(y)) {
-							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 2);
-							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 1);
-
-							for (int x = 0; x < M5_LCD_WIDTH; x++) {
-								auto c = M5.Lcd.get_pt(x, y);
-
-								// RENDER BLUR
-								draw_point(p1, c);
-								draw_point(p2, c);
-
-								p1 += 1;
-								p2 += 1;
-							}
-						}
-					}
-
-				}
-				else if (render_mode_m5_main == 3) {
-					for (int y = 0; y < M5_LCD_HEIGHT; y++) {
-						if (M5.Lcd.update_line(y)) {
-							uint32_t* p1 = (uint32_t*)mPixels + (y * M5_LCD_WIDTH * 4);
-							uint32_t* p2 = p1 + (M5_LCD_WIDTH * 2);
-
-							for (int x = 0; x < M5_LCD_WIDTH; x++) {
-								auto c = M5.Lcd.get_pt(x, y);
-
-								// RENDER LIKE DIGITAL TEXTURE
-								draw_point(p1, c);
-								draw_point(p1 + 1, c);
-								draw_point(p2, c);
-								draw_point(p2 + 1, c);
-
-								p1 += 2;
-								p2 += 2;
-							}
-						}
-					}
-				}
+			if (auto l = TWE::LockGuard(gMutex_Render, 32)) {
+				_render_main_screen_copy_buffer(mPixels);
+			}
+			else {
+				// timeout, but perform transferring app screen buffer anyway.
+				_render_main_screen_copy_buffer(mPixels);
+				WrtCon << "!";
 			}
 		}
 		
@@ -2357,15 +2371,17 @@ static uint32_t callbackTimerApp(uint32_t interval, void* param) {
 
 	if (twe_prog.is_protocol_busy()) {
 		// loop 8 times at once
+		auto l = TWE::LockGuard(gMutex_Render, 32);
+		if (!l) WrtCon << "*"; // lock fails (timeout)
 		for (int i = 0; i < 8; i++) {
-			if (auto l = TWE::LockGuard(gMutex_Render)) {
-				::s_sketch_loop(); // loop last
-			}
+			::s_sketch_loop(); // loop last (w/ keeping lock)
 		}
+
 		return 1;
 	} else {
 		{
-			auto l = TWE::LockGuard(gMutex_Render);
+			auto l = TWE::LockGuard(gMutex_Render, 32);
+			if (!l) WrtCon << "*"; // lock fails (timeout)
 			::s_sketch_loop(); // loop last
 		}
 

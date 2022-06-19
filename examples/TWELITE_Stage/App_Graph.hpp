@@ -9,7 +9,7 @@
 
 #include <utility>
 
-class App_CUE : public TWE::APP_DEF, public TWE::APP_HNDLR<App_CUE> {
+class App_Graph : public TWE::APP_DEF, public TWE::APP_HNDLR<App_Graph> {
 public:
 	static const int APP_ID = int(E_APP_ID::CUE);
 	static const wchar_t LAUNCH_MSG[];
@@ -53,7 +53,7 @@ private:
 	} font_IDs;
 
 public:
-	App_CUE(int exit_id = -1)
+	App_Graph(int exit_id = -1)
 		: parse_ascii(512)
 #if M5_SCREEN_HIRES == 0
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
@@ -78,8 +78,8 @@ public:
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 	}
 
-	~App_CUE() {
-		APP_HNDLR<App_CUE>::on_close();
+	~App_Graph() {
+		APP_HNDLR<App_Graph>::on_close();
 	}
 
 	void setup();
@@ -103,12 +103,12 @@ private:
 	// simple screen
 	
 public:
-	struct PAGE_ID {
-		static const uint8_t PAGE_BASIC = 0x00;
-		static const uint8_t PAGE_CUE_FIFO = 0x01;
-		static const uint8_t PAGE_ARIA_BASIC = 0x02;
-		static const uint8_t PAGE_WSNS_DB = 0x03;
-		static const uint8_t PAGE_HELP = 0x7F;
+	enum PAGE_ID {
+		PAGE_OPEN,
+		PAGE_CUE_FIFO,
+		PAGE_WSNS_DB,
+		PAGE_HELP,
+		_PAGE_END_
 	};
 
 	/**
@@ -117,19 +117,14 @@ public:
 	EMBED_APP_HNDLR_TEMPLATE_PROCEDURE(hndr);
 
 	// Opening screen data context 
-	struct SCR_CUE_BASIC;
-	friend struct SCR_CUE_BASIC;
-	void hndr_SCR_CUE_BASIC(event_type ev, arg_type arg);
-
-	// Opening screen data context 
 	struct SCR_CUE_FIFO;
 	friend struct SCR_CUE_FIFO;
 	void hndr_SCR_CUE_FIFO(event_type ev, arg_type arg);
 
 	// Opening screen data context 
-	struct SCR_ARIA_BASIC;
-	friend struct SCR_ARIA_BASIC;
-	void hndr_SCR_ARIA_BASIC(event_type ev, arg_type arg);
+	struct SCR_OPEN;
+	friend struct SCR_OPEN;
+	void hndr_SCR_OPEN(event_type ev, arg_type arg);
 
 	// Opening screen data context 
 	struct SCR_WSNS_DB;
