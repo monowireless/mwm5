@@ -24,6 +24,7 @@ using APP_BASE = App_Graph;
 #define PKT_TYPE_MAG uint8_t(E_PAL_DATA_TYPE::MAG_STD)
 #define PKT_TYPE_APPTWELITE (0x100 + (uint16_t)E_PKT::PKT_TWELITE)
 #define PKT_TYPE_APPIO (0x100 + (uint16_t)E_PKT::PKT_APPIO)
+#define PKT_TYPE_UNK (0xFFFF)
 //#define IS_PKT_TYPE_PAL(x) (x && x <= 0xFF)
 #define IS_PKT_TYPE_ARIA_AMB(x) (x == uint8_t(E_PAL_DATA_TYPE::AMB_STD) || x == uint8_t(E_PAL_DATA_TYPE::EX_ARIA_STD))
 #define IS_PKT_TYPE_MOT_CUE(x) (x == uint8_t(E_PAL_DATA_TYPE::MOT_STD) || x == uint8_t(E_PAL_DATA_TYPE::EX_CUE_STD))
@@ -31,8 +32,8 @@ using APP_BASE = App_Graph;
 #define IS_PKT_APPIO(x) (x == PKT_TYPE_APPIO)
 #define IS_PKT_MAG(x) (x == PKT_TYPE_MAG)
 
-//#define WSNS_DEBUG_FUNCTIONS
-//#define WSNS_DB_USE_YMDH
+//#define WSNS_DEBUG_FUNCTIONS // add debug screen (open by button [ B ] at node list view.)
+//#define WSNS_DB_USE_YMDH // use query key by YEAR/MONTH/DAY/HOUR (may not be available now)
 
 #ifdef WSNS_DEBUG_FUNCTIONS
 // RANDOM GENERATOR
@@ -1189,17 +1190,31 @@ public:
      * \param hndl_query    external handler function(or lambda expression) which is called each entry.
      * \return 
      */
-    int query_sorted_sensor_list_newer_first(std::function<void(uint32_t sid, uint64_t ts)> hndl_query) {
+    int query_sorted_sensor_list_newer_first(std::function<void(SENSOR_DATA& d)> hndl_query) {
         auto scrbuzy = SCREEN_BUSY();
 
         try {
             auto query = sql_statement("SELECT * FROM sensor_last ORDER BY ts DESC");
 
             while (query.executeStep()) {
-                hndl_query(
-                    uint32_t(query.getColumn(0).getInt()),
-                    uint64_t(query.getColumn(1).getInt64())
-                );
+                SENSOR_DATA d;
+
+                // store necessary info as SENSOR_DATA (note: selective data elements from last packet)
+                int n = 0;
+                d.sid = DB_INTEGER(query.getColumn(n));
+                n++; d.ts = DB_TIMESTAMP(query.getColumn(n));
+                n++; d.lid = DB_INTEGER(query.getColumn(n));
+                n++; d.lqi = DB_INTEGER(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.pkt_type = DB_INTEGER(query.getColumn(n)); else d.pkt_type = DB_INTEGER(PKT_TYPE_UNK);
+                n++; d.value = DB_REAL(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.value1 = DB_REAL(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.value2 = DB_REAL(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.value3 = DB_REAL(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.val_vcc_mv = DB_INTEGER(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.val_dio = DB_INTEGER(query.getColumn(n));
+                n++; if (!query.getColumn(n).isNull()) d.ev_id = DB_INTEGER(query.getColumn(n));
+                
+                hndl_query(d);
 
                 // update internal list
                 _node_seen.append(uint32_t(query.getColumn(0).getInt()));
@@ -1318,10 +1333,11 @@ public:
      * query description of SID stored in sensor_node table.
      * 
      * \param sid
-     * \param strbuff_to_append
+     * \param strbuff_to_set
      * \return 
      */
-    int query_sid_string(uint32_t sid, SmplBuf_WChar& strbuff_to_append) {
+    int query_sid_string(uint32_t sid, SmplBuf_WChar& strbuff_to_set) {
+        int ret = EXIT_FAILURE;
         try {
             auto query = sql_statement("SELECT * FROM sensor_node WHERE (sid = ?)", DB_INTEGER(int32_t(sid)));
 
@@ -1329,17 +1345,17 @@ public:
                 const auto& col = query.getColumn(2);
                 if (col.isText()) {
                     auto p = col.getText();
-                    strbuff_to_append << p;
+                    strbuff_to_set.emptify() << p;
+                    ret = EXIT_SUCCESS;
                 }
             }
         }
         catch (std::exception& e)
         {
             on_exception(e);
-            return EXIT_FAILURE;
         }
 
-        return EXIT_SUCCESS;
+        return ret;
     }
 
     /**
@@ -2061,7 +2077,7 @@ public:
             rndr.drawRect(area_graph_sub.x - 1, area_graph_sub.y - 1, area_graph_sub.w + 2, area_graph_sub.h + 2, col_gray30);
 
             if (b_preview) {
-                const wchar_t* msg = L"-- プレビュー --";
+                const wchar_t* msg = MLSLW(L"-- プレビュー --", L"--- PREVIEW ---");
                 int l_msg = TWEUTILS::strlen_vis(msg);
 
                 drawChar(font
@@ -2136,7 +2152,7 @@ public:
 
                     if (IS_PKT_TYPE_ARIA_AMB(data_type)) {
                         if (bm_value & BM_VALUE2) {
-                            const wchar_t* lbl = L"照度[lx]";
+                            const wchar_t* lbl = MLSLW(L"照度[lx]", L"Lumi[lx]");
                             x_pos -= strlen_vis(lbl) * font_w;
                             drawChar(font
                                 , x_pos, y_pos
@@ -2146,7 +2162,7 @@ public:
                         }
 
                         if (bm_value & BM_VALUE1) {
-                            const wchar_t* lbl = L"湿度[％]";
+                            const wchar_t* lbl = MLSLW(L"湿度[％]", L"Humi[％]");
                             x_pos -= strlen_vis(lbl) * font_w;
                             drawChar(font
                                 , x_pos, y_pos
@@ -2156,7 +2172,7 @@ public:
                         }
 
                         if (bm_value & BM_VALUE) {
-                            const wchar_t* lbl = L"温度[℃]";
+                            const wchar_t* lbl = MLSLW(L"温度[℃]", L"Temp[℃]");
                             x_pos -= strlen_vis(lbl) * font_w;
                             drawChar(font
                                 , x_pos, y_pos
@@ -2249,22 +2265,22 @@ public:
                     }
                     else if (IS_PKT_MAG(data_type)) {
                         if (bm_value & BM_VALUE) {
-                            const wchar_t* lbl2 = L"2:S極";
+                            const wchar_t* lbl2 = MLSLW(L"2:S極", L"2:S  ");
                             x_pos -= strlen_vis(lbl2) * font_w;
                             drawChar(font, x_pos, y_pos, lbl2, col_darkB, WHITE, 0, M5);
                             x_pos -= font_w;
 
-                            const wchar_t* lbl1 = L"1:N極";
+                            const wchar_t* lbl1 = MLSLW(L"1:N極", L"1:N  ");
                             x_pos -= strlen_vis(lbl1) * font_w;
                             drawChar(font, x_pos, y_pos, lbl1, col_darkR, WHITE, 0, M5);
                             x_pos -= font_w;
 
-                            const wchar_t* lbl0 = L"0:なし";
+                            const wchar_t* lbl0 = MLSLW(L"0:なし", L"0:None");
                             x_pos -= strlen_vis(lbl0) * font_w;
                             drawChar(font, x_pos, y_pos, lbl0, col_gray30, WHITE, 0, M5);
                             x_pos -= font_w;
 
-                            const wchar_t* lbl = L"磁石";
+                            const wchar_t* lbl = MLSLW(L"磁石", L"MAG ");
                             x_pos -= strlen_vis(lbl) * font_w;
                             drawChar(font, x_pos, y_pos, lbl, col_darkG, WHITE, 0, M5);
                             x_pos -= font_w;
@@ -2314,9 +2330,9 @@ public:
                     }
                     else if (IS_PKT_MAG(data_type)) {
                         switch (i) {
-                        case 1: drawChar(font, area_graph.x - font_w * 4 - 2, y - font_h / 2, L"Ｓ極", col_darkB, WHITE, 0, M5); break;
-                        case 5: drawChar(font, area_graph.x - font_w * 4 - 2, y - font_h / 2, L"Ｎ極", col_darkR, WHITE, 0, M5); break; 
-                        case 9: drawChar(font, area_graph.x - font_w * 4 - 2, y - font_h / 2, L"なし", col_gray30, WHITE, 0, M5); break;
+                        case 1: drawChar(font, area_graph.x - font_w * 4 - 2, y - font_h / 2, MLSLW(L"Ｓ極", L"S po"), col_darkB, WHITE, 0, M5); break;
+                        case 5: drawChar(font, area_graph.x - font_w * 4 - 2, y - font_h / 2, MLSLW(L"Ｎ極", L"N po"), col_darkR, WHITE, 0, M5); break;
+                        case 9: drawChar(font, area_graph.x - font_w * 4 - 2, y - font_h / 2, MLSLW(L"なし", L"None"), col_gray30, WHITE, 0, M5); break;
                         }
                     }
                 }
@@ -2344,7 +2360,7 @@ public:
                     int y_pos = area_graph_sub.y - font_h - 1;
 
                     if (bm_value & BM_MAG) {
-                        const wchar_t* lbl_mag = L"磁石";
+                        const wchar_t* lbl_mag = MLSLW(L"磁石", L"MAG");
                         x_pos -= strlen_vis(lbl_mag) * font_w;
                         drawChar(font
                             , x_pos
@@ -2364,7 +2380,7 @@ public:
                     x_pos -= font_w;
 
                     if (bm_value & BM_VCC) {
-                        const wchar_t* lbl_vcc = L"電源[V]";
+                        const wchar_t* lbl_vcc = MLSLW(L"電源[V]", L"VCC[V]");
                         x_pos -= strlen_vis(lbl_vcc) * font_w;
                         drawChar(font
                             , x_pos
@@ -2390,7 +2406,7 @@ public:
             rndr.fillRect(area_draw.x, area_draw.y, area_draw.w, area_draw.h, b_preview ? col_gray90 : col_white);
 
             if (ct_plot_points == 0) {
-                const wchar_t* msg = L"表示データが存在しないか、この画面では表示を行いません";
+                const wchar_t* msg = MLSLW(L"表示データが存在しないか、この画面では表示を行いません", L"No display data exists or no display is performed on this screen.");
                 drawChar(font
                     , area_graph.x + font_w * 2
                     , area_graph.y + area_graph.h / 2 - font_h / 2
@@ -2707,19 +2723,19 @@ public:
                             if (IS_PKT_TYPE_ARIA_AMB(data_type)) {
                                 if (d.value) {
                                     lbl.clear();
-                                    lbl << L"温:" << format("%1.2f", *d.value);
+                                    lbl << MLSLW(L"温:", L"Te:") << format("%1.2f", *d.value);
                                     drawChar(font, rc.x + 2, y_pos, lbl.c_str(), col_darkR, WHITE, 0, M5);
                                     y_pos += font_h;
                                 }
                                 if (d.value1) {
                                     lbl.clear();
-                                    lbl << L"湿:" << format("%2.1f", *d.value1);
+                                    lbl << MLSLW(L"湿:", L"Hm:") << format("%2.1f", *d.value1);
                                     drawChar(font, rc.x + 2, y_pos, lbl.c_str(), col_darkB, WHITE, 0, M5);
                                     y_pos += font_h;
                                 }
                                 if (d.value2) {
                                     lbl.clear();
-                                    lbl << L"照:" << format("%d", convert_double_to_int32_t(*d.value2, 0, 1000000, -1));
+                                    lbl << MLSLW(L"照:", L"Lu:") << format("%d", convert_double_to_int32_t(*d.value2, 0, 1000000, -1));
                                     drawChar(font, rc.x + 2, y_pos, lbl.c_str(), col_darkG, WHITE, 0, M5);
                                     y_pos += font_h;
                                 }
@@ -2801,7 +2817,7 @@ public:
                                 if (d.val_dio && (*d.val_dio & 0x10000000)) {
                                     lbl.clear();
                                     int v_mag = (*d.val_dio >> 24) & 0x3;
-                                    const wchar_t lblMag[4][4] = { L"なし", L"N", L"S", L"-" };
+                                    const wchar_t lblMag[4][8] = { L"none", L"N", L"S", L"-" };
                                     lbl << "M:" << lblMag[v_mag]; 
                                     const uint16_t cols[4] = { col_gray30, col_darkR, col_darkB, WHITE };
                                     drawChar(font, rc.x + 2, y_pos, lbl.c_str(), cols[v_mag], WHITE, 0, M5);
@@ -2825,7 +2841,7 @@ public:
                             if (d.val_dio && (*d.val_dio & 0x10000000)) {
                                 lbl.clear();
                                 int v_mag = (*d.val_dio >> 24) & 0x3;
-                                const wchar_t lblMag[4][4] = { L"なし", L"N", L"S", L"-" };
+                                const wchar_t lblMag[4][8] = { L"none", L"N", L"S", L"-" };
                                 lbl << "M:" << lblMag[v_mag];
                                 const uint16_t cols[4] = { col_gray30, col_darkR, col_darkB, WHITE };
                                 drawChar(font, rc.x + 2, y_pos, lbl.c_str(), cols[v_mag], WHITE, 0, M5);
@@ -2935,7 +2951,7 @@ public:
 
                     SmplBuf_WCharS lbl;
                     lbl << format("%04d/%02d/%02d", t.year, t.month, t.day)
-                        << L"にはセンサーデータが記録されていません";
+                        << MLSLW(L"にはセンサーデータが記録されていません", L" has no sensor data.");
 
                     drawChar(font
                         , x_pos, y_pos
@@ -3165,7 +3181,7 @@ public:
             }
             
             int l = l_start;
-            scr(1, l++) << "[    センサー情報    ]";
+            scr(1, l++) << MLSLW(L"[    センサー情報    ]", L"[    Sensor Info     ]");
             scr(1, l++) << format("  TS:%02d:%02d:%02d.%03d", td.hour, td.minute, td.second, *d.ts_msec);
 
             scr(1, l++);
@@ -3747,15 +3763,15 @@ public:
 
         bool b_stat = true;
 
-        // prepare node information (not mandate)
-        _db->sensor_node_add(u32ids[0], "DMY_NODE1");
-        _db->sensor_node_add(u32ids[1], "DMY_NODE2");
-        _db->sensor_node_add(u32ids[2], "DMY_NODE3");
-        _db->sensor_node_add(u32ids[3], "DMY_NODE4");
-        _db->sensor_node_add(u32ids[4], "DMY_NODE5");
-        _db->sensor_node_add(u32ids[5], "DMY_NODE6");
-        _db->sensor_node_add(u32ids[6], "DMY_NODE7");
-        _db->sensor_node_add(u32ids[7], "DMY_NODE8");
+        // add node information if not exist in sensor_node table.
+        SmplBuf_WChar w;
+        for(int i = 0; i < TWEUTILS::elements_of_array(u32ids); i++) {
+            if (_db->query_sid_string(u32ids[i], w) == EXIT_FAILURE) {
+                SmplBuf_ByteSL<64> lblnode;
+                lblnode << format("DMY_NODE%d", i);
+                _db->sensor_node_add(u32ids[i], lblnode.c_str());
+            }
+        }
 
         // The timestamp of the data to be added is the past sec_to_go_back seconds starting from the current time.
         auto ts_now = TWESYS::TweLocalTime::epoch_now();
@@ -3967,7 +3983,7 @@ public:
          * \return      true: time out
          */
         bool is_timeout_over_on_item() {
-            if (tick_request != 0 && (millis() - tick_request > 300)) {
+            if (tick_request != 0 && (millis() - tick_request > 200)) {
                 tick_request = 0;
                 int i = idx_request;
                 // idx_request = -1;
@@ -3992,63 +4008,176 @@ public:
     struct subscr_list_nodes : public B_subs_view_gen, public APP_HANDLR_DC {
     public:
         static const int CLS_ID = _SCRN_MGR::SUBS_LIST_NODES; // APP_HANDLER
+
+        enum class E_LIST_FMT {
+            STD = 0,
+            DESC,
+            STD2,
+            __END__
+        } fmt_list;
+
+        enum class E_SORT_TYPE{
+            BY_TS_ASC = 0,
+            BY_LID_ASC,
+            BY_SID_ASC,
+            BY_KIND_ASC,
+            BY_DESC_ASC,
+            __END__
+        } sort_type;
+        bool b_sort_reverse;
         
         SCR_WSNS_DB& base;
         TWE_WidSet_Buttons btns;
+        struct _id_btns {
+            int sort_type;
+            int sort_order;
+            int fmt_list;
+        } id_btns;
 
         struct _node_ent {
-            uint32_t sid;
-            uint64_t ts;
+            WSnsDb::SENSOR_DATA data;
+            SmplBuf_WChar desc;
         };
+
         SimpleBuffer<_node_ent> v_node;
-        int sort_type;
 
         TWESYS::TweLocalTime tl_query;
 
         uint32_t tick_last;
 
+
         static const int LIVE_VIEW_DUR = _VIEW::LIVE_VIEW_DUR;
+
+        void _list_sort() {
+            switch (sort_type) {
+            case E_SORT_TYPE::BY_LID_ASC:
+                if (b_sort_reverse)
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.lid < *b.data.lid; });
+                else
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.lid > *b.data.lid; });
+                break;
+
+            case E_SORT_TYPE::BY_SID_ASC:
+                if (b_sort_reverse)
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.sid < *b.data.sid; });
+                else
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.sid > *b.data.sid; });
+                break;
+
+            case E_SORT_TYPE::BY_TS_ASC:
+                if (b_sort_reverse)
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.ts < *b.data.ts; });
+                else
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.ts > *b.data.ts; });
+                break;
+
+            case E_SORT_TYPE::BY_KIND_ASC:
+                if (b_sort_reverse)
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.pkt_type < *b.data.pkt_type; });
+                else
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return *a.data.pkt_type > *b.data.pkt_type; });
+                break;
+
+            case E_SORT_TYPE::BY_DESC_ASC:
+                if (b_sort_reverse)
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return a.desc < b.desc; });
+                else
+                    SmplBuf_Sort(v_node, [](_node_ent& a, _node_ent& b) { return a.desc > b.desc; });
+                break;
+
+            
+            default: 
+                break;
+            }
+        }
 
         /**
          * Sorting SID list..
          * 
          */
-        void _sort_list_by_sid(int id_btn = -1) {
+        void _list_toggle_sort_type(int id_btn = -1) {
             const wchar_t* plbl = nullptr;
-            switch (sort_type) {
-            case 0:
-                SmplBuf_Sort(v_node,
-                    [](_node_ent& a, _node_ent& b) {
-                        return a.sid > b.sid;
-                    }
-                );
-                plbl = L"[SID ↑]";
-                break;
-            case 1:
-                SmplBuf_Sort(v_node,
-                    [](_node_ent& a, _node_ent& b) {
-                        return a.sid < b.sid;
-                    }
-                );
 
-                plbl = L"[SID ↓]";
+            sort_type = E_SORT_TYPE(int(sort_type) + 1);
+            if (sort_type >= E_SORT_TYPE::__END__) sort_type = E_SORT_TYPE(0);
+
+            _list_sort(); // perform sort
+            
+            switch (sort_type) {
+            case E_SORT_TYPE::BY_SID_ASC:
+                plbl = L"[SID ]";
                 break;
-            case 2:
-                SmplBuf_Sort(v_node,
-                    [](_node_ent& a, _node_ent& b) {
-                        return a.ts < b.ts;
-                    }
-                );
-                plbl = L"[PktT↑]";
+            
+            case E_SORT_TYPE::BY_LID_ASC:
+                plbl = L"[LID ]";
                 break;
-            case 3:
-                SmplBuf_Sort(v_node,
-                    [](_node_ent& a, _node_ent& b) {
-                        return a.ts > b.ts;
-                    }
-                );
-                plbl = L"[PktT↓]";
+
+            case E_SORT_TYPE::BY_TS_ASC:
+                plbl = L"[PktT]";
                 break;
+
+            case E_SORT_TYPE::BY_KIND_ASC:
+                plbl = MLSLW(L"[種別]", L"[Type]");
+                break;
+
+            case E_SORT_TYPE::BY_DESC_ASC:
+                plbl = MLSLW(L"[名前]", L"[Name]");
+                break;
+
+            default:
+                plbl = MLSLW(L"[ｿｰﾄ ]", L"[Sort]");
+            }
+
+            if (id_btn != -1) {
+                auto& b = btns[id_btn];
+                b.get_label() = plbl;
+                b.update_view();
+            }
+        }
+
+
+        /**
+         * Sorting SID list (toggle order asc or dsc)
+         */
+        void _list_toggle_sort_order(int id_btn = -1) {
+            const wchar_t* plbl = nullptr;
+
+            b_sort_reverse = !b_sort_reverse; // update flag
+
+            _list_sort(); // perform sort
+
+            plbl = b_sort_reverse ? L"↓" : L"↑";
+
+            if (id_btn != -1) {
+                auto& b = btns[id_btn];
+                b.get_label() = plbl;
+                b.update_view();
+            }
+        }
+
+        /**
+         * toggle display label format
+         * 
+         */
+        void _list_toggle_text_format(int id_btn = -1) {
+            const wchar_t* plbl = nullptr;
+
+            fmt_list = E_LIST_FMT(int(fmt_list) + 1);
+            if (fmt_list >= E_LIST_FMT::__END__) fmt_list = E_LIST_FMT(0);
+
+            _update_list_string();
+
+            switch (fmt_list) {
+            case E_LIST_FMT::STD:
+                plbl = MLSLW(L"[標準]", L"[Std ]");
+                break;
+            case E_LIST_FMT::STD2:
+                plbl = MLSLW(L"[標２]", L"[Std2]");
+                break;
+            case E_LIST_FMT::DESC:
+                plbl = MLSLW(L"[名前]", L"[Name]");
+                break;
+            default: plbl = MLSLW(L"[表示]", L"[Disp]");
             }
 
             if (id_btn != -1) {
@@ -4057,8 +4186,6 @@ public:
                 b.update_view();
             }
 
-            sort_type++;
-            if (sort_type > 3) sort_type = 0;
         }
 
         /**
@@ -4073,21 +4200,92 @@ public:
             tl.now();
 
             for (unsigned i = 0; i < v_node.size(); i++) {
-                auto sid = v_node[i].sid;
-                auto ts = v_node[i].ts;
-
                 SmplBuf_WCharSL<64> lbl;
                 SmplBuf_WCharSL<64> opt;
-                lbl << format("%08X", sid);
-                int64_t t_dif = tl.epoch - ts;
-                if (t_dif >= 86400) opt << format("%d", (t_dif + 43200) / 86400) << L"日前";
-                else if (t_dif >= 3600) opt << format("%d", (t_dif + 1800) / 3600) << L"時間前";
-                else if (t_dif >= 60) opt << format("%d", (t_dif + 30) / 60) << L"分前";
-                else if (t_dif >= 20) opt << L"\033[37mNEW!\033[130m";
-                else if (t_dif >= 10) opt << L"\033[35mNEW!\033[130m";
-                else                  opt << L"\033[31mNEW!\033[130m";
-                
-                lbl << L"(" << opt << L")";
+
+                if (fmt_list == E_LIST_FMT::STD) {
+                    auto sid = *v_node[i].data.sid;
+                    auto ts = *v_node[i].data.ts;
+                    auto p_lid = v_node[i].data.lid;
+
+                    auto pty = *v_node[i].data.pkt_type;
+
+                    switch (pty) {
+                    case PKT_TYPE_ARIA: lbl << L"ARA"; break;
+                    case PKT_TYPE_AMB: lbl << L"AMB"; break;
+                    case PKT_TYPE_MOT: lbl << L"MOT"; break;
+                    case PKT_TYPE_CUE: lbl << L"CUE"; break;
+                    case PKT_TYPE_MAG: lbl << L"MAG"; break;
+                    case PKT_TYPE_APPTWELITE: lbl << L"TWL"; break;
+                    default: lbl << L"UNK";
+                    }
+
+                    if (p_lid) {
+                        lbl << format("/%03d,%04X", *p_lid, sid & 0xFFFF);
+                    }
+                    else {
+                        lbl << format("/%08X", sid);
+                    }
+
+                    int64_t t_dif = tl.epoch - ts;
+                    if (t_dif >= 86400) {
+                        int days = int((t_dif + 43200) / 86400);
+                        if (days >= 1000) days = 999;
+                        opt << format("%d", (t_dif + 43200) / 86400) << MLSLW(L"日前", L"d");
+                    }
+                    else if (t_dif >= 3600) opt << format("%d", (t_dif + 1800) / 3600) << MLSLW(L"時間前", L"h");
+                    else if (t_dif >= 60) opt << format("%d", (t_dif + 30) / 60) << MLSLW(L"分前", L"m");
+                    else if (t_dif >= 20) opt << L"\033[37mNEW!\033[130m";
+                    else if (t_dif >= 10) opt << L"\033[35mNEW!\033[130m";
+                    else                  opt << L"\033[31mNEW!\033[130m";
+
+                    lbl << L" " << opt;
+                }
+                else if (fmt_list == E_LIST_FMT::STD2) {
+                    auto sid = *v_node[i].data.sid;
+                    auto ts = *v_node[i].data.ts;
+                    auto p_lid = v_node[i].data.lid;
+
+                    auto pty = *v_node[i].data.pkt_type;
+                    auto lqi = *v_node[i].data.lqi;
+                    auto p_volt = v_node[i].data.val_vcc_mv;
+
+                    switch (pty) {
+                    case PKT_TYPE_ARIA: lbl << L"ARA"; break;
+                    case PKT_TYPE_AMB: lbl << L"AMB"; break;
+                    case PKT_TYPE_MOT: lbl << L"MOT"; break;
+                    case PKT_TYPE_CUE: lbl << L"CUE"; break;
+                    case PKT_TYPE_MAG: lbl << L"MAG"; break;
+                    case PKT_TYPE_APPTWELITE: lbl << L"TWL"; break;
+                    default: lbl << L"UNK";
+                    }
+
+                    if (p_lid) {
+                        lbl << format("/%03d", *p_lid);
+                    }
+                    else {
+                        lbl << format("/---", sid);
+                    }
+
+                    lbl << format(",%08X/%4d", sid, p_volt ? *p_volt : 0);
+                }
+                else if (fmt_list == E_LIST_FMT::DESC) {
+                    int wid_max = base.the_screen.get_cols() - 4;
+
+                    auto& desc = v_node[i].desc;
+                    
+                    // copy char within wid_max.
+                    int l = 0;
+                    for (unsigned i = 0; i < desc.length(); i++) {
+                        auto c = desc[i];
+                        int c_vislen = strlen_vis(c);
+                        if (l + c_vislen <= wid_max) {
+                            lbl.push_back(c);
+                            l += c_vislen;
+                        }
+                        else break;
+                    }
+                }
 
                 if (i < lv.size()) {
                     auto x = lv.get(i);
@@ -4124,18 +4322,19 @@ public:
                 
                 bool b_updated = false;
                 for (unsigned j = 0; j < v_node.size(); ++j) {
-                    if (v_node[j].sid == sid) {
-                        if (v_node[j].ts < ts) v_node[j].ts = ts; // update ts
+                    if (*v_node[j].data.sid == sid) {
+                        if (*v_node[j].data.ts < int64_t(ts)) *v_node[j].data.ts = ts; // update ts
                         b_updated = true;
                         break;
                     }
                 }
                 // if not found, add new entry.
                 if (!b_updated) {
-                    v_node.push_back({ sid, ts });
+                    v_node.push_back({ d,L"" });
                 }
             }
 
+            // update label
             _update_list_string();
 
             lv_redraw();
@@ -4199,15 +4398,20 @@ public:
             lv.clear();
             v_node.clear();
 
-            lv.set_info_area(L">>");
+            // lv.set_info_area(L">>"); // no use of sub button (space is very limited)
 
             tl_query.now(); // save timestamp of this query.
 
             db.query_sorted_sensor_list_newer_first(
-                [&](uint32_t sid, uint64_t ts) {
-                    v_node.push_back({ sid, ts });
+                [&](WSnsDb::SENSOR_DATA& d) {
+                    v_node.push_back({d, L""});
                 }
             );
+            
+            // query description
+            for (auto& x : v_node) {
+                base._db->query_sid_string(*x.data.sid, x.desc);
+            }
 
             // update string label
             if (b_update_on_lv) _update_list_string();
@@ -4216,6 +4420,54 @@ public:
         }
  
 #endif
+
+        enum class E_LIST_UPDATE {
+            SORT_TYPE,
+            SORT_ORDER,
+            FMT_LIST,
+        };
+
+        void _list_change_order(E_LIST_UPDATE type, int id_btn) {
+            // save selected SID
+            uint32_t sid_sel = 0x0;
+            int i_sel = lv.get_selected_index();
+            if (i_sel != -1 && unsigned(i_sel) < v_node.size()) {
+                sid_sel = v_node[i_sel].data.sid.value();
+            }
+
+            // perform db commit first
+            base.db_commit(); 
+
+            update_list(false);
+            
+            lv.set_view(0, -1); // set no selected.
+
+            switch (type) {
+            case E_LIST_UPDATE::SORT_ORDER:
+                _list_toggle_sort_order(id_btn); // sort items
+                _update_list_string();
+                break;
+            case E_LIST_UPDATE::SORT_TYPE:
+                _list_toggle_sort_type(id_btn); // sort items
+                _update_list_string();
+                break;
+            case E_LIST_UPDATE::FMT_LIST:
+                _list_toggle_text_format(id_btn);
+                break;
+            }
+
+            // try to restore selected index
+            if (sid_sel != 0x0) {
+                for (unsigned i = 0; i < v_node.size(); i++) {
+                    if (v_node[i].data.sid.value() == sid_sel) {
+                        lv.set_view_with_select_item(i);
+                        break;
+                    }
+                }
+            }
+
+            lv_redraw();
+        }
 
         /**
          * initialize view of node list.
@@ -4234,37 +4486,44 @@ public:
             if (init) {
             
                 lv_attach_scr(scr, 3);
+                int c = 0;// scr.get_cols() - 1;
+                int r = 0; // scr.get_rows() - 1;
 
-                btns.clear();
-                const wchar_t* lbl_update = L"[更新]";
-                int c = scr.get_cols() - TWEUTILS::strlen_vis(lbl_update) - 1;
-                btns.add(c, 0 /* scr.get_rows() - 1 */, lbl_update,
-                    [&](int, uint32_t) {
-                        base._node.set_sid(0);
-
-                        base.db_commit();
-                        update_list();
-                        lv_redraw();
-                    }
-                );
-
-                const wchar_t* lbl_sort = L"[ソート]";
-                btns.add(c - TWEUTILS::strlen_vis(lbl_sort) - 1, 0 /* scr.get_rows() - 1 */, lbl_sort,
+                const wchar_t* lbl_disp = MLSLW(L"[表示]", L"[DISP]");
+                id_btns.fmt_list = btns.add(c, r, lbl_disp,
                     [&](int id_btn, uint32_t) {
-                        base._node.set_sid(0);
+                        _list_change_order(E_LIST_UPDATE::FMT_LIST, id_btn);
+                        return;
 
-                        base.db_commit();
-                        update_list(false);
-
-                        _sort_list_by_sid(id_btn); // sort items
-                        lv.set_view(0, -1); // set no selected.
-                        _update_list_string();
+                        _list_toggle_text_format(id_btn);
                         lv_redraw();
                     }
                 );
+                c += TWEUTILS::strlen_vis(lbl_disp) + 1;
+
+                const wchar_t* lbl_sort = MLSLW(L"[ｿｰﾄ ]", L"[SORT]");
+                id_btns.sort_type = btns.add(c, r, lbl_sort,
+                    [&](int id_btn, uint32_t) {
+                        _list_change_order(E_LIST_UPDATE::SORT_TYPE, id_btn);
+                        return;
+                    }
+                );
+                c += TWEUTILS::strlen_vis(lbl_sort) + 1;
+
+                const wchar_t* lbl_sort_order = L"↑";
+                id_btns.sort_order = btns.add(c, r, lbl_sort_order,
+                    [&](int id_btn, uint32_t) {
+                        _list_change_order(E_LIST_UPDATE::SORT_ORDER, id_btn);
+                        return;
+                    }
+                );
+                c += TWEUTILS::strlen_vis(lbl_sort_order) + 1;
+
+                // help button
+                btns.add(scr.get_cols() - 7, r, MLSLW(L"[ﾍﾙﾌﾟ]", L"[HELP]"), [&](int id_btn, uint32_t) { base.open_help_url(); });
 
                 // title
-                base.set_title(L"ノード一覧");
+                base.set_title(MLSLW(L"ノード一覧", L"Nodes list"));
                 node.set_sid(0);
             }
 
@@ -4274,7 +4533,7 @@ public:
             // select the node.
             if (sid_set != 0) {
                 for (unsigned i = 0; i <= v_node.size(); i++) {
-                    if (sid_set == v_node[i].sid) {
+                    if (sid_set == *v_node[i].data.sid) {
                         lv.set_view_with_select_item(i);
                         break;
                     }
@@ -4287,6 +4546,13 @@ public:
         }
 
         void setup() {
+            auto& t = base._app.the_screen_c; t.clear_screen();
+            //    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+            t << MLSLW(
+                L"        ↑/長押:戻る       決定/ソート            ↓/ﾘｾｯﾄ",
+                L"        ↑/Long:BACK     SELECT/SORT            ↓/RST"
+            );
+           
             show_list(true);
         }
 
@@ -4316,7 +4582,7 @@ public:
                 if (1) {
                     if (lv_handle_events(c,
                         [&](int idx_sel, TWE_ListView::pair_type&& item_sel) { // CLICK MAIN CONTENT
-                            uint32_t sid = v_node[idx_sel].sid;
+                            uint32_t sid = v_node[idx_sel].data.sid.value();
                             node.set_sid(sid);
 
                             if (sid == view.sid_preview) {
@@ -4328,7 +4594,7 @@ public:
                             base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_D_DAY);
                         },
                         [&](int, int idx_sel, TWE_ListView::pair_type&& item_sel) { // CLICK RIGHT BUTTON
-                            uint32_t sid = v_node[idx_sel].sid;
+                            uint32_t sid = v_node[idx_sel].data.sid.value();
                             node.set_sid(sid);
 
                             if (sid == view.sid_preview) {
@@ -4340,7 +4606,7 @@ public:
                             base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_D_DAY);
                         },
                         [&](int idx_sel, TWE_ListView::pair_type&& item_sel) {  // OVER
-                            uint32_t sid = v_node[idx_sel].sid;
+                            uint32_t sid = v_node[idx_sel].data.sid.value();
                             node.set_sid(sid);
 
                             base._view.disp_sid_text(sid, 2);
@@ -4359,18 +4625,18 @@ public:
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_D_DAY);
                 }
                 else switch (c) {
-                case KeyInput::KEY_BUTTON_A: break;
-                case KeyInput::KEY_BUTTON_B:
+                case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+                case KeyInput::KEY_BUTTON_B: 
 #ifdef WSNS_DEBUG_FUNCTIONS
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_DEBUG);
+#else
+                    the_keyboard.push(KeyInput::KEY_ENTER);
 #endif
                     break;
-                case KeyInput::KEY_BUTTON_C: break;
-                case KeyInput::KEY_BUTTON_A_LONG: break;
-                case KeyInput::KEY_BUTTON_B_LONG: break;
-                case KeyInput::KEY_BUTTON_C_LONG: 
-
-                    break;
+                case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break; break;
+                case KeyInput::KEY_BUTTON_A_LONG: break; // HANDLED BY UPPER SCREEN
+                case KeyInput::KEY_BUTTON_B_LONG: btns.press(id_btns.sort_type); break;
+                case KeyInput::KEY_BUTTON_C_LONG: break; // HANDLED BY UPPER SCREEN
                 default: break;
                 }
 
@@ -4406,9 +4672,9 @@ public:
             : B_subs_view_gen()
             , APP_HANDLR_DC(CLS_ID)
             , base(base)
-            , btns(*this, base.the_screen)
+            , btns(*this, base.the_screen), id_btns()
             , tick_last(0)
-            , v_node(), sort_type(0)
+            , v_node(), sort_type(E_SORT_TYPE(0)), b_sort_reverse(false), fmt_list(E_LIST_FMT(0))
         {}
 
         virtual ~subscr_list_nodes() {}
@@ -4474,7 +4740,14 @@ public:
             auto& node = base._node;
 
             scr.clear();
-            base.set_title(L"ライブデータ");
+            base.set_title(MLSLW(L"ライブデータ", L"Live data"));
+
+            auto& t = base._app.the_screen_c; t.clear_screen();
+            //    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+            t << MLSLW(
+                L"    ｽﾞｰﾑ↑/長押:戻る     24時間/一覧          ｽﾞｰﾑ↓/ﾘｾｯﾄ",
+                L"    ZOOM↑/Long:BACK       24Hr/Nodes         ZOOM↓/RST"
+            );
 
             int l = 1;
             l++;
@@ -4486,30 +4759,30 @@ public:
 
             if (init) {
                 btns.clear();
-                const wchar_t* lbl_back = L"[<<一覧]";
 
-                btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1, 0, lbl_back,
-                    [&](int, uint32_t) {
-                        base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_NODES);
-                    }
-                );
+                const wchar_t* lbl_help = MLSLW(L"[ﾍﾙﾌﾟ]", L"[HELP]");
+                btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_help) - 1, 0, lbl_help
+                    , [&](int, uint32_t) { base.open_help_url(); } );
+
+                const wchar_t* lbl_back = MLSLW(L"[<<一覧]", L"[<Nodes]");
+                btns.add(0, 0, lbl_back, [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_NODES); } );
 
                 int l = 7;
 
-                btns.add(7, l, L"[年]",
+                btns.add(7, l, MLSLW(L"[年]", L"[Yr]"),
                     [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_YEARS); }
                 );
-                btns.add(7 + 6, l, L"[月]",
+                btns.add(7 + 6, l, MLSLW(L"[月]", L"[Mo]"),
                     [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_MONTHS); }
                 );
-                btns.add(7 + 12, l, L"[日]",
+                btns.add(7 + 12, l, MLSLW(L"[日]", L"[Dy]"),
                     [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_DAYS); }
                 );
                 l++;
 
                 l++; // blank line
 
-                const wchar_t* lbl24hr = L"[<<24時間データ]";
+                const wchar_t* lbl24hr = MLSLW(L"[<<24時間データ]", L"[<<24Hr Data]");
                 btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl24hr) - 1, l++, lbl24hr,
                     [&](int, uint32_t) {
                         node.set_latest_date();
@@ -4599,17 +4872,18 @@ public:
                 else switch (c) {
                 case KeyInput::KEY_LEFT: view.pick_sample_prev(true); break;
                 case KeyInput::KEY_RIGHT: view.pick_sample_next(true); break;
-                case KeyInput::KEY_BUTTON_A: break;
+                case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
                 case KeyInput::KEY_BUTTON_B:
 #ifdef WSNS_DEBUG_FUNCTIONS
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_DEBUG);
+#else
+                    base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_D_DAY);
 #endif
                     break;
-                case KeyInput::KEY_BUTTON_C: break;
-                case KeyInput::KEY_BUTTON_A_LONG: break;
-                case KeyInput::KEY_BUTTON_B_LONG: break;
-                case KeyInput::KEY_BUTTON_C_LONG:
-                    break;
+                case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
+                case KeyInput::KEY_BUTTON_A_LONG: break; // HANDLED BY UPPER SCREEN
+                case KeyInput::KEY_BUTTON_B_LONG: base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_NODES); break;
+                case KeyInput::KEY_BUTTON_C_LONG: break; // HANDLED BY UPPER SCREEN
                 default: break;
                 }
 
@@ -4673,19 +4947,29 @@ public:
 
         void setup() {
             auto& scr = base.the_screen;
-
             scr.clear();
+
+            auto& t = base._app.the_screen_c; t.clear_screen();
+            //    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+            t << MLSLW(
+                L"        ↑/長押:戻る       決定/--                ↓/ﾘｾｯﾄ",
+                L"        ↑/Long:BACK     SELECT/--                ↓/RST"
+            );
 
             update_list(*base._db);
             lv_attach_scr(scr, 3);
 
             btns.clear();
 
-            const wchar_t* lbl_back = L"[<<一覧]";
-            btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1, 0, lbl_back,
+            const wchar_t* lbl_help = MLSLW(L"[ﾍﾙﾌﾟ]", L"[HELP]");
+            btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_help) - 1, 0, lbl_help
+                , [&](int, uint32_t) { base.open_help_url(); });
+
+            const wchar_t* lbl_back = MLSLW(L"[<<一覧]", L"[<Nodes]");
+            btns.add(0, 0, lbl_back,
                 [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_NODES); });
 
-            base.set_title(L"年選択");
+            base.set_title(MLSLW(L"年選択", L"Year"));
 
             // show empty graph
             base._view._clear();
@@ -4730,12 +5014,12 @@ public:
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_MONTHS);
                 }
                 else switch (c) {
-                case KeyInput::KEY_BUTTON_A: break;
-                case KeyInput::KEY_BUTTON_B: break;
-                case KeyInput::KEY_BUTTON_C: break;
-                case KeyInput::KEY_BUTTON_A_LONG: break;
+                case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+                case KeyInput::KEY_BUTTON_B: the_keyboard.push(KeyInput::KEY_ENTER); break;
+                case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
+                case KeyInput::KEY_BUTTON_A_LONG: break; // HANDLED BY UPPER SCREEN
                 case KeyInput::KEY_BUTTON_B_LONG: break;
-                case KeyInput::KEY_BUTTON_C_LONG: break;
+                case KeyInput::KEY_BUTTON_C_LONG: break; // HANDLED BY UPPER SCREEN
                 default: break;
                 }
             } while (the_keyboard.available());
@@ -4797,16 +5081,22 @@ public:
 
         void setup() {
             auto& scr = base.the_screen;
-
             scr.clear();
+
+            auto& t = base._app.the_screen_c; t.clear_screen();
+            //    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+            t << MLSLW(
+                    L"        ↑/長押:戻る       決定/--                ↓/ﾘｾｯﾄ",
+                    L"        ↑/Long:BACK     SELECT/--                ↓/RST"
+                );
 
             update_list(*base._db);
             lv_attach_scr(scr, 3);
 
             btns.clear();
 
-            const wchar_t* lbl_back = L"[<<年選択]";
-            btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1, 0, lbl_back,
+            const wchar_t* lbl_back = MLSLW(L"[<<年選択]", L"[<<Year]");
+            btns.add(0 /* scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1 */, 0, lbl_back,
                 [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_YEARS); });
 
             // show empty graph
@@ -4814,7 +5104,7 @@ public:
             base._view.plot_empty();
 
             // title
-            base.set_title(L"月選択");
+            base.set_title(MLSLW(L"月選択", L"Month"));
         }
 
         void loop() {
@@ -4855,12 +5145,12 @@ public:
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_DAYS);
                 }
                 else switch (c) {
-                case KeyInput::KEY_BUTTON_A: break;
-                case KeyInput::KEY_BUTTON_B: break;
-                case KeyInput::KEY_BUTTON_C: break;
-                case KeyInput::KEY_BUTTON_A_LONG: break;
+                case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+                case KeyInput::KEY_BUTTON_B: the_keyboard.push(KeyInput::KEY_ENTER); break;
+                case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
+                case KeyInput::KEY_BUTTON_A_LONG: break; // HANDLED BY UPPER SCREEN
                 case KeyInput::KEY_BUTTON_B_LONG: break;
-                case KeyInput::KEY_BUTTON_C_LONG: break;
+                case KeyInput::KEY_BUTTON_C_LONG: break; // HANDLED BY UPPER SCREEN
                 default: break;
                 }
 
@@ -4928,20 +5218,26 @@ public:
 
         void setup() {
             auto& scr = base.the_screen;
-
             scr.clear();
+
+            auto& t = base._app.the_screen_c; t.clear_screen();
+            //       "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+            t << MLSLW(
+                    L"        ↑/長押:戻る       決定/--                ↓/ﾘｾｯﾄ",
+                    L"        ↑/Long:BACK     SELECT/--                ↓/RST"
+                );
 
             update_list(*base._db);
             lv_attach_scr(scr, 3);
 
             btns.clear();
 
-            const wchar_t* lbl_back = L"[<<月選択]";
-            btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1, 0, lbl_back,
+            const wchar_t* lbl_back = MLSLW(L"[<<月選択]", L"[<<Month]");
+            btns.add(0 /*scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1 */ , 0, lbl_back,
                 [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_MONTHS); });
 
 
-            base.set_title(L"日選択");
+            base.set_title(MLSLW(L"日選択", L"Day selection"));
         }
 
         void loop() {
@@ -4994,12 +5290,12 @@ public:
                 else switch (c) {
                 case KeyInput::KEY_LEFT: base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_MONTHS); break;
                 case KeyInput::KEY_RIGHT: base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_D_DAY); break;
-                case KeyInput::KEY_BUTTON_A: break;
-                case KeyInput::KEY_BUTTON_B: break;
-                case KeyInput::KEY_BUTTON_C: break;
-                case KeyInput::KEY_BUTTON_A_LONG: break;
+                case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+                case KeyInput::KEY_BUTTON_B: the_keyboard.push(KeyInput::KEY_ENTER); break;
+                case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
+                case KeyInput::KEY_BUTTON_A_LONG: break; // HANDLED BY UPPER SCREEN
                 case KeyInput::KEY_BUTTON_B_LONG: break;
-                case KeyInput::KEY_BUTTON_C_LONG: break;
+                case KeyInput::KEY_BUTTON_C_LONG: break; // HANDLED BY UPPER SCREEN
                 default: break;
                 }
             } while (the_keyboard.available());
@@ -5090,7 +5386,7 @@ public:
             
             // show essential information
             auto& scr = base.the_screen;
-            base.set_title(L"24時間データ");
+            base.set_title(MLSLW(L"24時間データ", L"24Hr Data"));
 
             int l = 1;
             l++;
@@ -5119,9 +5415,21 @@ public:
 
             scr.clear();
 
+            auto& t = base._app.the_screen_c; t.clear_screen();
+            //    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+            t << MLSLW(
+                L"    ｽﾞｰﾑ↑/長押:戻る       ﾗｲﾌﾞ/一覧          ｽﾞｰﾑ↓/ﾘｾｯﾄ",
+                L"    ZOOM↑/Long:BACK       LIVE/NODES         ZOOM↓/RST"
+                );
+
             btns.clear();
-            const wchar_t* lbl_back = L"[<<一覧]";
-            btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_back) - 1, 0, lbl_back,
+
+            const wchar_t* lbl_help = MLSLW(L"[ﾍﾙﾌﾟ]", L"[HELP]");
+            btns.add(scr.get_cols() - TWEUTILS::strlen_vis(lbl_help) - 1, 0, lbl_help
+                , [&](int, uint32_t) { base.open_help_url(); });
+
+            const wchar_t* lbl_back = MLSLW(L"[<<一覧]", L"[<Nodes]");
+            btns.add(0, 0, lbl_back,
                 [&](int, uint32_t) {
                     //node.set_sid(0);
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_NODES);
@@ -5164,7 +5472,7 @@ public:
                 }
             );
 
-            btns_id.latest = btns.add(0, 7, L"[最新]",
+            btns_id.latest = btns.add(0, 7, MLSLW(L"[最新]", L"[Ltst]"),
                 [&](int, uint32_t) {
                     if (node.ts_newest) {
                         TWESYS::TweLocalTime t;
@@ -5180,26 +5488,26 @@ public:
                 }
             );
 
-            const wchar_t* lbl_live = L"[ライブ>>]";
+            const wchar_t* lbl_live = MLSLW(L"[ライブ>>]", L"[LIVE>>]");
             btns.add(scr.get_cols() - strlen_vis(lbl_live) - 1, 9, lbl_live,
                 [&](int, uint32_t) {
                     base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIVE_VIEW);
                 }
             );
 
-            btns.add(7, 7, L"[年]",
+            btns.add(7, 7, MLSLW(L"[年]", L"[Yr]"),
                 [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_YEARS); }
             );
 
-            btns.add(7 + 6, 7, L"[月]",
+            btns.add(7 + 6, 7, MLSLW(L"[月]", L"[Mo]"),
                 [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_MONTHS); }
             );
 
-            btns.add(7 + 12, 7, L"[日]",
+            btns.add(7 + 12, 7, MLSLW(L"[日]", L"[Dy]"),
                 [&](int, uint32_t) { base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_DAYS); }
             );
 
-            btns.add(1, 11, L"[CSV出力]",
+            btns.add(1, 11, MLSLW(L"[CSV出力]", L"[CSV export]"),
                 [&](int, uint32_t) { base.export_sensor_data_day(uint32_t(node.sid), node.year, node.month, node.day); }
             );
 
@@ -5340,12 +5648,12 @@ public:
                 case KeyInput::KEY_RIGHT: base._view.pick_sample_next(false); break;
                 case KeyInput::KEY_UP: base._view.pseudo_scale_up(); view.plot_graph(); break;
                 case KeyInput::KEY_DOWN: base._view.pseudo_scale_down(); view.plot_graph(); break;
-                case KeyInput::KEY_BUTTON_A: break;
-                case KeyInput::KEY_BUTTON_B: break;
-                case KeyInput::KEY_BUTTON_C: break;
-                case KeyInput::KEY_BUTTON_A_LONG: break;
-                case KeyInput::KEY_BUTTON_B_LONG: break;
-                case KeyInput::KEY_BUTTON_C_LONG: break;
+                case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+                case KeyInput::KEY_BUTTON_B: base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIVE_VIEW); break;
+                case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
+                case KeyInput::KEY_BUTTON_A_LONG: break; // HANDLED BY UPPER SCREEN
+                case KeyInput::KEY_BUTTON_B_LONG: base._scr_sub.screen_change_request(_SCRN_MGR::SUBS_LIST_NODES); break;
+                case KeyInput::KEY_BUTTON_C_LONG: break; // HANDLED BY UPPER SCREEN
                 default: break;
                 }
             } while (the_keyboard.available());
@@ -5410,7 +5718,7 @@ public:
         uint32_t t_screen_opened;
 
         void go_back() {
-            the_app.exit(APP_ID);
+            the_app.exit(base._app.get_APP_ID());
         }
         
         void setup() {
@@ -5420,12 +5728,12 @@ public:
 
             int c = 0, l = 4;
             scr.clear();
-            scr(c, l++) << "*** データベースの初期";
-            scr(c, l++) << "    化に失敗しました。";
-            scr(c, l++) << "->直前の画面に戻ります。";
+            scr(c, l++) << MLSLW(L"*** データベースの初期",   L"*** Failed to initialize");
+            scr(c, l++) << MLSLW(L"    化に失敗しました。",   L"    the database.");
+            scr(c, l++) << MLSLW(L"->直前の画面に戻ります。", L"-> back to prev screen.");
 
             l++;
-            btns.add(0, l++, L"[戻る]", [&](int, uint32_t) { go_back(); });
+            btns.add(0, l++, MLSLW(L"[戻る]", L"[BACK]"), [&](int, uint32_t) { go_back(); });
         }
 
         void loop() {
@@ -5447,14 +5755,9 @@ public:
                 switch (c) {
                 case -1: break;
 
+                case KeyInput::KEY_BUTTON_B:
                 case KeyInput::KEY_ENTER:
                     go_back();
-                    break;
-
-                case KeyInput::KEY_BUTTON_A:
-                    break;
-
-                case KeyInput::KEY_BUTTON_B:
                     break;
                 }
 
@@ -5706,6 +6009,32 @@ public:
     }
 
     /**
+     * Open the help link.
+     */
+    void open_help_url() {
+        shell_open_help(MLSLW(
+            L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/graph/graph_sns.html",
+            L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/graph/graph_sns.html")
+        );
+    }
+
+    void set_nav_bar(const wchar_t* b, const wchar_t* b_long) {
+        auto& t = _app.the_screen_c;
+        t.clear_screen();
+        t << "";
+        //<< "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+        t << "    ｽﾞｰﾑ↑/長押:戻る   ";
+        
+        for (int i = strlen_vis(b); i <= 8; i++) t << ' ';
+        t << b;
+        t << '/';
+        t << b_long;
+        for (int i = strlen_vis(b_long); i <= 8; i++) t << ' ';
+
+        t << "     ｽﾞｰﾑ↓/ﾘｾｯﾄ";
+    }
+
+    /**
      * the setup.
      */
 	void setup() {
@@ -5733,13 +6062,15 @@ public:
 		_app.set_title_bar(PAGE_ID::PAGE_WSNS_DB);
 		_app.set_nav_bar();
 
+        set_nav_bar(L"--", L"--");
+
         // time stamp
         _lt_now.now();
 
         // open DB
         if (db_open()) {
             // query nodes list
-            _db->query_sorted_sensor_list_newer_first([&](uint32_t sid, uint64_t ts) {}); // load SID list.
+            // _db->query_sorted_sensor_list_newer_first([&](uint32_t sid, uint64_t ts) {}); // load SID list.
             _db->sensor_node_check(); // if missing node desc in sensor_node table, insert dummy one.
 
             // view setting
@@ -5790,10 +6121,8 @@ public:
 	void on_close() {
         APP_HNDLR<SCR_WSNS_DB>::on_close();
 
-        the_screen.set_draw_area(_area_scr_main);
-        the_screen.set_font(_app.font_IDs.main);
-        the_screen.clear_screen();
-        the_screen.force_refresh();
+        // restore screen
+        _app.screen_restore();
 	}
 
     /**

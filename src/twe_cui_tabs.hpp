@@ -90,8 +90,8 @@ namespace TWECUI {
 			static_cast<TWE_WidEv_Tab<T>*>(_upapp.get())->_hndlrs.reserve(16);
 
 			_btns_dialogue.reserve(2);
-			_btns_dialogue.push_back(TWECUI::upTWE_Button(new TWE_Button(trm.get_cols() - 12, 0, L"[YES]")));
-			_btns_dialogue.push_back(TWECUI::upTWE_Button(new TWE_Button(trm.get_cols() - 5, 0, L"[NO]")));
+			_btns_dialogue.push_back(TWECUI::upTWE_Button(new TWE_Button(6, 0, L"[YES]")));
+			_btns_dialogue.push_back(TWECUI::upTWE_Button(new TWE_Button(12, 0, L"[NO]")));
 
 			_btns_dialogue[0]->attach_term(_trm);
 			_btns_dialogue[0]->set_mouse_down_to_selcomp();

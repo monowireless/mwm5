@@ -310,7 +310,7 @@ namespace TWE {
 
 		TWEUTILS::SmplBuf_Byte _buf_payload;
 
-		uint8_t _u8protocol_busy;
+		volatile uint8_t _u8protocol_busy;
 
 	private:
 		/* private member funcs */

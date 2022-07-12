@@ -9,6 +9,23 @@
 #include "App_SelectPort.hpp"
 #include "serial_ftdi.hpp"
 
+template<>
+const wchar_t* App_SelectPort::APP_DESC<App_SelectPort>::TITLE_LONG[] = {
+	L"シリアルポートの選択",
+	L"Select SERIAL port"
+};
+
+template<>
+const wchar_t* App_SelectPort::APP_DESC<App_SelectPort>::LAUNCH_MSG[] =
+//....+....1....+....2....+....3....+....4| // 16dots 40cols
+{
+L"シリアルポートを選択します。""\r\n"
+L"※ Alt(Cmd)+0..9での操作も可能です。""\r\n"
+,
+L"Select SERIAL PORT""\r\n"
+L"※ It can be seleceted by Alt(Cmd)+0..9 operation as well.""\r\n"
+};
+
 void App_SelectPort::setup() {
 	// preference
 	the_settings_menu.begin(0); // load default preference
@@ -17,12 +34,13 @@ void App_SelectPort::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｼﾘｱﾙﾎﾟｰﾄ選択";
+	the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｼﾘｱﾙﾎﾟｰﾄ選択",
+						  L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Select SERIAL port");
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	TermAttr TB(TERM_COLOR_FG_BLACK | TERM_COLOR_BG_WHITE);
 	TermAttr TC(TERM_ATTR_OFF);
-	the_screen_b << TB << L" c ｷｰ: 反転項目のCOM番号を調べる" << TC;
+	the_screen_b << TB << MLSLW(L" c ｷｰ: 反転項目のCOM番号を調べる", L" c key: look up COM port # of selected item.") << TC;
 #endif
 
 	// add items
@@ -45,14 +63,28 @@ void App_SelectPort::hndlr_not_found(event_type ev, arg_type arg) {
 		// button navigation
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     --/長押:--            ﾒﾆｭｰ/--                --/--";
+		the_screen_c << MLSLW(L"     --/長押:--            ﾒﾆｭｰ/--                --/--",
+							  L"     --/Long:--            MENU/--                --/--");
 
-		the_screen << "\033[2J\033[H"
-			<< crlf
-			// L"....+....1....+....2....+....3....+....4" // 16dots 40cols
-			<< L"   * シリアルポートが見つかりません *   " << crlf << crlf
-			<< L"    \033[7mボタン\033[0mまたは\033[7m[Enter]\033[0mで、" << crlf
-			<< L"    メニューに移動します。";
+		switch (g_lang) {
+		case TWE::LANG_JP:
+			the_screen << "\033[2J\033[H"
+				<< crlf
+				// L"....+....1....+....2....+....3....+....4" // 16dots 40cols
+				<< L"   * シリアルポートが見つかりません *   " << crlf << crlf
+				<< L"    \033[7mボタン\033[0mまたは\033[7m[Enter]\033[0mで、" << crlf
+				<< L"    メニューに移動します。";
+			break;
+		case TWE::LANG_EN:
+			the_screen << "\033[2J\033[H"
+				<< crlf
+				// L"....+....1....+....2....+....3....+....4" // 16dots 40cols
+				<< L"   * No SERIAL port found *   " << crlf << crlf
+				<< L"   Move bake to MENU by" << crlf
+				<< L"    \033[7mButton\033[0mor\033[7m[Enter]\033[0m."
+				;
+			break;
+		}
 		break;
 
 	case EV_LOOP:
@@ -91,8 +123,9 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 	case EV_SETUP:
 		// button navigation
 		the_screen_c.clear_screen();
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     ↑/長押:--            決定/--                ↓/--";
+		//e_screen_c <<        "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(L"     ↑/長押:--            決定/--                ↓/--",
+							  L"     ↑/Long:--          SELECT/--                ↓/--");
 
 		if (sAppData.au8_TWESTG_STAGE_FTDI_ADDR[1] <= 0x20) {
 			int c = sAppData.au8_TWESTG_STAGE_FTDI_ADDR[0];
@@ -170,7 +203,7 @@ void App_SelectPort::hndlr_list(event_type ev, arg_type arg) {
 					// get extra information (COM number, the port must be opened)
 					const wchar_t* msg = Serial2.query_extra_device_info();
 					if (msg == nullptr || msg[0] == 0) {
-						msg = L"不明";
+						msg = MLSLW(L"不明", L"UNK");
 					}
 
 					the_screen_b.clear_line(1);
@@ -262,7 +295,7 @@ void App_SelectPort::setup_screen() {
 	TWEFONT::createFontShinonome16(10, 5, 3);
 	
 	//TWEFONT::createFontMP12(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(11, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */0);
 
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 	TWEFONT::createFontMP12(13, 0, 0);

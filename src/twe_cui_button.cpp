@@ -104,19 +104,22 @@ void TWE_Button::update_view() {
 
 	// move cursor
 	t.move_cursor(_c_vis, _l_vis);
-	t << "\033[7";
-	if (_col_label != 255) t << TWE::printfmt(";%d", 40 + _col_label);
-	if (_col_face != 255) t << TWE::printfmt(";%d", 30 + _col_face);
-	t << 'm';
-
+	t << "\033[7"; // reversed
+	
 	// reverse, bold attr (if selected)
-	if (_b_selected) {
-		t << TWE::printfmt("\033[%d", (_col_label == 255) ? 41 : _col_label + 40);
-		if (_col_face != 255) t << TWE::printfmt("\033[%d", _col_face + 30);
+	if (!_b_selected) {
+		if (_col_label != 255) t << TWE::printfmt(";%d", 40 + _col_label);
+		if (_col_face != 255) t << TWE::printfmt(";%d", 30 + _col_face);
+	}
+	else if (_b_selected) {
+		t << TWE::printfmt(";%d", (_col_focus_label == 255) ? 41 : _col_focus_label + 40);
+
+		if (_col_focus_face != 255) t << TWE::printfmt(";%d", _col_focus_face + 30);
+		else if (_col_face != 255) t << TWE::printfmt(";%d", 30 + _col_face);
 
 		if (_b_sel_comp_pre) t << ";1"; // bold
-		t << "m";
 	}
+	t << "m";
 
 	// label
 	auto p = _strlbl.begin();
@@ -148,7 +151,7 @@ bool TWE_Button::key_event(TWE::keyinput_type keycode) {
 	bool bHandled = false;
 
 	// if selected and out of focus...
-	if (_b_selected && !TWE_Widget::_is_focus()) {
+	if (_b_selected && !TWE_Widget::_is_focus() && !_b_sel_comp_pre_force) {
 		_b_selected = false;
 		update_view();
 	}
@@ -161,6 +164,7 @@ bool TWE_Button::key_event(TWE::keyinput_type keycode) {
 			if (millis() - _tick_selected > 300) {
 				_b_sel_comp = true;
 				_b_sel_comp_pre = false;
+				_b_sel_comp_pre_force = false;
 
 				update_view();
 				bHandled = true;
@@ -203,7 +207,7 @@ bool TWE_Button::key_event(TWE::keyinput_type keycode) {
 			}
 			else {
 				// out of button area
-				if (_b_selected) {
+				if (_b_selected && !_b_sel_comp_pre_force) {
 					_b_selected = false;
 
 					update_view();

@@ -6,7 +6,6 @@
 
 #include "App_RootMenu.hpp"
 #include "App_Twelite.hpp"
-#include "App_PAL.hpp"
 #include "App_Glancer.hpp"
 #include "App_Commander.hpp"
 #include "App_Graph.hpp"
@@ -14,6 +13,7 @@
 #include "App_Interactive.hpp"
 #include "App_Console.hpp"
 #include "App_Settings.hpp"
+#include "App_Manual.hpp"
 
 #ifdef ESP32
 # define IDF_UART
@@ -67,6 +67,7 @@ void setup() {
 #endif
 
 	// the preferences 
+	
 	update_settings();
 
 	// init the keyboard
@@ -158,51 +159,51 @@ uint32_t change_baud(uint32_t baud) {
  * @returns	        app id of switched app.
  */
 static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int exit_id) {
-	switch (n_appsel) {
-	case App_TweLite::APP_ID:
+	switch (E_APP_ID(n_appsel)) {
+	case E_APP_ID::TWELITE:
 		the_app.new_app<App_TweLite>();
 		break;
 
-	case App_PAL::APP_ID:
-		the_app.new_app<App_PAL>();
-		break;
-		
-	case App_Glancer::APP_ID:
+	case E_APP_ID::SMPL_VIEWER:
 		the_app.new_app<App_Glancer>();
 		break;
 
-	case App_Commander::APP_ID:
+	case E_APP_ID::COMMANDER:
 		the_app.new_app<App_Commander>();
 		break;
 
-	case App_Graph::APP_ID:
+	case E_APP_ID::GRAPH:
 		the_app.new_app<App_Graph>(exit_id);
 		break;
 
-	case App_FirmProg::APP_ID:
+	case E_APP_ID::FIRM_PROG:
 		the_app.new_app<App_FirmProg>(exit_id);
 		break;
 
-	case App_Interactive::APP_ID:
+	case E_APP_ID::INTERACTIVE:
 		the_app.new_app<App_Interactive>();
 		break;
 
-	case App_Console::APP_ID:
+	case E_APP_ID::CONSOLE:
 		the_app.new_app<App_Console>();
 		break;
 
-	case App_Settings::APP_ID:
+	case E_APP_ID::SETTINGS:
 		the_app.new_app<App_Settings>();
 		break;
 
 #if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
-	case App_SelectPort::APP_ID:
+	case E_APP_ID::SELECT_PORT:
 		the_app.new_app<App_SelectPort>(prev_app);
+		break;
+
+	case E_APP_ID::MANUAL:
+		the_app.new_app<App_Manual>(prev_app);
 		break;
 #endif
 
-	case APP_MGR::NEXT_APP_DEFAULT: // -1
-	case App_RootMenu::APP_ID: // should be 0
+	case E_APP_ID::_NEXT_APP_: // -1
+	case E_APP_ID::ROOT_MENU: // should be 0
 	default:
 		the_app.new_app<App_RootMenu>(exit_id);
 
@@ -213,35 +214,34 @@ static int s_change_app(TWE::APP_MGR& the_app, int n_appsel, int prev_app, int e
 	return n_appsel;
 }
 
-const wchar_t* query_app_launch_message(int n_appsel) {
-	switch (n_appsel) {
-	case App_TweLite::APP_ID:
-		return App_TweLite::LAUNCH_MSG;
-		break;
+/**
+ * query app title and help descriptions.
+ * 
+ * \param n_appsel
+ * \param b_title
+ * \return 
+ */
+const wchar_t* query_app_launch_message(int n_appsel, bool b_title) {
+	#define __QUERY_A_L_M_CASE(x) return b_title ? x::APP_DESC<x>::get_TITLE_LONG() : x::APP_DESC<x>::get_LAUNCH_MSG()
 
-	case App_PAL::APP_ID:
-		return App_PAL::LAUNCH_MSG;
-		break;
-
-	case App_Glancer::APP_ID:
-		return App_Glancer::LAUNCH_MSG;
-		break;
-
-	case App_Console::APP_ID:
-		return App_Console::LAUNCH_MSG;
-		break;
-
-	case App_Commander::APP_ID:
-		return App_Commander::LAUNCH_MSG;
-		break;
-
-	case App_Graph::APP_ID:
-		return App_Graph::LAUNCH_MSG;
-		break;
-		
+	switch (E_APP_ID(n_appsel)) {
+	case E_APP_ID::TWELITE: __QUERY_A_L_M_CASE(App_TweLite); break;
+	case E_APP_ID::SMPL_VIEWER: __QUERY_A_L_M_CASE(App_Glancer); break;
+	case E_APP_ID::COMMANDER: __QUERY_A_L_M_CASE(App_Commander); break;
+	case E_APP_ID::GRAPH: __QUERY_A_L_M_CASE(App_Graph); break;
+	case E_APP_ID::FIRM_PROG: __QUERY_A_L_M_CASE(App_FirmProg);	break;
+	case E_APP_ID::INTERACTIVE: __QUERY_A_L_M_CASE(App_Interactive); break;
+	case E_APP_ID::CONSOLE: __QUERY_A_L_M_CASE(App_Console); break;
+	case E_APP_ID::SETTINGS: __QUERY_A_L_M_CASE(App_Settings);
+#ifndef ESP32
+	case E_APP_ID::SELECT_PORT: __QUERY_A_L_M_CASE(App_SelectPort); break;
+	case E_APP_ID::MANUAL: __QUERY_A_L_M_CASE(App_Manual); break;
+#endif
 	default:
 		return L"";
 	}
+
+	#undef __QUERY_A_L_M_CASE
 }
 
 void update_serial_keyb_input(bool force_update = false) {
@@ -359,7 +359,7 @@ static void s_check_clipboard() {
  */
 void update_settings() {
 #ifndef ESP32
-	the_settings_menu.begin(appid_to_slotid(App_FirmProg::APP_ID));
+	the_settings_menu.begin(appid_to_slotid(int(E_APP_ID::FIRM_PROG)));
 	the_cwd.set_mwsdk_env(
 		sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS
 		, sAppData.u8_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO

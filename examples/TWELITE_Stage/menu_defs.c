@@ -153,6 +153,130 @@ const TWESTG_tsElement TWESTG_SLOT_SCREEN_INTRCT[] = {
 	{E_TWESTG_DEFSETS_VOID}
 };
 
+const TWESTG_tsElement TWESTG_STAGE_BASE_en[] = {
+	{ E_TWESTG_STAGE_START_APP,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "AID", "Startup App.",
+		  "Specifies the starting application number.\r\n"
+		  "0 is not specified. 1... is the menu number."
+		},
+		{ E_TWEINPUTSTRING_DATATYPE_HEX, 8, 'a' },
+		{ {.u32 = 0}, {.u32 = 0xFF}, TWESTGS_VLD_u32MinMax, NULL },
+	},
+#ifndef ESP32
+	{ E_TWESTG_STAGE_SCREEN_MODE,
+#if M5_SCREEN_HIRES == 0
+		{ TWESTG_DATATYPE_UINT8,  sizeof(uint8),  0, 0, {.u8 = 0x00 }},
+		{ "SCM", "Screen size and drawing method",
+		  "Specify by 2 - digit XY character(X: screen size Y : drawing method)\r\n"
+		  "X 0:640x480 1:960x720 2:1280x720\r\n"
+		  "  3:1280x960 4:1920x1080 5:320x240\r\n"
+		  "Y 0:LCD-like 1:CRT-like 2:Blur 3:Block"
+		},
+#elif M5_SCREEN_HIRES == 1
+		{ TWESTG_DATATYPE_UINT8,  sizeof(uint8),  0, 0, {.u8 = 0x02 }},
+		{ "SCM", "Screen size and drawing method",
+		  "Specify by 2-digit XY character (X: screen size Y: drawing method)\r\n"
+		  "X 0:640x480 1:1280x720 2:1280x960\r\n"
+		  "  3:1920x1440 4:2560x1440 5:320x240\r\n"
+		  "Y 0:LCD-like 1:CRT-like 2:Blur (when enlarged) 3:Block"
+		},
+#endif
+		{ E_TWEINPUTSTRING_DATATYPE_HEX, 3, 'G' },
+		{ {.u32 = 0}, {.u32 = 0xFF}, TWESTGS_VLD_u32MinMax, NULL },
+	},
+	{ E_TWESTG_STAGE_FTDI_ADDR,
+		{ TWESTG_DATATYPE_STRING,  8, 0, 0, {.pu8 = (uint8*)"\0       " }},
+		{ "FTA", "Serial Device ID",
+		  "Specify the serial number of the FTDI device.\r\n"
+		  "If not specified, leave blank" },
+		{ E_TWEINPUTSTRING_DATATYPE_STRING, 8, 'F' },
+		{ {.u32 = 0}, {.u32 = 0}, TWESTGS_VLD_u32String, NULL },
+	},
+#else
+	{ E_TWESTG_STAGE_KEYBOARD_LAYOUT,
+		{ TWESTG_DATATYPE_UINT8,  sizeof(uint8),  0, 0, {.u8 = 1 }},
+		{ "KYB", "PS/2キーボードレイアウト",
+		  "PS/2キーボードのレイアウトを指定します。\r\n"
+		  "  0: US 1: JP\r\n"
+		  "※電源再投入後に反映されます。" },
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 1, 'k' },
+		{ {.u32 = 0}, {.u32 = 1 }, TWESTGS_VLD_u32MinMax, NULL },
+	},
+#endif
+	{ E_TWESTG_STAGE_FG_COLOR,
+		{ TWESTG_DATATYPE_UINT32,  sizeof(uint32),  0, 0, {.u32 = 0xFFFFFF }},
+		{ "FGC", "FG color",
+		  "Specify the character color as 6 hexadecimal characters of RRGGBB.\r\n"
+		  "For example, red, FF0000, black, 0000000, white, FFFFFF" },
+		{ E_TWEINPUTSTRING_DATATYPE_HEX, 6, 'f' },
+		{ {.u32 = 0}, {.u32 = 0xFFFFFF}, TWESTGS_VLD_u32MinMax, NULL },
+	},
+	{ E_TWESTG_STAGE_BG_COLOR,
+		{ TWESTG_DATATYPE_UINT32,  sizeof(uint32),  0, 0, {.u32 = ((90 << 16) | 50) }},
+		{ "BGC", "BG color",
+		  "Specify the background color as 6 hexadecimal characters of RRGGBB.\r\n"
+		  "For example, red, FF0000, black, 0000000, white, FFFFFF" },
+		{ E_TWEINPUTSTRING_DATATYPE_HEX, 6, 'b' },
+		{ {.u32 = 0}, {.u32 = 0xFFFFFF}, TWESTGS_VLD_u32MinMax, NULL },
+	},
+	{ E_TWESTG_STAGE_BAUD_TERM,
+		{ TWESTG_DATATYPE_UINT32,  sizeof(uint32),  0, 0,  {.u32 = 115200}},
+		{ "BAU", "Baud Rate",
+		  "Terminal Interactive mode Specifies the baud rate.\r\n"
+		  "115200 bps is the standard, specified in 9600-115200.\r\n"
+		  "The TWELITE application needs to be supported." },
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 6, 'B' },
+		{ {.u32 = 9600}, {.u32 = 1000000}, TWESTGS_VLD_u32MinMax, NULL },
+	},
+	{E_TWESTG_DEFSETS_VOID} // FINAL DATA
+};
+
+const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD_en[] = {
+#ifndef ESP32
+	{ E_TWESTG_STAGE_APPWRT_BUILD_MAKE_JOGS,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "JOBS", "Number of make jobs at build time",
+		  "The number of jobs to be processed in parallel by make at build time.\r\n"
+		  "0: This defaults to half the number of logical CPUs.\r\n"
+		  "1: No parallel processing.\r\n"
+		  "Above: Number of jobs. Around the number of physical CPUs is optimal." },
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'j' },
+		{ {.u32 = 0}, {.u32 = 0xFFFFFF}, TWESTGS_VLD_u32MinMax, NULL } },
+	{ E_TWESTG_STAGE_APPWRT_OPEN_CODE,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "VSC", "Open a folder with VSCode",
+		  "Open a folder with VSCode\r\n"
+		  "0: Open the folder in the usual way.\r\n"
+		  "1: Open the folder with the `code' command.\r\n"
+		  "   VSCode installation and configuration is required."},
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'v' },
+		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
+# if defined(_MSC_VER) || defined(__MINGW32__)
+	{ E_TWESTG_STAGE_APPWRT_FORCE_DISABLE_LTO,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "LTO", "No LTO",
+		  "LTO will reduce the BIN size by about 5%.\r\n"
+		  "Selecting not to do will shorten the link time.\r\n"
+		  "0: Perform LTO\r\n"
+		  "1: No LTO" },
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'l' },
+		{ {.u32 = 0}, {.u32 = 1}, TWESTGS_VLD_u32MinMax, NULL } },
+# endif
+#endif
+	{ E_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN,
+		{ TWESTG_DATATYPE_UINT8, sizeof(uint8), 0, 0, {.u8 = 0 }},
+		{ "NXT", "Screen after rewriting is completed",
+		  "Select the screen after rewriting is completed\r\n"
+		  "0: By default Interactive mode interactive mode.\r\n"
+		  "1: Terminal screen.\r\n"
+		  "2: Return to the writing firmware menu."
+		},
+		{ E_TWEINPUTSTRING_DATATYPE_DEC, 2, 'n' },
+		{ {.u32 = 0}, {.u32 = 16}, TWESTGS_VLD_u32MinMax, NULL } },
+	{E_TWESTG_DEFSETS_VOID} // TERMINATOR
+};
+
 /*!
  * Custom default (another default value / hide an item)
  *   - hide items which is not necessary under sub settings.
@@ -227,3 +351,13 @@ const TWEINTRCT_tsFuncs asFuncs[] = {
 	{ 0xFF, NULL, NULL, NULL }
 };
 
+/**
+ * menu items for interactive menus.
+ */
+const TWEINTRCT_tsFuncs asFuncs_en[] = {
+	{ 0, (uint8*)"Settings Menu", TWEINTCT_vSerUpdateScreen_defmenus, TWEINTCT_vProcessInputByte_defmenus, TWEINTCT_vProcessInputString_defmenus, TWEINTCT_u32ProcessMenuEvent_defmenus }, // standard settings
+	{ 1, (uint8*)"STAGE Settings", TWEINTCT_vSerUpdateScreen_settings, TWEINTCT_vProcessInputByte_settings, TWEINTCT_vProcessInputString_settings, TWEINTCT_u32ProcessMenuEvent_settings  }, // standard settings
+	{ 2, (uint8*)"Save Data Utils(Dump/Erase)", TWEINTCT_vSerUpdateScreen_nvmutils, TWEINTCT_vProcessInputByte_nvmutils, TWEINTCT_vProcessInputString_nvmutils, TWEINTCT_u32ProcessMenuEvent_nvmutils }, // standard settings
+	{ 3, (uint8*)"Info", TWEINTCT_vSerUpdateScreen_stage_info, TWEINTCT_vProcessInputByte_stage_info, TWEINTCT_vProcessInputString_stage_info, TWEINTCT_u32ProcessMenuEvent_stage_info }, // standard settings
+	{ 0xFF, NULL, NULL, NULL }
+};

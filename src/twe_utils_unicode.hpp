@@ -48,6 +48,10 @@ namespace TWEUTILS {
 		return len;
 	}
 
+	inline int strlen_vis(const wchar_t c) {
+		return Unicode_isSingleWidth(c) ? 1 : 2;
+	}
+
 
 	/**
 	 * @fn	inline int strlen_vis(const wchar_t* p)

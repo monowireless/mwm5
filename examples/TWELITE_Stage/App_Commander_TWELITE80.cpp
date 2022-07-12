@@ -3,15 +3,17 @@
 
 #include "App_Commander.hpp"
 
-struct  App_Commander::SCR_TWELITE80 : public APP_HANDLR_DC {
-	static const int CLS_ID = App_Commander::PAGE_ID::PAGE_TWELITE80;
+using APP_BASE = App_Commander;
+
+struct  APP_BASE::SCR_TWELITE80 : public APP_HANDLR_DC {
+	static const int CLS_ID = APP_BASE::PAGE_ID::PAGE_TWELITE80;
 	int get_class_id() { return CLS_ID; }
 
-	App_Commander& _app;
+	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
 
 	// constructor
-	SCR_TWELITE80(App_Commander& app) : _app(app), _btns(*this, app.the_screen)
+	SCR_TWELITE80(APP_BASE& app) : _app(app), _btns(*this, app.the_screen)
 		, _b_dirty(1), _id(-1)
 		, _di_state{ 1,1,0,0 }
 		, _di_sel{ 1,1,0,0 }
@@ -43,10 +45,6 @@ private:
 	int8_t _pwm[4]; // 0..10:0-100%, 11:disabled
 
 public:
-	void on_setup() {
-		_b_dirty = 1;
-	}
-
 	// id
 	void id_up(int id, uint32_t opt = 0) {
 		_incr(_id, -1, 8);
@@ -93,31 +91,43 @@ public:
 	// parser command and transmit
 	void generate_command(bool turn_on = true);
 
-};
+	// setup
+	void setup() {
+		auto& dc = *this;
 
-// Screen def: NOTICE PAL 0x01
-void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
-	auto&& dc = APP_HNDLR::use<SCR_TWELITE80>();
-	auto& t = the_screen;
+		// layout screen.
+		_app.screen_layout_apps();
 
-	switch (ev) {
-	case EV_SETUP:
 		// set title bar
-		set_title_bar(PAGE_ID::PAGE_TWELITE80);
+		_app.set_title_bar(PAGE_ID::PAGE_TWELITE80);
+
+		// set nav bar
+		{
+			auto& t = _app.the_screen_c; t.clear_screen();
+			//    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+			t << MLSLW(L"    --/長押:戻る             --/--                --/ﾘｾｯﾄ", 
+				       L"    --/Long:BACK             --/--                --/RST");
+		}
 
 		// initialize some
-		dc.on_setup();
+		_b_dirty = 1;
 
 		// control array
 		{
+			auto& t = _app.the_screen; t.clear_screen();
+
 			// put base screen text
 			t.clear_screen();
 
 			//   "0....+....1....+....2....+....3....+....4....+....5...
 			t << crlf;
-			t << "             [標準ｱﾌﾟﾘ 0x80ｺﾏﾝﾄﾞ]" << crlf;     // L=1
+			t << MLSLW(
+				L"             [標準ｱﾌﾟﾘ 0x80ｺﾏﾝﾄﾞ]",
+				L"             [Std App  0x80 cmd]") << crlf;     // L=1
 			t << crlf;
-			t << "    宛先ID       (I)▽        △(i)" << crlf; // L=3
+			t << MLSLW(
+				L"    宛先ID       (I)▽        △(i)",
+				L"    DestID       (I)▽        △(i)") << crlf; // L=3
 			t << crlf;
 			//   "0....+....1....+....2....+....3....+....4....+....5...
 			t << "    DI1(1) 〇   DI2(2) 〇   DI3(3) 〇   DI4(4) 〇 " << crlf; // L=5
@@ -126,7 +136,10 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 			t << "    PWM1(a) |0123456789|    PWM2(s) |0123456789|" << crlf; // L=8
 			t << "    PWM3(d) |0123456789|    PWM4(f) |0123456789|" << crlf; // L=9
 			t << crlf; // L=10
-			t << "                                        送信(t)";
+
+			t << MLSLW(
+				L"                                        送信(t)",
+				L"                                        Trns(t)");
 
 			// add buttons
 			dc._btns.clear();
@@ -135,8 +148,8 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 			idx = dc._btns.add(20 - 3, 3, L"(I)▽", &SCR_TWELITE80::id_dn, &dc);
 			idx = dc._btns.add(30, 3, L"△(i)", &SCR_TWELITE80::id_up, &dc);
 
-			idx = dc._btns.add( 4, 5, L"DI1(1)", &SCR_TWELITE80::di_state, &dc, 0);
-			dc._btns[idx].set_additional_hot_area({4, 5, 9, 1}); // set additional hot area.
+			idx = dc._btns.add(4, 5, L"DI1(1)", &SCR_TWELITE80::di_state, &dc, 0);
+			dc._btns[idx].set_additional_hot_area({ 4, 5, 9, 1 }); // set additional hot area.
 			idx = dc._btns.add(16, 5, L"DI2(2)", &SCR_TWELITE80::di_state, &dc, 1);
 			dc._btns[idx].set_additional_hot_area({ 16, 5, 9, 1 });
 			idx = dc._btns.add(28, 5, L"DI3(3)", &SCR_TWELITE80::di_state, &dc, 2);
@@ -162,17 +175,20 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 			idx = dc._btns.add(28, 9, L"PWM4(f)", &SCR_TWELITE80::pwm, &dc, 3);
 			dc._btns[idx].set_additional_hot_area({ 28, 9, 19, 1 });
 
-			idx = dc._btns.add(40,11, L"送信(SPACE)", &SCR_TWELITE80::fire, &dc, 0);
+			idx = dc._btns.add(40, 11, MLSLW(L"送信(SPACE)", L"Trns(SPACE)"), &SCR_TWELITE80::fire, &dc, 0);
 
 #ifndef ESP32
-			idx = dc._btns.add(45, 0, L"ﾍﾙﾌﾟ(h)", &SCR_TWELITE80::web, &dc, 0);
+			idx = dc._btns.add(45, 0, MLSLW(L"ﾍﾙﾌﾟ(h)", L"HELP(h)"), &SCR_TWELITE80::web, &dc, 0);
 #endif
 
 			dc._btns.update_view();
 		}
-		break;
+	}
 
-	case EV_LOOP:
+	// the loop()
+	void loop() {
+		auto& dc = *this;
+
 		// handle events for buttons array
 		dc._btns.check_events();
 
@@ -210,14 +226,15 @@ void App_Commander::hndr_twelite80(event_type ev, arg_type arg) {
 
 		// update screen text (numbers, etc)
 		dc.update_screen();
-		break;
-
-	case EV_EXIT:
-		break;
 	}
-}
 
-void App_Commander::SCR_TWELITE80::generate_command(bool turn_on) {
+	// the on close
+	void on_close() {
+		;
+	}
+};
+
+void APP_BASE::SCR_TWELITE80::generate_command(bool turn_on) {
 	IParser& p = _app.parse_ascii;
 	auto&& a = p.get_payload();
 	a.clear();
@@ -257,7 +274,7 @@ void App_Commander::SCR_TWELITE80::generate_command(bool turn_on) {
 	TWE::WrtTWE << _app.parse_ascii;
 }
 
-void App_Commander::SCR_TWELITE80::update_screen() {
+void APP_BASE::SCR_TWELITE80::update_screen() {
 	ITerm& t = this->_app.the_screen;
 
 	if (_b_dirty) {
@@ -266,9 +283,9 @@ void App_Commander::SCR_TWELITE80::update_screen() {
 		t << "      "; // clean up with blank
 		t.move_cursor(23, 3);
 		switch (_id) {
-		case -1: t << "全子機"; break;
-		case 0: t << "親機:0"; break;
-		default: t << "子機:" << printfmt("%d", _id);
+		case -1: t << MLSLW(L"全子機", L"Chld:*"); break;
+		case 0: t << MLSLW(L"親機:0", L"Prnt:0"); break;
+		default: t << MLSLW(L"子機:", L"Chld:") << printfmt("%d", _id);
 		}
 
 		// pwm
@@ -323,3 +340,9 @@ void App_Commander::SCR_TWELITE80::update_screen() {
 		_b_dirty = 0;
 	}
 }
+
+
+/**
+ * create an instance of hander for SCR_TWELITE80.
+ */
+void APP_BASE::hndr_SCR_TWELITE80(event_type ev, arg_type arg) { hndr<SCR_TWELITE80>(ev, arg); }

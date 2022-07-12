@@ -3,12 +3,27 @@
 
 #include "App_Interactive.hpp"
 
- // *** Entering Config Mode ***
- // !INF EXIT INTERACTIVE MODE.
+template<>
+const wchar_t* App_Interactive::APP_DESC<App_Interactive>::TITLE_LONG[] = {
+	L"インタラクティブモード",
+	L"Interactive settings mode",
+};
+
+template<>
+const wchar_t* App_Interactive::APP_DESC<App_Interactive>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"TWELITEﾓｼﾞｭｰﾙの設定を行うためのｲﾝﾀﾗﾃｨﾌﾞ" "\r\n"
+	L"ﾓｰﾄﾞ画面を表示します。" "\r\n"
+	L"※ 書き込まれているﾌｧｰﾑｳｪｱによって対応" "\r\n"
+	L"   しないものもあります。"
+	,
+	L"To configure the TWELITE module Interactive mode screen. " "\r\n"
+	L"* Some firmware may not be supported." "\r\n"
+};
 
 void App_Interactive::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 
 #ifdef ESP32
 	if (!sAppData.u8_TWESTG_STAGE_INTRCT_USE_SETPIN) {
@@ -24,7 +39,8 @@ void App_Interactive::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ\033[0m";
+	the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ\033[0m",
+						  L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Interactive settings mode\033[0m");
 
 	// set new handler
 	APP_HNDLR::new_hndlr(&App_Interactive::hndlr_init_screen);
@@ -43,14 +59,27 @@ void App_Interactive::hndlr_init_screen(event_type ev, arg_type arg) {
 	case EV_SETUP:
 		the_screen.clear();
 		the_screen_msg.visible(true);
-		the_screen_msg << L"TWELITEﾓｼﾞｭｰﾙを\033[4mｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ\033[0mにします。" << crlf << crlf;
-		the_screen_msg
-			//  "....+....1....+....2....+....3....+....4"
-			<< L"※TWELITEは一旦ﾘｾｯﾄされ、ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞに" L"\r\n"
-			<< L" 移行します。ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ未対応の場合は" L"\r\n"
-			<< L" 通常の出力が表示されます。"              L"\r\n"
-			<< L"(画面が崩れた場合は[\033[7mEnter\033[0m]ｷｰで再描画)" L"\r\n"
-			;
+
+		if (g_lang == 0) {
+			the_screen_msg << L"TWELITEﾓｼﾞｭｰﾙを\033[4mｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ\033[0mにします。" << crlf << crlf;
+			the_screen_msg
+				//  "....+....1....+....2....+....3....+....4"
+				<< L"※TWELITEは一旦ﾘｾｯﾄされ、ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞに" L"\r\n"
+				<< L" 移行します。ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ未対応の場合は" L"\r\n"
+				<< L" 通常の出力が表示されます。"              L"\r\n"
+				<< L"(画面が崩れた場合は[\033[7mEnter\033[0m]ｷｰで再描画)" L"\r\n"
+				;
+		}
+		else {
+			the_screen_msg << L"Set TWELITE modlue to \033[4mInteractive settings mode\033[0m." << crlf << crlf;
+			the_screen_msg
+				//  "....+....1....+....2....+....3....+....4"
+				<< L"Note: TWELITE module is reset once and interactive sttings mode."
+				<< L"If firmware does not have the mode, the screen won't show." << crlf
+				
+				<< L"(Press [\033[7mEnter\033[0m] key to redraw screen when corrupted.)" L"\r\n"
+				;
+		}
 
 
 #ifdef ESP32
@@ -73,7 +102,8 @@ void App_Interactive::hndlr_init_screen(event_type ev, arg_type arg) {
 			<< printfmt("\033[%d;1H", the_screen_msg.get_rows())
 			//  "....+....1....+....2....+....3....+....4"
 			//         中ボタンまたは[Enter]で進む
-			<< L"      \033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で進む";
+			<< MLSLW(L"      \033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で進む",
+				     L"Press \033[7mMiddle button\033[0m or [\033[7mEnter\033[0m] to Go");
 
 		the_screen_msg.force_refresh();
 
@@ -81,7 +111,9 @@ void App_Interactive::hndlr_init_screen(event_type ev, arg_type arg) {
 		//              "0....+....1....+....2....+....3....+....4....+....5....+...."
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     --/長押:MENU     ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ遷移/--        --/-- ";
+		the_screen_c << MLSLW(L"     --/長押:MENU     ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ遷移/--        --/-- ",
+							  L"     --/Long:MENU       to Intrctv mode/--        --/-- ");
+			  	 
 		the_screen_c.force_refresh();
 
 		break;
@@ -95,7 +127,7 @@ void App_Interactive::hndlr_init_screen(event_type ev, arg_type arg) {
 			case KeyInput::KEY_BS:
 			case KeyInput::KEY_ESC:
 			case KeyInput::KEY_BUTTON_A_LONG:
-				the_app.exit(APP_ID);
+				the_app.exit(get_APP_ID());
 				break;
 			case KeyInput::KEY_ENTER:
 			case KeyInput::KEY_BUTTON_A:
@@ -138,7 +170,8 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 		// button navigation
 		the_screen_c.clear_screen();
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "   +++入力/長押:MENU     ズーム/--          ﾌｧｰﾑ書換/-- ";
+		the_screen_c << MLSLW(L"   +++入力/長押:MENU     ズーム/--          ﾌｧｰﾑ書換/-- ",
+							  L" Input +++/Long:MENU       Zoom/--          Wrt Firm/-- ");
 		the_screen_c.force_refresh();
 
 		// reserve struct
@@ -183,7 +216,7 @@ void App_Interactive::hndlr_main_screen(event_type ev, arg_type arg) {
 				if (!(_sp_intr && _sp_intr->b_now_input)) {
 					// if input prompt is confirmed, just pass ESC to the UART,
 					// otherwise exit this screen.
-					the_app.exit(APP_ID);
+					the_app.exit(get_APP_ID());
 					c = -1;
 				}
 				break;
@@ -263,7 +296,7 @@ void App_Interactive::setup_screen() {
 	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_TATEBAI); // zoom font
 
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */ 0);
 	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 
 	// TWEFONT::createFontShinonome16(14, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
@@ -477,12 +510,12 @@ void App_Interactive::monitor_uart(KeyInput::keyinput_type c) {
 				
 			case E_STAT::DETECT_EXIT_MESSAGE:
 				if (intr.timeout.is_timeout()) {
-					the_app.exit(APP_ID);
+					the_app.exit(get_APP_ID());
 				}
 				break;
 
 			default:
-				the_app.exit(APP_ID);
+				the_app.exit(get_APP_ID());
 			}
 		}
 

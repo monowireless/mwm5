@@ -8,19 +8,27 @@
 # undef min
 #endif
 
-const wchar_t App_Commander::LAUNCH_MSG[] =
-//....+....1....+....2....+....3....+....4| // 16dots 40cols
-L"         \033[4m"
-         L"Commander コマンダー\033[0m"
-                             L"          ""\r\n"
-L"\r\n"
-L"Commander コマンダーは、子機側デバイスに""\r\n"
-L"対して指令を送ります。""\r\n"
-L"""\r\n"
-L"Commanderから指令を送る親機にはApp_Wings""\r\n"
-L"を書き込みます。ｱﾌﾟﾘｹｰｼｮﾝとﾁｬﾈﾙをWingsと" "\r\n"
-L"子機側ﾃﾞﾊﾞｲｽで同じ設定にします。" "\r\n"
-;
+template<>
+const wchar_t* App_Commander::APP_DESC<App_Commander>::TITLE_LONG[] =
+{
+	L"Commander コマンダー (命令送信)",
+	L"Commander (send an order to a child device)",
+};
+
+template<>
+const wchar_t* App_Commander::APP_DESC<App_Commander>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"Commander コマンダーは、子機側デバイスに""\r\n"
+	L"対して指令を送ります。""\r\n"
+	L"""\r\n"
+	L"Commanderから指令を送る親機にはApp_Wings""\r\n"
+	L"を書き込みます。c" "\r\n"
+,
+	L"Commander will send an order to child devices.\r\n"
+	L"""\r\n"
+	L"App_Wings is written to the parent machine that sends commands from the Commander. "
+	L"Application ID and Channel are set the same for App_Wings and the child device.\r\n"
+};
 
 // color table
 static uint16_t COLTBL_MAIN[8] = {
@@ -37,18 +45,23 @@ static uint16_t COLTBL_MAIN[8] = {
 
 void App_Commander::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
+
+	// save layout
+	layout.the_screen = the_screen.get_draw_area();
+	layout.the_screen_b = the_screen_b.get_draw_area();
+	layout.b_saved = true;
 
 	// button navigation
 	set_nav_bar();
 
 	// add tab
-	_tabs.add(L"---", &App_Commander::hndr_opening);
-	_tabs.add(L"TWELITE", &App_Commander::hndr_twelite80);
-	_tabs.add(L"NOTICE", &App_Commander::hndr_notice_pal_0x01);
+	_tabs.add(L"---", &App_Commander::hndr_SCR_OPEN);
+	_tabs.add(L"TWELITE", &App_Commander::hndr_SCR_TWELITE80);
+	_tabs.add(L"NOTICE", &App_Commander::hndr_SCR_NOTICE1);
 	_tabs.update_view();
 
 	// put a init message
@@ -65,14 +78,21 @@ void App_Commander::loop() {
 	do {
 		int c = the_keyboard.peek_a_byte();
 		
-		if (c == KeyInput::KEY_BUTTON_A) {
-			_tabs.select_prev();
-		} else
-		if (c == KeyInput::KEY_BUTTON_C) {
-			_tabs.select_next();
+		if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
+			// handle double ESC/double right click
+			static uint32_t t_last;
+			uint32_t t_now = millis();
+
+			if (t_now - t_last < STAGE_DOUBLE_ESC_EXIT_TIMEOUT) {
+				the_app.exit(get_APP_ID());
+			}
+			else {
+				b_loop = false;
+			}
+			t_last = t_now; 
 		}
-		else if (c == KeyInput::KEY_BUTTON_A_LONG || c == KeyInput::KEY_ESC) {
-			the_app.exit(APP_ID);
+		else if (c == KeyInput::KEY_BUTTON_A_LONG) {
+			the_app.exit(get_APP_ID());
 		}
 		else if (c == KeyInput::KEY_BUTTON_C_LONG) {
 			twe_prog.reset_module();
@@ -118,24 +138,27 @@ void App_Commander::setup_screen() {
 	the_screen_c.set_font(1);
 
 #elif M5_SCREEN_HIRES == 1
-	TWEFONT::createFontShinonome16(10, 0, 0); // normal font
+	font_IDs.main = 11;
+	font_IDs.smaller = 14;
+	font_IDs.medium = 15;
+	font_IDs.tiny = 1;
+
+	TWEFONT::createFontShinonome16_full(font_IDs.main, 4, 2); // MP11 font
+
+	TWEFONT::createFontMP10_std(font_IDs.tiny, 0, 0);
+	TWEFONT::createFontMP12_std(font_IDs.smaller, 0, 0);
+	TWEFONT::createFontShinonome14(font_IDs.medium, 1, 0);
+
+	TWEFONT::createFontShinonome16(13, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */ 0); // TOP
+	TWEFONT::createFontShinonome16(10, 0, 0); // TAB
+	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI); // NAVBAR
 	
-	//TWEFONT::createFontMP12(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI); // MP11 font
-	TWEFONT::createFontShinonome16_full(11, 4, 2); // MP11 font
+	the_screen.set_font(font_IDs.main);
+	the_screen_b.set_font(font_IDs.smaller);
 
-	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-
-	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
-	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-
-	TWEFONT::createFontMP12_std(14, 0, 0);
-	
 	the_screen_t.set_font(13);
 	the_screen_tab.set_font(10);
-	the_screen.set_font(11);
-	the_screen_b.set_font(14);
 	the_screen_c.set_font(12);
-
 #endif
 	
 	// main screen area
@@ -165,6 +188,38 @@ void App_Commander::setup_screen() {
 	the_screen_c.force_refresh();
 }
 
+void App_Commander::screen_layout_opening() {
+	if (layout.b_saved) {
+		// full screen clear
+		the_screen.set_draw_area(layout.the_screen);
+		the_screen_b.set_draw_area(layout.the_screen_b);
+		the_screen_b.set_font(font_IDs.medium);
+		the_screen.clear_screen();
+		the_screen_b.clear_screen();
+		the_screen.force_refresh();
+		the_screen_b.force_refresh();
+	}
+}
+
+void App_Commander::screen_layout_apps() {
+	Rect r = layout.the_screen;
+	Rect r_b = layout.the_screen_b;
+
+	// move boundary by 100pix
+	r.h += 80;
+	r_b.h -= 80;
+	r_b.y += 80;
+
+	the_screen_b.set_draw_area(r_b);
+	the_screen_b.set_font(font_IDs.smaller);
+	the_screen_b.clear_screen();
+	the_screen_b.force_refresh();
+
+	the_screen.set_draw_area(r);
+	the_screen.clear_screen();
+	the_screen.force_refresh();
+}
+
 // screen refresh timing (every 32ms)
 void App_Commander::screen_refresh() {
 	static uint32_t u32mills;
@@ -185,14 +240,16 @@ void App_Commander::screen_refresh() {
 void App_Commander::set_nav_bar() {
 	the_screen_c.clear_screen();
 
-	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "  前TAB/長押:戻る            --/--             次TAB/ﾘｾｯﾄ";
+	//e_screen_c <<        "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+	the_screen_c << MLSLW(L"     --/長押:戻る            --/--                --/ﾘｾｯﾄ",
+						  L"     --/Long:Back            --/--                --/RST");
 }
 
 
 // set title bar
 void App_Commander::set_title_bar(int page_id) {
-	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｺﾏﾝﾀﾞｰ\033[0m";
+	const wchar_t* title = MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｺﾏﾝﾀﾞｰ\033[0m",
+								 L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Commander\033[0m");
 
 	the_screen_t.clear_screen();
 

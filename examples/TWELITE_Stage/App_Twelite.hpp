@@ -8,15 +8,7 @@
 
 #include "common.h"
 
-class App_TweLite : public TWE::APP_DEF {
-public:
-	static const int APP_ID = int(E_APP_ID::TWELITE);
-	static const wchar_t LAUNCH_MSG[];
-	
-	int get_APP_ID() { return APP_ID; }
-	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
-
-
+class App_TweLite : public TWE::APP_DEF, public TWE::APP_DESC<App_TweLite> {
 private:
 	// Serial Parser
 	AsciiParser parse_ascii;
@@ -40,12 +32,20 @@ private:
 	// Pakcet Data
 	spTwePacket spLastPacket;
 
+	// some vars
+	uint8_t _screen_font_idx;	// for toggling screen font selection.
+	int _ct_packets;			// count of incoming packets
+	int _idx_test_data;	        // for toggling test data.
+	uint32_t _u32_millis_last_screen_update; // tick when the last screen update was performed.
+
+	// fixed values
 	static const int APP_COLUMN = 19;
 	static const int APP_ROW = 6;
 
 public:
 	App_TweLite()
-		: default_bg_color(0)
+		: APP_DEF(int(E_APP_ID::TWELITE))
+		, default_bg_color(0)
 		, default_fg_color(0)
 		, parse_ascii(256)
 #if M5_SCREEN_HIRES == 0
@@ -61,6 +61,7 @@ public:
 #endif
 
 		, spLastPacket()
+		, _screen_font_idx(0), _ct_packets(0), _idx_test_data(0), _u32_millis_last_screen_update(0)
 	{
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 	}

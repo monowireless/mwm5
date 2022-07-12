@@ -1,79 +1,132 @@
-/* Copyright (C) 2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2020-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Commander.hpp"
 
-struct App_Commander::SCR_OPEN : public APP_HANDLR_DC {
-	static const int CLS_ID = App_Commander::PAGE_ID::PAGE_OPEN;
+using APP_BASE = App_Commander; //! alias to parent class
+
+struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
+	static const int CLS_ID = APP_BASE::PAGE_ID::PAGE_OPEN;
 	int get_class_id() { return CLS_ID; }
 
-	App_Commander& _app;
-	TWE_WidSet_Buttons _btns;
+	APP_BASE& _app;
+	TWE_ListView _lv;
 
-	SCR_OPEN(App_Commander& app) : _app(app), _btns(*this, app.the_screen), APP_HANDLR_DC(CLS_ID) {}
+	SCR_OPEN(APP_BASE& app) : _app(app), _lv(16), APP_HANDLR_DC(CLS_ID) {}
 	~SCR_OPEN() {}
-
-	void show_message() {
-		auto& t = _app.the_screen;
-
-		//     "0....+....1....+....2....+....3....+....4....+....5...
-		t   << "Commanderはｱｽｷｰ形式のｺﾏﾝﾄﾞをApp_Wingsに渡します。" << crlf
-			<< "(App_Wingsを書き込んだ親機に接続します)" << crlf
-			<< crlf
-			<< "App_Wingsは様々な子機ｱﾌﾟﾘに対しｺﾏﾝﾄﾞを無線経由で送信し" << crlf
-			<< "ます。App_Wingsと子機ｱﾌﾟﾘ(TWELITE標準ｱﾌﾟﾘやPALｱﾌﾟﾘ)" << crlf
-			<< "の設定(\033[7;41mｱﾌﾟﾘｹｰｼｮﾝID,無線ﾁｬﾈﾙ,暗号化有無･鍵\033[0m)が同じで" << crlf
-			<< "ないと無線通信しないようになっています。" << crlf
-			<< crlf
-			<< "ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞで\033[41;7m親機側(App_Wings)と子機側双方\033[0mの設定を" << crlf
-			<< "確認してください。"
-			;
-	}
 
 	void Btn_Press(int id, uint32_t opt = 0) {
 		_app._tabs.select(opt);
 	}
-};
 
- // Screen def: opening
-void App_Commander::hndr_opening(event_type ev, arg_type arg) {
-	// renew object
-	auto&& dc = APP_HNDLR::use<SCR_OPEN>();
+	void setup() {
+		_app.screen_layout_opening();
 
-	switch (ev) {
-	case EV_SETUP:
-		the_screen.clear_screen();
-		the_screen_b.clear_screen();
-		set_title_bar(PAGE_ID::PAGE_OPEN);
+		_app.the_screen.clear_screen();
+		_app.the_screen_b.clear_screen();
+		_app.set_title_bar(PAGE_ID::PAGE_OPEN);
 
-		dc.show_message();
+		auto& t = _app.the_screen_c; t.clear_screen();
+		//          "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		t << MLSLW(L"    ↑/長押:戻る           選択/--                ↓/ﾘｾｯﾄ",
+			       L"    ↑/Long:BACK         SELECT/--                ↓/RST");
 
-		dc._btns.add(2,  13, L"App_Twelite 0x80ｺﾏﾝﾄﾞ(t)", &SCR_OPEN::Btn_Press, &dc, 1);
-		dc._btns.add(27, 13, L"NOTICE PAL LED(n)", &SCR_OPEN::Btn_Press, &dc, 2);
-		break;
+		// list view
+		_lv.attach_term(_app.the_screen, 1, int(PAGE_ID::_PAGE_END_) - 1);
+		_lv.set_view();
 
-	case EV_LOOP:
-		dc._btns.check_events();
+		for (int i = 0; PAGE_ID(i) < PAGE_ID::_PAGE_END_; i++) {
+			switch (PAGE_ID(i)) {
+				// case PAGE_ID::PAGE_OPEN: _lv.push_back(L"---", uint16_t(PAGE_ID::PAGE_OPEN)); break;
+			case PAGE_ID::PAGE_TWELITE80: _lv.push_back(MLSLW(L"App_Twelite 0x80ｺﾏﾝﾄﾞ", L"App_Twelite 0x80 cmd"), uint16_t(PAGE_ID::PAGE_TWELITE80)); break;
+			case PAGE_ID::PAGE_NOTICE01: _lv.push_back(L"NOTICE PAL LED", uint16_t(PAGE_ID::PAGE_NOTICE01)); break;
 
+			default: break;
+			}
+		}
+
+		_lv.update_view(true);
+	}
+
+	void loop() {
 		do {
 			int c = the_keyboard.read();
 
-			switch (c) {
-			case KeyInput::KEY_BUTTON_A:
-				break;
-			case KeyInput::KEY_BUTTON_B:
-				break;
-			case KeyInput::KEY_BUTTON_C:
-				break;
+			if (_lv.key_event(c)) {
+				int isel = _lv.get_selected_index();
+				auto sel = _lv.get_selected();
+				int itab = sel.second[0]; // tab index
+
+				if (isel >= 0 && isel < _lv.size()) {
+					if (_lv.is_selection_completed()) {
+						// selection
+						_app._tabs.select(itab);
+					}
+					else if (int n_sel = _lv.is_info_selected()) { // 1:primary 2:secondary
+						// select sub item
+					}
+					else {
+						// over
+						auto& t = _app.the_screen_b;
+						t.clear_screen();
+						t << "\033[32m";
+
+						switch (PAGE_ID(itab)) {
+						case PAGE_ID::PAGE_TWELITE80:
+							t <<
+								MLSLW(L"TWELITE 標準アプリ(App_Twelite) の 0x80 コマンドを送信します。"
+									  L"0x80コマンドは無線経由で相手側のディジタル・PWMポート制御します。"
+									  ,
+									  L"Sends the 0x80 command of the TWELITE standard application (App_Twelite)."
+									  L"The 0x80 command controls the other side's digital PWM port via radio."
+								);
+							t << crlf << 
+								MLSLW(L"(STAGEに接続するTWELITEには App_Wings またはMONOSTICK用の App_Twelite を書き込み、"
+								      L"接続するTWELITE同士に、同一のｱﾌﾟﾘｹｰｼｮﾝIDと無線ﾁｬﾈﾙを設定しておきます)"
+									  ,
+									  L"(The TWELITE to be connected to the STAGE is programmed with App_Wings or App_Twelite for MONOSTICK,"
+									  L" and the TWELITEs to be connected to each other are configured with the same Application ID and Radio channel.)"
+								);
+							break;
+						case PAGE_ID::PAGE_NOTICE01:
+							t <<
+								MLSLW(L"通知PAL(NOTICE PAL)のLED制御を行います。"
+									  ,
+									  L"LED control for notification PAL (NOTICE PAL)."
+								);
+							t << crlf <<
+								MLSLW(L"(STAGEに接続するTWELITEには App_Wings を書き込み、"
+								      L"接続するTWELITE同士に、同一のｱﾌﾟﾘｹｰｼｮﾝIDと無線ﾁｬﾈﾙを設定しておきます)"
+									  ,
+									  L"(The TWELITE to be connected to the STAGE is programmed with App_Wings,"
+									  L" and the TWELITEs to be connected to each other are configured with the same Application ID and Radio channel.)"
+								);
+							break;
+						default: break;
+						}
+
+						t << "\033[0m";
+					}
+				}
+			}
+			else switch (c) {
+			case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+			case KeyInput::KEY_BUTTON_B: the_keyboard.push(KeyInput::KEY_ENTER); break;
+			case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
 
 			default:
 				break;
 			}
 
 		} while (the_keyboard.available());
-		break;
-
-	case EV_EXIT:
-		break;
 	}
-}
+
+	void on_close() {
+		;
+	}
+};
+
+/**
+ * create an instance of hander for SCR_GLANCER.
+ */
+void APP_BASE::hndr_SCR_OPEN(event_type ev, arg_type arg) { hndr<SCR_OPEN>(ev, arg); }

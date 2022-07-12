@@ -3,45 +3,11 @@
 
 #include "App_Graph.hpp"
 
-static const wchar_t HELP_MSG[][384] =
+static const wchar_t HELP_MSG[][TWE::LANG_CT][1024] =
 {
-	//   "0....+....1....+....2....+....3....+....4....+....5..
-		L"TWELITE CUE/ARIAからのﾒｯｾｰｼﾞを解釈・表示します。" L"\r\n"
-		L"\r\n"
-		L"親機にApp_Wingsを書込ｱﾌﾟﾘｹｰｼｮﾝIDとﾁｬﾈﾙを設定します。" L"\r\n"
-		L"親機とCUE/ARIAは同じ設定でなければ通信できません。" L"\r\n"
-		L"\r\n"
-		L"CUE/ARIA->App_Wings親機に無線ﾊﾟｹｯﾄが送信されたとき" L"\r\n"
-		L"ﾃﾞｰﾀを解釈し、ｾﾝｻｰ情報、ｾﾝｻｰ情報の評価したｲﾍﾞﾝﾄ情報が" L"\r\n"
-	    L"都度表示されます。" L"\r\n"
-		,
-	//   "0....+....1....+....2....+....3....+....4....+....5..
-		L"[加速度センサーに基づくイベント]" L"\r\n"
-		L"  \033[7mﾑｰﾌﾞ:加速度の変化を検出\033[0m" L"\r\n"
-		L"     一定の加速度を検出したときにｽﾘｰﾌﾟ起床した後" L"\r\n"
-	    L"     加速度情報を10ｻﾝﾌﾟﾙ収集しﾃﾞｰﾀ送信します。" L"\r\n"
-		L"     ※静止時にも検出される場合があります。" L"\r\n"
-		L"  \033[7mｼｪｲｸ:加速度の変化->連続的な加速度を検出\033[0m" L"\r\n"
-		L"     ﾑｰﾌﾞ検出後の加速度情報を評価し連続的な加速度を" L"\r\n"
-		L"     検出した場合はﾑｰﾌﾞの替わりにｼｪｲｸが発生します。" L"\r\n"
-		L"  \033[7mﾀﾞｲｽ:ﾀｲﾏｰ送信時に面を確定\033[0m"  L"\r\n"
-		L"     ﾑｰﾌﾞ以外のｽﾘｰﾌﾟ起床後に加速度情報を10ｻﾝﾌﾟﾙ収集" L"\r\n"
-		L"     加速度情報の評価の結果、動いていないと判定され" L"\r\n"
-		L"     る場合、面に対応するｲﾍﾞﾝﾄ(1..6)が発生します。" L"\r\n"
-		L"\r\n"
-		,
-	//   "0....+....1....+....2....+....3....+....4....+....5..
-		L"[TWELITE CUE センサー値情報]" L"\r\n"
-		L"  電源電圧: 電源電圧をmVで計測した結果" L"\r\n"
-		//L"  ADC1電圧: ADC1をmVで計測した結果" L"\r\n"
-		L"  磁気ｾﾝｻｰ: 磁気センサーの状態" L"\r\n"
-		L"      磁石の極によりS/N極が検出されます。" L"\r\n"
-		L"      動かし方によって反対の極も検出されます。" L"\r\n"
-		L"  加速度  : 受信した10ｻﾝﾌﾟﾙのうち先頭8ｻﾝﾌﾟﾙの平均" L"\r\n"
-		L"      単位はmG(ﾐﾘG, 1G=9.8m/s²=1000mG)です。" L"\r\n"
-		,
-	//   "0....+....1....+....2....+....3....+....4....+....5..
-		L"[TWELITE CUE グラフ]" L"\r\n"
+	
+	{//  "0....+....1....+....2....+....3....+....4....+....5..
+		L"[加速度リアルタイムグラフ]" L"\r\n"
 		L"  加速度のグラフ表示を行います。" L"\r\n"
 		L"  ・受信データは log ﾌｫﾙﾀﾞに保存します。" L"\r\n"
 		L"    保存先は(l)ｷｰ。ｸﾞﾗﾌ画面終了までﾌｧｲﾙは開けません。" L"\r\n"
@@ -51,21 +17,35 @@ static const wchar_t HELP_MSG[][384] =
 		L"    ( ), 右クリック     ⇒ 一時停止" L"\r\n"
 		L"    (c) ⇒ 表示位置のデータCSV保存" L"\r\n"
 		L"    (f) ⇒ FFTサンプル数を変更" L"\r\n"
-		L"※ ｻﾝﾌﾟﾙﾚｰﾄ･周波数は受信時刻からの推測値です。" L"\r\n"
+		L"※ ｻﾝﾌﾟﾙﾚｰﾄ･周波数は受信時刻からの推測値です。"
 		,
-	//   "0....+....1....+....2....+....3....+....4....+....5..
-		L"[TWELITE ARIA センサー値情報]" L"\r\n"
-		L"  時間(s) : ｱﾌﾟﾘを起動してから受信するまでの時間。" L"\r\n"
-		L"      単位は秒です。" L"\r\n"
-		L"  ID      : TWELITE ARIAの論理ﾃﾞﾊﾞｲｽID" L"\r\n"
-		L"  VCC(mV) : 電源電圧をmVで計測した結果" L"\r\n"
-		//L"  ADC1電圧: ADC1をmVで計測した結果" L"\r\n"
-		L"  温度(C) : 計測した温度。単位は℃です。" L"\r\n"
-		L"  湿度(%) : 計測した湿度。単位は％です。" L"\r\n"
-		L"  磁石    : 磁気センサーの状態" L"\r\n"
-		L"      磁石の極によりS/N極が検出されます。" L"\r\n"
-		L"      動かし方によって反対の極も検出されます。" L"\r\n"
+		L"[Acceleration real-time graph" L"\r\n"
+		L"  Display a graph of acceleration." L"\r\n"
+		L"  ・Received data is saved in the log folder." L"\r\n"
+		L"    Save to (l) key. The file will not be opened until" L"\r\n"
+		L"    the end of the graph screen." L"\r\n"
+		L"  ・Operation:" L"\r\n"
+		L"    →, ←, mouse L drag⇒ move pos" L"\r\n"
+		L"    ↑, ↓, wheel       ⇒ Horizontal scaling" L"\r\n"
+		L"    ( ), R click        ⇒ PAUSE" L"\r\n"
+		L"※ The sample rate and frequency are estimated values"  L"\r\n"
+	    L"   based on the time of reception."
+	},
+	{ // "0....+....1....+....2....+....3....+....4....+....5..
+		L"[センサーグラフ]" L"\r\n"
+		L"  各種センサーデータを保存・表示します。" L"\r\n"
+		L"  ・操作(24H画面)" L"\r\n"
+		L"    →, ←, ﾏｳｽ左ﾄﾞﾗｯｸﾞ ⇒ 表示位置移動" L"\r\n"
+		L"    ↑, ↓, ﾏｳｽﾎｲｰﾙ     ⇒ 横方向拡大縮小" L"\r\n"
+		,
+		L"[Sensor graph]" L"\r\n"
+		L"  Stores and displays various sensor data." L"\r\n"
+		L"  ・Operation (24H screen)" L"\r\n"
+		L"    →, ←, mouse L drag⇒ move pos" L"\r\n"
+		L"    ↑, ↓, wheel       ⇒ Horizontal scaling" L"\r\n"
+		L""
 
+	}
 };
 static const int MAX_PAGE_NUM = int(elements_of_array(HELP_MSG) - 1);
 
@@ -109,7 +89,7 @@ struct App_Graph::SCR_HELP : public APP_HANDLR_DC {
 
 		// show message
 		the_screen.clear_screen();
-		the_screen << HELP_MSG[_page];
+		the_screen << HELP_MSG[_page][g_lang];
 
 		// controls
 		the_screen(23, 14) << printfmt("%d / %d", _page + 1, MAX_PAGE_NUM + 1);
@@ -123,14 +103,18 @@ struct App_Graph::SCR_HELP : public APP_HANDLR_DC {
 		the_screen_b.clear_screen();
 		_app.set_title_bar(PAGE_ID::PAGE_HELP);
 		//          "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		_app.set_nav_bar("  前TAB/長押:戻る      次ページ/--             次TAB/ﾘｾｯﾄ");
+		_app.set_nav_bar(MLSL(
+			" --/長押:戻る     次ページ/--                --/ﾘｾｯﾄ",
+			" --/Long:BACK         NEXT/--                --/RST"
+			)
+		);
 
 		// the message
 		show_message(0);
 
 		// add next/prev page buttons
-		_btns.add(2, 14, L"＜前", &SCR_HELP::Btn_Press, this, SCR_HELP::PAGE_PREV);
-		_btns.add(47, 14, L"次＞", &SCR_HELP::Btn_Press, this, SCR_HELP::PAGE_NEXT);
+		_btns.add(2, 14, MLSLW(L"＜前", L"<Pre"), &SCR_HELP::Btn_Press, this, SCR_HELP::PAGE_PREV);
+		_btns.add(47, 14, MLSLW(L"次＞", L">Nxt"), &SCR_HELP::Btn_Press, this, SCR_HELP::PAGE_NEXT);
 
 		// add direct page selection buttons
 		for (int i = 0; i <= MAX_PAGE_NUM; i++) {

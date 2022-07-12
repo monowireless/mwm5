@@ -146,7 +146,8 @@
             },
             "compilerPath": "C:/msys64/mingw64/bin/g++",
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],
     "version": 4

@@ -161,3 +161,6 @@ uint64_t TWESYS::TweLocalTime::epoch_now() {
 	std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
 	return std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count();
 }
+
+// the LANG
+int TWE::g_lang = 0;

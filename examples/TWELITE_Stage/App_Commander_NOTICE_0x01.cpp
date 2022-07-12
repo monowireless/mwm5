@@ -2,16 +2,17 @@
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #include "App_Commander.hpp"
+using APP_BASE = App_Commander;
 
-struct  App_Commander::SCR_NOTICE1 : public APP_HANDLR_DC {
-	static const int CLS_ID = App_Commander::PAGE_ID::PAGE_NOTICE01;
+struct  APP_BASE::SCR_NOTICE1 : public APP_HANDLR_DC {
+	static const int CLS_ID = APP_BASE::PAGE_ID::PAGE_NOTICE01;
 	int get_class_id() { return CLS_ID; }
 
-	App_Commander& _app;
+	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
 
 	// constructor
-	SCR_NOTICE1(App_Commander& app) : _app(app), _btns(*this, app.the_screen)
+	SCR_NOTICE1(APP_BASE& app) : _app(app), _btns(*this, app.the_screen)
 		, _b_dirty(1), _id(1), _pat(0), _col(0), _bri(15), _dur(4), APP_HANDLR_DC(CLS_ID) {}
 
 private:
@@ -77,76 +78,107 @@ public:
 		shell_open_url(L"https://wings.twelite.info/how-to-use/parent-mode/transemit-command/0x90-command");
 	}
 #endif
+
 	// screen updator
 	void update_screen();
 
 	// parser command and transmit
 	void generate_command(bool turn_on = true);
 
-};
+	// the setup
+	void setup() {
+		auto& dc = *this;
+		
+		// layout screen.
+		_app.screen_layout_apps();
 
- // Screen def: NOTICE PAL 0x01
-void App_Commander::hndr_notice_pal_0x01(event_type ev, arg_type arg) {
-	auto&& dc = APP_HNDLR::use<SCR_NOTICE1>();
-	auto& t = the_screen;
-
-	switch (ev) {
-	case EV_SETUP:
 		// set title bar
-		set_title_bar(PAGE_ID::PAGE_NOTICE01);
+		_app.set_title_bar(PAGE_ID::PAGE_NOTICE01);
+
+		// set nav bar
+		{
+			auto& t = _app.the_screen_c; t.clear_screen();
+			//    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+			t << MLSLW(L"    --/長押:戻る             --/--                --/ﾘｾｯﾄ",
+				       L"    --/Long:BACK             --/--                --/RST");
+		}
 
 		// initialize some
-		dc.on_setup();
+		_b_dirty = 1;
 
 		// control array
 		{
+			auto& t = _app.the_screen;
+
 			// put base screen text
 			t.clear_screen();
 
-			//   "0....+....1....+....2....+....3....+....4....+....5...
-			t << crlf;
-			t << "             [NOTICE PAL LED 点灯制御]" << crlf;     // L=1
-			t << crlf;
-			t << "    子機ID       (I)▽        △(i)" << crlf; // L=3
-			t << crlf;
-			t << "    色           (C)▽        △(c)" << crlf; // L=5
-			t << crlf;
-			t << "    明るさ       (B)▽        △(b)" << crlf; // L=7
-			t << crlf;
-			t << "    点灯点滅     (P)▽        △(p)" << crlf; // L=9
-			t << crlf;
-			t << "    点灯時間     (D)▽        △(d)" << crlf; // L=11
-			t << crlf;
-			t << "                    消灯(x)   点灯(SPACE)"; // L=13 (消灯,点灯)
+			if (g_lang == TWE::LANG_JP) {
+				//   "0....+....1....+....2....+....3....+....4....+....5...
+				t << crlf;
+				t << "             [NOTICE PAL LED 点灯制御]" << crlf;     // L=1
+				t << crlf;
+				t << "    子機ID       (I)▽        △(i)" << crlf; // L=3
+				t << crlf;
+				t << "    色           (C)▽        △(c)" << crlf; // L=5
+				t << crlf;
+				t << "    明るさ       (B)▽        △(b)" << crlf; // L=7
+				t << crlf;
+				t << "    点灯点滅     (P)▽        △(p)" << crlf; // L=9
+				t << crlf;
+				t << "    点灯時間     (D)▽        △(d)" << crlf; // L=11
+				t << crlf;
+				t << "                    消灯(x)   点灯(SPACE)"; // L=13 (消灯,点灯)
+			}
+			else {
+				//   "0....+....1....+....2....+....3....+....4....+....5...
+				t << crlf;
+				t << "             [NOTICE PAL LED ON/OFF CONTROL]" << crlf;     // L=1
+				t << crlf;
+				t << "    LD(Chld)     (I)▽        △(i)" << crlf; // L=3
+				t << crlf;
+				t << "    Color        (C)▽        △(c)" << crlf; // L=5
+				t << crlf;
+				t << "    Brightness   (B)▽        △(b)" << crlf; // L=7
+				t << crlf;
+				t << "    Blink        (P)▽        △(p)" << crlf; // L=9
+				t << crlf;
+				t << "    Light Dur    (D)▽        △(d)" << crlf; // L=11
+				t << crlf;
+				t << "                    消灯(x)   点灯(SPACE)"; // L=13 (消灯,点灯)
+			}
 
 			// add buttons
 			dc._btns.clear();
 
-			dc._btns.add(20-3, 3, L"(I)▽", &SCR_NOTICE1::id_dn, &dc);
+			dc._btns.add(20 - 3, 3, L"(I)▽", &SCR_NOTICE1::id_dn, &dc);
 			dc._btns.add(30, 3, L"△(i)", &SCR_NOTICE1::id_up, &dc);
 
-			dc._btns.add(20-3, 5, L"(C)▽", &SCR_NOTICE1::col_dn, &dc);
+			dc._btns.add(20 - 3, 5, L"(C)▽", &SCR_NOTICE1::col_dn, &dc);
 			dc._btns.add(30, 5, L"△(c)", &SCR_NOTICE1::col_up, &dc);
 
-			dc._btns.add(20-3, 7, L"(B)▽", &SCR_NOTICE1::bri_dn, &dc);
+			dc._btns.add(20 - 3, 7, L"(B)▽", &SCR_NOTICE1::bri_dn, &dc);
 			dc._btns.add(30, 7, L"△(b)", &SCR_NOTICE1::bri_up, &dc);
-			
-			dc._btns.add(20-3, 9, L"(P)▽", &SCR_NOTICE1::pat_dn, &dc);
+
+			dc._btns.add(20 - 3, 9, L"(P)▽", &SCR_NOTICE1::pat_dn, &dc);
 			dc._btns.add(30, 9, L"△(p)", &SCR_NOTICE1::pat_up, &dc);
 
-			dc._btns.add(20-3, 11, L"(D)▽", &SCR_NOTICE1::dur_dn, &dc);
+			dc._btns.add(20 - 3, 11, L"(D)▽", &SCR_NOTICE1::dur_dn, &dc);
 			dc._btns.add(30, 11, L"△(d)", &SCR_NOTICE1::dur_up, &dc);
 
-			dc._btns.add(20, 13, L"消灯(x)", &SCR_NOTICE1::turn_off, &dc);
-			dc._btns.add(30, 13, L"点灯(SPACE)", &SCR_NOTICE1::turn_on, &dc);
+			dc._btns.add(20, 13, MLSLW(L"消灯(x)", L" Off(x)"), &SCR_NOTICE1::turn_off, &dc);
+			dc._btns.add(30, 13, MLSLW(L"点灯(SPACE)", L"  On(SPACE)"), &SCR_NOTICE1::turn_on, &dc);
 #ifndef ESP32
-			dc._btns.add(45, 0, L"ﾍﾙﾌﾟ(h)", &SCR_NOTICE1::web, &dc, 0);
+			dc._btns.add(45, 0, MLSLW(L"ﾍﾙﾌﾟ(h)", L"HELP(h)"), &SCR_NOTICE1::web, &dc, 0);
 #endif
 			dc._btns.update_view();
 		}
-		break;
+	}
 
-	case EV_LOOP:
+	// the loop
+	void loop() {
+		auto& dc = *this;
+
 		// handle events for buttons array
 		dc._btns.check_events();
 
@@ -173,7 +205,7 @@ void App_Commander::hndr_notice_pal_0x01(event_type ev, arg_type arg) {
 			case KeyInput::KEY_BUTTON_B:
 				dc.turn_on(0);
 				break;
-	
+
 			default: break;
 			}
 
@@ -181,14 +213,15 @@ void App_Commander::hndr_notice_pal_0x01(event_type ev, arg_type arg) {
 
 		// update screen text (numbers, etc)
 		dc.update_screen();
-		break;
-
-	case EV_EXIT:
-		break;
 	}
-}
 
-void App_Commander::SCR_NOTICE1::generate_command(bool turn_on) {
+	// the closing
+	void on_close() {
+		;
+	}
+};
+
+void APP_BASE::SCR_NOTICE1::generate_command(bool turn_on) {
 	IParser& p = _app.parse_ascii;
 	auto&& a = p.get_payload();
 	a.clear();
@@ -226,7 +259,7 @@ void App_Commander::SCR_NOTICE1::generate_command(bool turn_on) {
 	TWE::WrtTWE << _app.parse_ascii;
 }
 
-void App_Commander::SCR_NOTICE1::update_screen() {
+void APP_BASE::SCR_NOTICE1::update_screen() {
 	ITerm& t = this->_app.the_screen;
 
 	if (_b_dirty) {
@@ -236,16 +269,17 @@ void App_Commander::SCR_NOTICE1::update_screen() {
 
 		// color
 		t.move_cursor(23, 5);
-		const wchar_t COLS[][16] = {
-			L"\033[7;31m0:赤\033[0m",
-			L"\033[7;32m1:緑\033[0m",
-			L"\033[7;34m2:青\033[0m",
-			L"\033[7;33m3:黄\033[0m",
-			L"\033[7;35m4:紫\033[0m",
-			L"\033[7;36m5:水\033[0m",
-			L"\033[7;37m6:白\033[0m",
-			L"\033[7;37m7:白\033[0m" };
-		t << ' ' << COLS[_col];
+		const wchar_t COLS[][TWE::LANG_CT][16] = {
+			{ L"\033[7;31m0:赤\033[0m", L"\033[7;31m0:Rd\033[0m" },
+			{ L"\033[7;32m1:緑\033[0m", L"\033[7;32m1:Gr\033[0m" },
+			{ L"\033[7;34m2:青\033[0m", L"\033[7;34m2:Bl\033[0m" },
+			{ L"\033[7;33m3:黄\033[0m", L"\033[7;33m3:Ye\033[0m" },
+			{ L"\033[7;35m4:紫\033[0m", L"\033[7;35m4:Pu\033[0m" },
+			{ L"\033[7;36m5:水\033[0m", L"\033[7;36m5:Cy\033[0m" },
+			{ L"\033[7;37m6:白\033[0m", L"\033[7;37m6:Wh\033[0m" },
+			{ L"\033[7;37m7:白\033[0m", L"\033[7;37m7:Wh\033[0m" },
+		};
+		t << ' ' << COLS[_col][g_lang];
 
 		// 明るさ
 		t.move_cursor(23, 7);
@@ -253,18 +287,23 @@ void App_Commander::SCR_NOTICE1::update_screen() {
 
 		// pat
 		t.move_cursor(23, 9);
-		const wchar_t PAT[][16] = {
-			L" 点灯 ",
-			L" 点滅1",
-			L" 点滅2",
-			L" 点滅3",
+		const wchar_t PAT[][TWE::LANG_CT][16] = {
+			{ L" 点灯 ", L" Con't" },
+			{ L" 点滅1", L" Blnk1" },
+			{ L" 点滅2", L" Blnk2" },
+			{ L" 点滅3", L" Blnk3" },
 		};
-		t << PAT[_pat];
+		t << PAT[_pat][g_lang];
 
 		// dur
 		t.move_cursor(23, 11);
-		t << printfmt("%4d秒", get_dur_s());
+		t << printfmt("%4d", get_dur_s()) << MLSLW(L"秒", L"s.");
 
 		_b_dirty = 0;
 	}
 }
+
+/**
+ * create an instance of hander for SCR_NOTICE.
+ */
+void APP_BASE::hndr_SCR_NOTICE1(event_type ev, arg_type arg) { hndr<SCR_NOTICE1>(ev, arg); }

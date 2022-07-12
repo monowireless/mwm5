@@ -7,6 +7,18 @@
 // flag of working state
 static int s_bstarted = 0;
 
+// color table
+static const uint16_t COLTBL_MAIN[8] = {
+	BLACK,
+	RED,
+	color565(31, 191, 31), // GREEN
+	YELLOW,
+	color565(127, 127, 255), // BLUE,
+	color565(255, 0, 142), // MAGENTA,
+	CYAN,
+	ALMOST_WHITE
+};
+
 void App_RootMenu::setup() {
 	// load the default profile
 	the_settings_menu.begin(0); // load slot 0 (=default) profile
@@ -51,20 +63,20 @@ void App_RootMenu::set_listview() {
 
 	if (_b_appmenu) { // アプリ一覧
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
-		_listMenu.set_info_area(L"ﾍﾙﾌﾟ");
+		_listMenu.set_info_area(MLSLW(L"ﾍﾙﾌﾟ", L"HELP"));
 #endif
 		for (int menu_id = 1; menu_id < (int)E_APP_ID::_APPS_END_; menu_id++) {
 			appid[0] = menu_id;
-			_listMenu.push_back(str_appnames[menu_id], appid);
+			_listMenu.push_back(str_appnames[menu_id][g_lang], appid);
 		}
 	}
 	else {
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
-		_listMenu.set_info_area(L"ﾍﾙﾌﾟ");
+		_listMenu.set_info_area(MLSLW(L"ﾍﾙﾌﾟ", L"HELP"));
 #endif
 
 		appid[0] = 0;
-		_listMenu.push_back(str_appnames[0], appid);
+		_listMenu.push_back(str_appnames[0][g_lang], appid);
 
 		for (int menu_id = (int)E_APP_ID::_APPS_END_ + 1; menu_id < (int)E_APP_ID::_END_; menu_id++) {
 			if (menu_id != (int)E_APP_ID::_UTILS_END_) {
@@ -75,18 +87,18 @@ void App_RootMenu::set_listview() {
 
 				if (menu_id == (int)E_APP_ID::SELECT_PORT) {
 					SmplBuf_WChar str;
-					str << str_appnames[menu_id];
+					str << str_appnames[menu_id][g_lang];
 
 					if (Serial2.is_opened()) {
 						str << L'[' << Serial2.get_devname() << L']';
 					} else {
-						str << L"[未接続]";
+						str << MLSLW(L"[未接続]", L"[NO CONNECT]");
 					}
 					_listMenu.push_back(as_moving(str), appid);
 
 					if (menu_id == _nSel) _nSel = -1;
 				} else {
-					_listMenu.push_back(str_appnames[menu_id], appid);
+					_listMenu.push_back(str_appnames[menu_id][g_lang], appid);
 				}
 #endif
 			}
@@ -100,7 +112,7 @@ void App_RootMenu::set_listview() {
 			}
 		}
 	}
-	_listMenu.attach_term(the_screen);
+	_listMenu.attach_term(the_screen, 1, the_screen.get_rows() - 1);
 	_listMenu.update_view(true);
 }
 
@@ -140,16 +152,16 @@ void App_RootMenu::loop() {
 				if (_b_appmenu) {
 					int i = _listMenu.get_selected_index() + 1;
 					if (i > 0 && i < int(E_APP_ID::_APPS_END_)) {
-						shell_open_url(str_appurls[i]);
+						shell_open_help(str_appurls[i][g_lang]); // open local hrml file instead.
 					}
 				} else {
 					unsigned i = _listMenu.get_selected_index();
-					auto wstr = str_appurls[0]; // Viewer
+					auto wstr = str_appurls[0][g_lang]; // Viewer
 					if (i > 0 && i < int(E_APP_ID::_END_)) {
-						wstr = str_appurls[i + int(E_APP_ID::_APPS_END_)];
+						wstr = str_appurls[i + int(E_APP_ID::_APPS_END_)][g_lang];
 					}
 					if (i < int(E_APP_ID::_END_)) {
-						shell_open_url(wstr);
+						shell_open_help(wstr); // open local hrml file instead.
 					}
 				}
 #endif
@@ -163,7 +175,26 @@ void App_RootMenu::loop() {
 				}
 				else {
 					uint16_t sel_app_id = (uint16_t)_listMenu.get(_listMenu.get_selected_index()).second[0];
+#ifndef ESP32
+					// go to the screen.
+					if (_b_appmenu) {
+						if (s_bstarted == 2) { // auto start app
+							s_bstarted = 3;
+							the_app.exit(_auto_launch_param, sel_app_id);
+						}
+						else { // normal menu select.
+							_i_selected_viewer_app = int(sel_app_id);
+							the_app.exit(-1, _i_selected_viewer_app);
+						}
+					}
+					else {
+						// top menu selection.
+						the_app.exit(-1, sel_app_id); // switch to the app.
+					}
 
+					return;
+#else
+					// if menu is shown, opening message will be shown.
 					if (_b_appmenu) {
 						// auto-launch at booting.
 						if (s_bstarted == 2) {
@@ -195,8 +226,40 @@ void App_RootMenu::loop() {
 						continue;
 					}
 					else the_app.exit(-1, sel_app_id); // switch to the app.
+#endif
 				}
 				return;
+			}
+			else { // mouse over (just hilighted)
+#ifndef ESP32
+				// display info message.
+				const wchar_t* EMPH_TITLE_IN = L"\033[30;42;1m\033[K ";
+				const wchar_t* EMPH_TITLE_OUT = L"\033[0m";
+
+				the_screen_l.clear_screen();
+				the_screen_b.clear_screen();
+
+				int n_sel = _listMenu.get_selected_index();
+				auto sel = _listMenu.get(n_sel);
+
+				if (!_b_appmenu && n_sel == 0) {
+					// top menu > viewer
+					the_screen_l << EMPH_TITLE_IN << MLSLW(L"ビューア", L"Viewer") << EMPH_TITLE_OUT;
+					the_screen_b << MLSLW(L"ターミナルや各TWELITEアプリからのデータを表示したりグラフ描画したり、様々なビューアがあります。",
+										  L"There are various viewers that display data from the terminal and each TWELITE application, as well as graph drawings.");
+				}
+				else {
+					if (_b_appmenu) {
+						// viewer menu
+						the_screen_l << EMPH_TITLE_IN << query_app_launch_message(int(sel.second[0]), true) << EMPH_TITLE_OUT;
+					}
+					else {
+						// top menu
+						the_screen_l << EMPH_TITLE_IN << sel.first << EMPH_TITLE_OUT;
+					}
+					the_screen_b << query_app_launch_message(int(sel.second[0]), false);
+				}
+#endif
 			}
 		}
 		else switch (key) {
@@ -261,6 +324,7 @@ void App_RootMenu::setup_screen() {
 	TWEFONT::createFontMP12_mini(13, 0, 0); // MP10 font
 
 	the_screen.set_font(10);
+	the_screen_l.set_font(13);
 	the_screen_b.set_font(1);
 	the_screen_c.set_font(1);
 	the_screen_t.set_font(11);
@@ -270,14 +334,18 @@ void App_RootMenu::setup_screen() {
 
 	TWEFONT::createFontShinonome16(10, 5, 3);
 	//TWEFONT::createFontMP12(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontShinonome16(11, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(11, 0, 0, 0 /* TWEFONT::U32_OPT_FONT_YOKOBAI */);
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontMP12(13, 0, 0);
 
-	the_screen.set_font(10);
-	the_screen_b.set_font(10);
-	the_screen_c.set_font(12);
+	TWEFONT::createFontShinonome14(13, 1, 0);
+	//TWEFONT::createFontMP12_std(13, 1, 0);
+	//TWEFONT::createFontMP12_std(13, 1, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+
 	the_screen_t.set_font(11);
+	the_screen.set_font(10);
+	the_screen_l.set_font(10);
+	the_screen_b.set_font(13);
+	the_screen_c.set_font(12);
 #endif
 
 	// main screen area
@@ -286,13 +354,20 @@ void App_RootMenu::setup_screen() {
 	the_screen.clear_screen();
 	the_screen.force_refresh();
 
+	// list area
+	the_screen_l.set_color(default_fg_color, BLACK);
+	the_screen_l.set_cursor(0); // 0: no 1: curosr 2: blink cursor
+	the_screen_l.set_color_table(COLTBL_MAIN); // set color palette
+	the_screen_l.force_refresh();
+
 	// bottom area
-	the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
+	the_screen_b.set_color(GREEN, color565(20, 20, 20));
+	// the_screen_b.set_color(color565(80, 80, 80), color565(20, 20, 20));
 	the_screen_b.set_cursor(0);
 	the_screen_b.clear_screen();
 	the_screen_b.force_refresh();
 
-	// bottom area
+	// nav bar
 	the_screen_c.set_color(ORANGE, color565(20, 20, 20));
 	the_screen_c.set_cursor(0);
 	the_screen_c.clear_screen();
@@ -307,12 +382,13 @@ void App_RootMenu::setup_screen() {
 
 // screen refresh timing (every 32ms)
 void App_RootMenu::check_for_refresh() {
-	static uint32_t u32mills;
+	static uint32_t u32mills = 0;
 
 	uint32_t u32now = millis();
 	if (u32now - u32mills > 32) {
 		the_screen.refresh();
 		the_screen_b.refresh();
+		the_screen_l.refresh();
 		the_screen_c.refresh();
 		the_screen_t.refresh();
 
@@ -327,10 +403,13 @@ void App_RootMenu::set_title_status() {
 	if (this->_b_appmenu) {
 		// put a init message
 		the_screen_t.clear_screen();
-		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ビューア";
+		the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ビューア",
+							  L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Viewer");
 
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     ↑/長押:戻る          決定/--                ↓/--";
+		
+		//e_screen_c <<       L"....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(L"     ↑/長押:戻る          決定/--                ↓/--",
+							  L"     ↑/Long:Back        SELECT/--                ↓/--");
 	} else {
 		// put a init message
 		the_screen_t.clear_screen();
@@ -342,7 +421,8 @@ void App_RootMenu::set_title_status() {
 		the_screen_c << "     ↑/長押:電源OFF       決定/--                ↓/--";
 #else
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     ↑/長押:終了          決定/--                ↓/--";
+		the_screen_c << MLSLW(L"     ↑/長押:終了          決定/--                ↓/--",
+			                  L"     ↑/Long:Exit        SELECT/--                ↓/--");
 #endif
 	}
 }

@@ -27,6 +27,8 @@ using APP_BASE = App_Graph;
 #define LOG_NAME "accel_%08X_"
 #define LOG_FILEEXT "csv"
 
+const double TWE_M_PI = 3.14159265358979323846264338327950288;   /**< pi */
+
 namespace OTFFT {
 	// OTFFT - http://wwwa.pikara.ne.jp/okojisan/stockham/optimization1.html
 	//    Copyright(c) OK Ojisan(Takuya OKAHISA)
@@ -45,7 +47,7 @@ namespace OTFFT {
 	void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
 	{
 		const int m = n / 2;
-		const double theta0 = 2 * 3.141592653589793 / n;
+		const double theta0 = 2 * TWE_M_PI / n;
 
 		if (n == 2) {
 			complex_t* z = eo ? y : x;
@@ -734,10 +736,11 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 			const int32_t MAX_V = _area_draw.h * 7 / 8;
 
 			// draw label FFT REGION
-			const char* msg_FFT_REGION = "FFT REGION";
-			const char* msg_FFT_HOLD = "FFT HOLD";
+			//const char* msg_FFT_REGION = "FFT REGION";
+			const wchar_t* msg_FFT_REGION = MLSLW(L"解析窓", L"FD_Win");
+			const wchar_t* msg_FFT_HOLD = MLSLW(L"ホールド", L"HOLD");
 			drawChar(font
-				, _area_draw.x + _area_draw.w - 1 - font_w * int32_t(strlen(_fft.b_fft_hold ? msg_FFT_HOLD : msg_FFT_REGION))
+				, _area_draw.x + _area_draw.w - 1 - font_w * int32_t(strlen_vis(_fft.b_fft_hold ? msg_FFT_HOLD : msg_FFT_REGION))
 				, _area_draw.y // + _area_draw.h - 1 - font_h
 				, _fft.b_fft_hold ? msg_FFT_HOLD : msg_FFT_REGION, col_gray80, WHITE, 0, M5);
 
@@ -905,11 +908,11 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 
 		// print FFT information
 		if (_fft.b_fft_calculated || _fft.b_fft_hold) {
-			the_screen(0, row) << "[FFT INFO](推定値)" << crlf; // move cursor
+			the_screen(0, row) << MLSLW(L"[周波数領域:推定]", L"[FreqDomain:Est]") << crlf; // move cursor
 			_fft.cHz = t_period ? 100 * 1024 * 1000 / t_period : 0;
 
-			the_screen << printfmt("\033[K 周波数: %3d.%02dHz", _fft.cHz / 100, _fft.cHz % 100) << crlf;
-			the_screen << "\033[K ピーク:" << crlf;
+			the_screen << printfmt(MLSL("\033[K 周波数: %3d.%02dHz", "\033[K   Freq: %3d.%02dHz"), _fft.cHz / 100, _fft.cHz % 100) << crlf;
+			the_screen << MLSLW(L"\033[K ピーク:", L"\033[K   PEAK:") << crlf;
 
 			uint32_t cHz = _fft.cHz * n_fft_max_x / _fft.n_fft;
 			if (fft_max_x > 0.02) the_screen << printfmt("  \033[31;47mＸ\033[0m %3d.%02dHz %1.2f", cHz / 100, cHz % 100, fft_max_x) << crlf;
@@ -930,8 +933,8 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 
 		row += 7;
 		if (LOG(_i_view_current)) {
-			the_screen(0, row++) << "[取得ﾃﾞｰﾀ保存中]";
-			the_screen(0, row++) << " (\033[4ml\033[0m)->保存先開く";
+			the_screen(0, row++) << MLSLW(L"[取得ﾃﾞｰﾀ保存中]", L"[now saving capt.]");
+			the_screen(0, row++) << MLSLW(L" (\033[4ml\033[0m)->保存先開く", L" (\033[4ml\033[0m)->Open Foldr");
 		}
 	}
 
@@ -959,7 +962,7 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	 * \param id		the module SDI
 	 * \return			if _LOCATE_BUFFER with idx of -1, not found.
 	 */
-	_LOCATE_BUFFER locate_data_buffer(uint32_t id) {
+	_LOCATE_BUFFER locate_data_buffer(uint32_t id, bool b_set_view_current = false) {
 		int active = 0;
 		for (int i = 0; i < BUFFER_COUNT; i++) {
 			if (D(i)._id != 0) active++;
@@ -978,6 +981,7 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 		else {
 			for (int i = 0; i < BUFFER_COUNT; i++) {
 				if (id == D(i)._id) {
+					if (b_set_view_current) _i_view_current = i;
 					return _LOCATE_BUFFER(i, active);
 				}
 			}
@@ -1005,6 +1009,7 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 					}
 
 					active++;
+					if (b_set_view_current) _i_view_current = i;
 					return _LOCATE_BUFFER(i, active);
 				}
 			}
@@ -1277,7 +1282,7 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	void UpdateLbl_Btn_FFT() {
 		auto& b = _btns[_id_btns.fft];
 		SmplBuf_ByteS l;
-		l << printfmt("(&f)FFT : %03d", _fft.n_fft);
+		l << printfmt("(&f)SMP#: %03d", _fft.n_fft);
 		b.get_label().emptify() << l.c_str();
 		b.update_view(); // need to call this for updating label quickly.
 	}
@@ -1292,6 +1297,8 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 		auto idx = locate_data_buffer(0);
 		reset_view_param();
 		UpdateLbl_Btn_Node(int(idx));
+
+		update_screen(); // redraw screen
 	}
 
 	/**
@@ -1355,7 +1362,10 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	 * \param opt  button parameters
 	 */
 	void Btn_Press_HELP(int id, uint32_t opt) {
-		shell_open_url(L"https://stage.twelite.info/usage/screens/main_menu/viewer/cue_viewer");
+		shell_open_help(MLSLW(
+			L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/graph/graph_mot.html",
+			L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/graph/graph_mot.html"
+		));
 	}
 
 	/**
@@ -1445,7 +1455,7 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	 * \param b_endl	true to output endl.
 	 */
 	void export_header_fft(std::ostream& os, bool b_endl = true) {
-		os << ",FFT#,Hz,X,Y,Z";
+		os << ",FD#,Hz,X,Y,Z";
 		if (b_endl) os << std::endl;
 	}
 
@@ -1548,9 +1558,9 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 			info.append("Samples", int(hist_size));
 
 			if (_fft.b_fft_calculated || _fft.b_fft_hold) {
-				info.append("FFT_Len", int(_fft.n_fft));
-				info.append("FFT_Start#", int(OUTPUT_SIZE - _fft.n_fft + 1));
-				info.append("FFT_Freq[Hz]") << format("%.2f", _fft.cHz / 100.);
+				info.append("FD_Len", int(_fft.n_fft));
+				info.append("FD_Start#", int(OUTPUT_SIZE - _fft.n_fft + 1));
+				info.append("FD_Freq[Hz]") << format("%.2f", _fft.cHz / 100.);
 			}
 
 			try {
@@ -1610,6 +1620,52 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	}
 
 	/**
+	 * putting test wave.
+	 */
+	void put_demo_data() {
+		const uint32_t u32addr = 0x863ABCDE;
+		const uint32_t U32SAMPLES = 512;
+		const uint32_t U32HZ = 100;
+		const double DBHZ = U32HZ;
+
+		if (auto idx = locate_data_buffer(u32addr, true)) {
+			UpdateLbl_Btn_Node(int(idx));
+			update_screen(); // redraw screen
+
+			auto time_packet = millis();
+			auto sample_dur = 1024UL*1000/U32HZ;
+
+			int ave_x = 0, ave_y = 0, ave_z = 0;
+			for (uint16_t i = 0; i < U32SAMPLES; i++) {
+
+				// Multiply over the entire waveform as in AM
+				double factor = 125. * sin(i * 2. * TWE_M_PI / 128);
+				double factor_n = 375. - factor;
+				factor += 375.;
+
+				// X axis: square + sine, DC offset
+				double x = factor * (
+							  ((i % 16 - 8) >= 0 ? 1.0 : -1.0)
+							+ 0.2 * std::sin(DBHZ/4 * i * 2. * TWE_M_PI / DBHZ)
+							) + 1250.;
+
+				// Y axis: higher frequency (HZ/4) sine wave
+				//double y = factor_n * (std::sin(DBHZ/2 * i * 2. * TWE_M_PI / DBHZ + TWE_M_PI / 2)); // highest freq
+				double y = factor_n * (std::sin(DBHZ/4 * i * 2. * TWE_M_PI / DBHZ));
+
+				// Z axis: lower frequency (HZ/16) sine wave
+				double z = factor * (std::sin(DBHZ/16 * i * 2. * TWE_M_PI / DBHZ)) - 1250.;
+
+				XYZT val = { int16_t(x),int16_t(y),int16_t(z),time_packet + ((i * sample_dur) >> 10),time_packet, i };
+				W(idx).push(val);
+			}
+		}
+		else {
+			the_screen_b << L"\033[31mERROR: REACHES MAX NODES.\033[0m";
+		}
+	}
+
+	/**
 	 * the setup() when the screen is created.
 	 */
 	void setup() {
@@ -1624,19 +1680,21 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 		// main screen
 		the_screen.clear_screen();
 		//the_screen << "\033[7m\033[K 加速度グラフ\033[0m" << crlf;
-		the_screen << "\033[K\033[1m加速度グラフ\033[0m" << crlf;
+		the_screen << MLSLW(L"\033[K\033[1m加速度グラフ\033[0m", L"\033[K\033[1mAcceleration graph\033[0m") << crlf;
 
 		int row = 3, col = 1;
 
 		_id_btns.nodes = _btns.add(col, row, L"(&i)ID#-: --------", &SCR_CUE_FIFO::Btn_Press_NODE_Toggle, this, 0);
 		row++;
 
-		_id_btns.fft = _btns.add(col, row, L"(&f)FFT : ###", &SCR_CUE_FIFO::Btn_Press_FFT_Toggle, this, 0);
+		_id_btns.fft = _btns.add(col, row, L"(&f)SMP#: ###", &SCR_CUE_FIFO::Btn_Press_FFT_Toggle, this, 0);
 		UpdateLbl_Btn_FFT();
 		row++;
 
 		row = the_screen.get_rows() - 3;
-		_id_btns.csvout = _btns.add(col, row, L"(&c)表示ﾃﾞｰﾀ保存", &SCR_CUE_FIFO::Btn_Press_CSV_OUT, this, 0);
+		_id_btns.csvout = _btns.add(col, row, MLSLW(
+			L"(&c)表示ﾃﾞｰﾀ保存", 
+			L"(&c)Data Save   "), &SCR_CUE_FIFO::Btn_Press_CSV_OUT, this, 0);
 
 		row = the_screen.get_rows() - 1;
 		col = 7;
@@ -1645,7 +1703,14 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 
 		row = 1;
 		col = the_screen.get_cols() - 1 - 9;
-		_btns.add(col, row, L"[ﾍﾙﾌﾟ(&H)]", &SCR_CUE_FIFO::Btn_Press_HELP, this, 0);
+		_btns.add(col, row, MLSLW(L"[ﾍﾙﾌﾟ(&H)]", L"[HELP(&H)]"), &SCR_CUE_FIFO::Btn_Press_HELP, this, 0);
+
+		// set nav bar
+		_app.the_screen_c.clear_screen();
+		//                   "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		_app.the_screen_c << MLSLW(
+			L"   ｽﾞｰﾑ↑/長押:戻る       PAUSE/ﾃﾞﾓﾃﾞｰﾀ       ｽﾞｰﾑ↓/ﾘｾｯﾄ",
+			L"   Zoom↑/Long:BACK       PAUSE/demo data     Zoom↓/RST");
 	}
 
 	void validate_view_magnify() {
@@ -1661,7 +1726,7 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	 */
 	void loop() {
 		uint32_t t_now = millis();
-		static uint32_t t_last_flush;
+		static uint32_t t_last_flush = 0;
 
 		// flush log file every seconds
 		if (t_now - t_last_flush > 1000) {
@@ -1780,13 +1845,13 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 				if (_view.is_in_area(_area_draw, _view.x_last, _view.y_last)) {
 					TWECUI::KeyInput::MOUSE_WHEEL ev(c);
 					if (ev.get_y() > 0) {
-						// scroll down
+						// zoom down
 						_view.magnify--;
 						validate_view_magnify();
 						update_screen();
 					}
 					else if (ev.get_y() < 0) {
-						// scroll up
+						// zoom up
 						_view.magnify++;
 						validate_view_magnify();
 						update_screen();
@@ -1795,10 +1860,25 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 			}
 			else switch (c) {
 			case KeyInput::KEY_BUTTON_A:
+				// zoom up
+				_view.magnify++;
+				validate_view_magnify();
+				update_screen();
 				break;
+
 			case KeyInput::KEY_BUTTON_B:
+				Btn_Press_PAUSE(0, 0);
 				break;
+
+			case KeyInput::KEY_BUTTON_B_LONG:
+				put_demo_data();
+				break;
+
 			case KeyInput::KEY_BUTTON_C:
+				// zoom down
+				_view.magnify++;
+				validate_view_magnify();
+				update_screen();
 				break;
 
 			case 'i': case 'I':
@@ -1877,12 +1957,8 @@ struct APP_BASE::SCR_CUE_FIFO : public APP_HANDLR_DC {
 	 * 
 	 */
 	void on_close() {
-		// restore main screen.
-		the_screen.set_draw_area(_area_scr_main);
-		the_screen.set_font(_app.font_IDs.main);
-		the_screen.visible(true);
-		the_screen.clear_screen();
-		the_screen.force_refresh();
+		// restore screen
+		_app.screen_restore();
 	}
 };
 

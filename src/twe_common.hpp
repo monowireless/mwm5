@@ -49,6 +49,35 @@ namespace TWE {
 		inline operator uint32_t() const { return get_value(); }
 		inline explicit operator bool() const { return is_success(); }
 	};
+
+	/**
+	 * language selection.
+	 */
+	const int LANG_JP = 0;
+	const int LANG_EN = 1;
+	//const int LANG_MAX = 1;
+	const int LANG_CT = 2;
+
+#ifndef ESP32
+	extern int g_lang;
+#else
+	const int g_lang = 0;
+#endif
+
+	/**
+	 * multi lang string literal.
+	 */
+	template<typename T>
+	class ML_STR_LITERAL {
+		const T* _p;
+	public:
+		ML_STR_LITERAL(const T* jp, const T* en) {
+			_p = (g_lang == LANG_JP || !en) ? jp : en;
+		}
+		operator const T* () const { return _p;  }
+	};
+	using MLSLW = ML_STR_LITERAL<wchar_t>;
+	using MLSL = ML_STR_LITERAL<char>;
 }
 
 // use of RTTI (not mandate anymore)

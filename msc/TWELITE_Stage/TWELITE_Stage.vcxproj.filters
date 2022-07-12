@@ -16,9 +16,6 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_FirmProg.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\examples\TWELITE_Stage\App_PAL.cpp">
-      <Filter>Sketch</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_RootMenu.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
@@ -88,12 +85,12 @@
     <ClCompile Include="..\..\examples\TWELITE_Stage\App_Glancer_ARIA_Basic.cpp">
       <Filter>Sketch</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\examples\TWELITE_Stage\App_Manual.cpp">
+      <Filter>Sketch</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_FirmProg.hpp">
-      <Filter>Sketch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\examples\TWELITE_Stage\App_PAL.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_RootMenu.hpp">
@@ -142,6 +139,9 @@
       <Filter>Sketch</Filter>
     </ClInclude>
     <ClInclude Include="..\..\examples\TWELITE_Stage\App_Graph.hpp">
+      <Filter>Sketch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\TWELITE_Stage\App_Manual.hpp">
       <Filter>Sketch</Filter>
     </ClInclude>
   </ItemGroup>

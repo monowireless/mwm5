@@ -38,10 +38,10 @@ typedef enum {
 	E_TWESTG_STAGE_VOID = 0xFF,
 } teTWESTG_STAGE;
 
-extern const TWESTG_tsElement TWESTG_STAGE_BASE[];
+extern const TWESTG_tsElement TWESTG_STAGE_BASE[], TWESTG_STAGE_BASE_en[];
 extern const TWESTG_tsSettingsListItem SetList[];
-extern const TWEINTRCT_tsFuncs asFuncs[];
-extern const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[];
+extern const TWEINTRCT_tsFuncs asFuncs[], asFuncs_en[];
+extern const TWESTG_tsElement TWESTG_SLOT_SCREEN_BUILD[], TWESTG_SLOT_SCREEN_BUILD_en[];
 extern const TWESTG_tsElement TWESTG_SLOT_SCREEN_INTRCT[];
 extern uint8 au8CustomDefault_Unuse[];
 extern uint8 au8CustomDefault_Unuse_Baud[];

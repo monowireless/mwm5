@@ -8,14 +8,7 @@
 #include "common.h"
 
 
-class App_Glancer : public TWE::APP_DEF, public TWE::APP_HNDLR<App_Glancer> {
-public:
-	static const int APP_ID = int(E_APP_ID::GLANCE);
-
-	static const wchar_t LAUNCH_MSG[];
-
-	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
-	int get_APP_ID() { return APP_ID; }
+class App_Glancer : public TWE::APP_DEF, public TWE::APP_DESC<App_Glancer>, public TWE::APP_HNDLR<App_Glancer> {
 
 private:
 	// Serial Parser
@@ -48,13 +41,22 @@ private:
 	// font IDs
 	struct {
 		uint8_t main;
+		uint8_t medium;
 		uint8_t smaller;
 		uint8_t tiny;
 	} font_IDs;
 
+	// screen layout
+	struct {
+		bool b_saved;
+		Rect the_screen;
+		Rect the_screen_b;
+	} layout;
+
 public:
 	App_Glancer(int exit_id = -1)
-		: parse_ascii(512)
+		: APP_DEF(int(E_APP_ID::SMPL_VIEWER))
+		, parse_ascii(512)
 #if M5_SCREEN_HIRES == 0
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_tab(64, 20, { 0, 18, 320, 10 }, M5)
@@ -64,8 +66,10 @@ public:
 #elif M5_SCREEN_HIRES == 1
 		, the_screen_t(80, 1, { 0,   0, 640,  24 }, M5)
 		, the_screen_tab(80, 2, { 0,  24, 640,  16 }, M5)
-		, the_screen(56, 48, { 0,  40, 640, 400 }, M5)
-		, the_screen_b(120, 2, { 0, 440, 640,  16 }, M5)
+		, the_screen(56, 48, { 0,  40, 640, 300 }, M5)
+		, the_screen_b(120, 10, { 0, 340, 640, 116 }, M5)
+		//, the_screen(56, 48, { 0,  40, 640, 400 }, M5)
+		//, the_screen_b(120, 2, { 0, 440, 640,  16 }, M5)
 		, the_screen_c(64, 1, { 0, 456, 640,  24 }, M5)
 #endif
 		, default_bg_color(0)
@@ -73,6 +77,7 @@ public:
 		, _tabs(*this, the_screen_tab)
 		, u8tab_selection(255)
 		, font_IDs()
+		, layout()
 	{
 		if (exit_id != -1) u8tab_selection = exit_id;
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
@@ -96,10 +101,11 @@ private:
 	// set title bar 
 	void set_title_bar(int page_id);
 
-	// set navigation bar on the bottom
-	void set_nav_bar(const char* msg = nullptr);
+	// restore layout
+	void screen_layout_opening();
 
-	// simple screen
+	// set screen layout for apps.
+	void screen_layout_apps();
 
 public:
 	enum PAGE_ID {

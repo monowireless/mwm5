@@ -2,9 +2,15 @@
 # * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 #####################################################################
 
-MACOS_TARGET?=X86_64_GCC
-#MACOS_TARGET=X86_64_CLANG
-#MACOS_TARGET=ARM64
+
+### detect running architecture.
+arch_name=$(shell uname -m)
+ifeq ($(arch_name),x86_64)
+  MACOS_TARGET?=X86_64_GCC
+endif
+ifeq ($(arch_name),arm64)
+  MACOS_TARGET?=ARM64
+endif
 
 ### NOTES FOR UNIVERSAL APP
 # To combine x86_64 app and arm64 app
@@ -12,7 +18,6 @@ MACOS_TARGET?=X86_64_GCC
 # To identify binary nature
 #   lipo -archs TWELITE_Stage.command
 #   objdump -a TWELITE_Stage.command
-
 
 ### defines 
 ifeq ($(MACOS_TARGET),X86_64_GCC)
@@ -27,6 +32,7 @@ MWM5_SERIAL_NO_FTDI=0
 $(info ...build for x86_64 system with clang for Catalina or later.)
 else ifeq ($(MACOS_TARGET),ARM64)
 MACOS_COMPILERTYPE=clang
+CXXFLAGS += -Wno-c++11-narrowing	# Avoid clang error: non-constant-expression cannot be narrowed
 MACOS_ARCH=arm64
 MWM5_SERIAL_NO_FTDI=0
 #MWM5_SERIAL_NO_FTDI=1 # now D2XX driver supports Apple Silicon.

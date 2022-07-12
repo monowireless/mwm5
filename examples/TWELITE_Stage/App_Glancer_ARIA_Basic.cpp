@@ -39,9 +39,15 @@ struct APP_BASE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 	void show_message() {
 		auto& t = _app.the_screen;
 
+		the_screen.clear_screen();
+		the_screen_b.clear_screen();
+
 		//     "0....+....1....+....2....+....3....+....4....+....5..
 		the_screen(0, 6)
-			<< "  -- TWELITE ARIAからのﾒｯｾｰｼﾞを解釈・表示します --" << crlf
+			<< MLSLW(L"  -- TWELITE ARIAからのﾒｯｾｰｼﾞを解釈・表示します --",
+					 L"-- Interpret and display messages from TWELITE ARIA --"
+			   )	
+			<< crlf
 			;
 	}
 	
@@ -146,7 +152,7 @@ struct APP_BASE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 					// update main screen
 					the_screen.clear_screen();
 					the_screen.move_cursor(0, 0);
-					the_screen << printfmt("■ パケット (#%04d, 種別:%02d)", _pkt_rcv_ct, identify_packet_type(_pal[_startid])) << crlf;
+					the_screen << printfmt(MLSL("■ パケット (#%04d, 種別:%02d)", "■ Packet (#%04d, Typ:%02d)"), _pkt_rcv_ct, identify_packet_type(_pal[_startid])) << crlf;
 					the_screen << printfmt("  ID=%02d AD=0x%08X LQ=%03d SQ=%04d", pal.u8addr_src, pal.u32addr_src, pal.u8lqi, pal.u16seq);
 
 					// list
@@ -154,7 +160,11 @@ struct APP_BASE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 					the_screen
 						//   "0....+....1....+....2....+....3....+....4....+....5..
 						<< L"┌-------┬---┬-------┬-------┬-------┬------┐" << crlf
-						<< L"｜時間(s)｜ ID｜VCC(mV)｜温度(C)｜湿度(%)｜ 磁石 ｜" << crlf
+						<< MLSLW(
+					       L"｜時間(s)｜ ID｜VCC(mV)｜温度(C)｜湿度(%)｜ 磁石 ｜",
+						   L"｜TIME(s)｜ ID｜VCC(mV)｜TEMP(C)｜HUM (%)｜ MAG  ｜"
+						   )
+						<< crlf
 						<< L"├-------┼---┼-------┼-------┼-------┼------┤" << crlf
 						;
 
@@ -179,9 +189,9 @@ struct APP_BASE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 									the_screen_b << "(";
 								}
 								switch (sns.get_mag_stat_u8() & 0x7F) {
-								case 0: the_screen << L"｜ なし"; if (index == _startid) the_screen_b << "NO MANGET"; break;
-								case 1: the_screen << "｜" << TR << L"[Ｎ極]" << TC << "｜"; if (index == _startid) the_screen_b << "N POLE"; break;
-								case 2: the_screen << "｜" << TB << L"[Ｓ極]" << TC << "｜"; if (index == _startid) the_screen_b << "S POLE"; break;
+								case 0: the_screen << MLSLW(L"｜ なし ｜", L"｜ None ｜"); if (index == _startid) the_screen_b << "NO MANGET"; break;
+								case 1: the_screen << "｜" << TR << MLSLW(L"[Ｎ極]", L"[N po]") << TC << "｜"; if (index == _startid) the_screen_b << "N POLE"; break;
+								case 2: the_screen << "｜" << TB << MLSLW(L"[Ｓ極]", L"[S po]") << TC << "｜"; if (index == _startid) the_screen_b << "S POLE"; break;
 								}
 								if (index == _startid) the_screen_b << ")";
 							}
@@ -214,10 +224,16 @@ struct APP_BASE::SCR_ARIA_BASIC : public APP_HANDLR_DC {
 	}
 
 	void setup() {
-		the_screen.clear_screen();
-		the_screen_b.clear_screen();
+		_app.screen_layout_apps();
 		_app.set_title_bar(PAGE_ID::PAGE_SCR_ARIA);
-		_app.set_nav_bar();
+
+		auto& t = _app.the_screen_c; t.clear_screen();
+		//    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		t << MLSLW(
+			L"    --/長押:戻る             --/--                --/ﾘｾｯﾄ",
+			L"    --/Long:BACK             --/--                --/RST"
+			);
+
 		show_message();
 	}
 

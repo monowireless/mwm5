@@ -9,14 +9,7 @@
 
 #include <utility>
 
-class App_Graph : public TWE::APP_DEF, public TWE::APP_HNDLR<App_Graph> {
-public:
-	static const int APP_ID = int(E_APP_ID::CUE);
-	static const wchar_t LAUNCH_MSG[];
-
-	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
-	int get_APP_ID() { return APP_ID; }
-
+class App_Graph : public TWE::APP_DEF, public TWE::APP_DESC<App_Graph>, public TWE::APP_HNDLR<App_Graph> {
 private:
 	// Serial Parser
 	AsciiParser parse_ascii;
@@ -49,12 +42,20 @@ private:
 	struct {
 		uint8_t main;
 		uint8_t smaller;
+		uint8_t medium;
 		uint8_t tiny;
 	} font_IDs;
 
+	struct {
+		bool b_set;
+		Rect the_screen;
+		Rect the_screen_b;
+	} layout;
+
 public:
 	App_Graph(int exit_id = -1)
-		: parse_ascii(512)
+		: APP_DEF(int(E_APP_ID::GRAPH))
+		, parse_ascii(512)
 #if M5_SCREEN_HIRES == 0
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_tab(64, 20, { 0, 18, 320, 10 }, M5)
@@ -65,7 +66,7 @@ public:
 		, the_screen_t(80, 1, { 0,   0, 640,  24 }, M5)
 		, the_screen_tab(80, 2, { 0,  24, 640,  16 }, M5)
 		, the_screen(56, 48, { 0,  40, 640, 400 }, M5)
-		, the_screen_b(120, 2, { 0, 440, 640,  16 }, M5)
+		, the_screen_b(120, 10, { 0, 440, 640,  16 }, M5)
 		, the_screen_c(64, 1, { 0, 456, 640,  24 }, M5)
 #endif
 		, default_bg_color(0)
@@ -73,9 +74,15 @@ public:
 		, _tabs(*this, the_screen_tab)
 		, u8tab_selection(255)
 		, font_IDs()
+		, layout()
 	{
 		if (exit_id != -1) u8tab_selection = exit_id;
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
+
+		// save screen layout
+		layout.the_screen = the_screen.get_draw_area();
+		layout.the_screen_b = the_screen_b.get_draw_area();
+		layout.b_set = true;
 	}
 
 	~App_Graph() {
@@ -85,6 +92,12 @@ public:
 	void setup();
 
 	void loop();
+
+	// restore layout
+	void screen_restore();
+
+	// set screen layout for apps.
+	void screen_app();
 
 	
 private:

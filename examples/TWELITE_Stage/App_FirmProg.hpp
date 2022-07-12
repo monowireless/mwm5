@@ -14,16 +14,10 @@
 #include <regex>
 #endif
 
-class App_FirmProg : public TWE::APP_DEF {
+class App_FirmProg : public TWE::APP_DEF, public TWE::APP_DESC<App_FirmProg> {
 public:
-	static const int APP_ID = int(E_APP_ID::FIRM_PROG);
-	typedef App_FirmProg self_type;
-
-	int get_APP_ID() { return APP_ID; }
-	const wchar_t* get_APP_INIT_MSG() { return L""; }
-	
+	using self_type = App_FirmProg;
 private:
-
 	// setup procedure
 	void setup_screen();
 
@@ -92,7 +86,8 @@ private:
 
 public:
 	App_FirmProg(int opt=0x0)
-		: parse_ascii(256)
+		: APP_DEF(int(E_APP_ID::FIRM_PROG))
+		, parse_ascii(256)
 #if M5_SCREEN_HIRES == 0
 		, the_screen(64, 20, { 0,  18, 320, 144 }, M5)
 		, the_screen_l(64, 2, { 0,  18 + 144, 320, 28 }, M5)
@@ -100,7 +95,7 @@ public:
 		, the_screen_b(64, 4, { 0, 18 + 172, 320, 40 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
 #elif M5_SCREEN_HIRES == 1
-		, the_screen_t(64, 1, { 0,   0, 640,  24 }, M5)
+		, the_screen_t(80, 1, { 0,   0, 640,  24 }, M5)
 		, the_screen(80, 25, { 0,  24, 640, 352 }, M5)
 		, the_screen_l(80, 4, { 0, 376, 640,  32 }, M5)
 		, the_screen_b(120, 4, { 0, 408, 640,  48 }, M5)
@@ -129,6 +124,8 @@ public:
 
 	void loop();
 
+public:
+	void disp_module_info();
 
 private: // SUBSCREEN
 	enum class E_SUBSCREEN {

@@ -107,6 +107,8 @@ namespace TWE {
 
 	public:
 		void vAppLoadData(uint8 u8kind, uint8 u8slot, bool_t bNoLoad);
+
+		virtual void init() = 0;
 		virtual void vQueryAppData() = 0;
 
 		uint8& get_kind() { return _u8AppKind; }
@@ -118,7 +120,7 @@ namespace TWE {
 
 		virtual const char *get_slot_name(uint8 slot) { return nullptr; }
 
-		virtual const TWESTG_tsSettingsListItem *get_setlist() { return _SetList; }
+		virtual const TWESTG_tsSettingsListItem *get_setlist() {  return _SetList; }
 		virtual const TWEINTRCT_tsFuncs *get_menulist() { return _tblFuncs; }
 
 	public:

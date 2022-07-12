@@ -1,6 +1,6 @@
 #pragma once
 
-/* Copyright (C) 2019-2020 Mono Wireless Inc. All Rights Reserved.
+/* Copyright (C) 2019-2022 Mono Wireless Inc. All Rights Reserved.
  * Released under MW-OSSLA-1J,1E (MONO WIRELESS OPEN SOURCE SOFTWARE LICENSE AGREEMENT). */
 
 #if defined(_MSC_VER) || defined(__APPLE__) || defined(__linux) || defined(__MINGW32__)
@@ -9,11 +9,7 @@
 
 #include "common.h"
 
-class App_SelectPort : public APP_DEF, public APP_DESC<App_SelectPort>, public APP_HNDLR<App_SelectPort> {
-public:
-	static const int APP_ID = int(E_APP_ID::SELECT_PORT);
-	int get_APP_ID() { return APP_ID; }
-
+class App_Manual : public APP_DEF, public APP_DESC<App_Manual>, public APP_HNDLR<App_Manual> {
 private:
 	// top bar
 	TWETerm_M5_Console the_screen_t; // init the screen.
@@ -32,47 +28,39 @@ private:
 	uint16_t default_fg_color;
 
 	// selection
-	TWE_ListView _listPorts;
-
-	// timeout object
-	TWESYS::TimeOut _timeout;
+	TWE_ListView _lv;
 
 	// argument (check if it's called from menu selection or booting)
 	int _n_arg;
 
 public:
-	App_SelectPort(int n_arg)
+	App_Manual(int n_arg)
+		: APP_DEF(int(E_APP_ID::MANUAL))
 #if M5_SCREEN_HIRES == 0
-		: the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
+		, the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
 #elif M5_SCREEN_HIRES == 1
-		: the_screen  (56, 16, { 0,  24, 640, 400 }, M5)
 		, the_screen_t(80,  1, { 0,   0, 640,  24 }, M5)
-		, the_screen_b(120,  2, { 0, 424, 640,  32 }, M5)
+		, the_screen  (56, 16, { 0,  24, 640, 300 }, M5)
+		, the_screen_b(120,10, { 0, 324, 640, 132 }, M5)
 		, the_screen_c(64,  1, { 0, 456, 640,  24 }, M5)
 #endif
 		, default_bg_color(0)
 		, default_fg_color(0)
-		, _listPorts(8) // MAX PORTS = 8
-		, _timeout()
+		, _lv(8) // MAX PORTS = 8
 		, _n_arg(n_arg)
 	{
 		set_appobj((void*)static_cast<ITerm*>(&the_screen)); // store app specific obj into APPDEF class storage.
 	}
 
-	~App_SelectPort() {}
+	~App_Manual() {}
 
 public:
 	// ADD_DEF managed virtual function implements.
 	void setup();
 	void loop();
-
-private:
-	// state handling functions (managed by APP_State<>)
-	void hndlr_list(event_type ev, arg_type arg = 0);
-	void hndlr_not_found(event_type ev, arg_type arg = 0);
 
 private:
 	// setup procedure

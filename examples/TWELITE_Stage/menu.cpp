@@ -58,38 +58,49 @@ void MyTweMenu::vQueryAppData() {
 	}
 }
 
-const char str_appnames[int(E_APP_ID::_END_)][STR_APPNAMES_STRLEN] = {
-	"ビューア",
-	"ターミナル",
-	"標準アプリ ビューア",
-	//"ＰＡＬ/ＣＵＥ/ＡＲＩＡ ビューア",
-	"グラフ表示 (加速度ﾘｱﾙﾀｲﾑ/ｾﾝｻｰ)",
-	"簡易モニタ (CUA/ARIA/他)",
-	"コマンダー",
-	"", // _APP_END_
-	"アプリ書換",
-	"インタラクティブモード",
-	"", // _UTILS_END_
-	"TWELITE® STAGEの設定",
+const char str_appnames[int(E_APP_ID::_END_)][TWE::LANG_CT][STR_APPNAMES_STRLEN] = {
+	{"ビューア","Viewer"},
+	{"ターミナル","Terminal"},
+	{"標準アプリ ビューア","Std App Viewer"},
+	{"グラフ表示 (加速度ﾘｱﾙﾀｲﾑ/ｾﾝｻｰ)", "Graph Viewer(Accl, Sensors)"},
+	{"簡易モニタ (CUE/ARIA/Glancer)", "Simple monitor (CUE/ARIA/Glancer)"},
+	{"コマンダー","Commander"},
+	{"",""}, // _APP_END_
+	{"アプリ書換","Wrt Firmware"},
+	{"インタラクティブモード", "Interactive settings mode"},
+	{"",""}, // _UTILS_END_
+	{"TWELITE® STAGEの設定","Settings of TWELITE® STAGE"},
 #ifndef ESP32
-	"シリアルポート選択",
+	{"シリアルポート選択","Select SERIAL port"},
+	{"説明書","Open MANUAL"},
 #endif
 };
 
 #ifndef ESP32
-const wchar_t str_appurls[int(E_APP_ID::_END_)][256] = {
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer",
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer/terminal",
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer/twelite81",
-	// L"https://stage.twelite.info/usage/screens/main_menu/viewer/pal_viewer",
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer/cue_viewer",
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer/glancer",
-	L"https://stage.twelite.info/usage/screens/main_menu/viewer/commander",
-	L"", // _APP_END_
-	L"https://stage.twelite.info/usage/screens/main_menu/firm_prog",
-	L"https://stage.twelite.info/usage/screens/main_menu/interactive",
-	L"https://stage.twelite.info/usage/screens/main_menu/settings",
-	L"https://stage.twelite.info/usage/screens/main_menu/select_serial_port"
+const wchar_t str_appurls[int(E_APP_ID::_END_)][TWE::LANG_CT][256] = {
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/README.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/README.html", },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/terminal.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/terminal.html", },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/twelite81.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/twelite81.html" },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/graph/README.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/graph/README.html" },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/smpl_mon/README.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/smpl_mon/README.html" },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/viewer/commander.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/viewer/commander.html" },
+	{ L"", L"" }, // _APP_END_
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/README.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/README.html" },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/interactive.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/interactive.html" },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/settings.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/settings.html" },
+	{ L"app_loc:MANUAL/jp/content/usage/screens/main_menu/select_serial_port.html",
+	  L"app_loc:MANUAL/en/content/usage/screens/main_menu/select_serial_port.html" },
+	{ L"app_loc:MANUAL/jp/index.html",
+	  L"app_loc:MANUAL/en/index.html" },
 };
 #endif
 
@@ -103,9 +114,9 @@ const wchar_t str_appurls[int(E_APP_ID::_END_)][256] = {
  * @returns	Null if it fails, else the slot name.
  */
 const char* MyTweMenu::get_slot_name(uint8_t slot) {
-	if (slot == 0) return "共通設定";
-	else if (slot < int(E_APP_ID::_APPS_END_)) return str_appnames[slot];
-	else if (slot < int(E_APP_ID::_UTILS_END_) - 1) return str_appnames[slot + 1];
+	if (slot == 0) return MLSL("共通設定", "Common");
+	else if (slot < int(E_APP_ID::_APPS_END_)) return str_appnames[slot][g_lang];
+	else if (slot < int(E_APP_ID::_UTILS_END_) - 1) return str_appnames[slot + 1][g_lang];
 	else return nullptr;
 }
 
@@ -114,9 +125,13 @@ void MyTweMenu::gen_SetList() {
 	int i_ct_slots = (int)E_APP_ID::_UTILS_END_ - 1;
 	_spSetList.reset(new TWESTG_tsSettingsListItem[i_ct_slots+ 1]); // slot + terminator
 
+	auto BASE = (g_lang == 0 ? TWESTG_STAGE_BASE : TWESTG_STAGE_BASE_en);
+	auto BUILD = (g_lang == 0 ? TWESTG_SLOT_SCREEN_BUILD : TWESTG_SLOT_SCREEN_BUILD_en);
+	auto INTRCT = TWESTG_SLOT_SCREEN_INTRCT;
+
 	// common settings
 	_spSetList[0] = { 0, TWESTG_SLOT_DEFAULT, // common settings
-		{ TWESTG_STAGE_BASE, NULL, NULL, NULL, NULL, NULL } };
+		{ BASE, NULL, NULL, NULL, NULL, NULL } };
 
 	// for app slot
 	for (uint8_t i = 1; i < (uint8_t)E_APP_ID::_APPS_END_; i++) {
@@ -124,14 +139,14 @@ void MyTweMenu::gen_SetList() {
 		switch(E_APP_ID(i)) {
 		case E_APP_ID::CONSOLE:
 			_spSetList[i_slot] = { 0, i_slot, // slot#n (for app#1)
-				{ TWESTG_STAGE_BASE, NULL, NULL,
+				{ BASE, NULL, NULL,
 				  NULL, au8CustomDefault_Unuse_Baud, NULL } };
 			break;
 		case E_APP_ID::ROOT_MENU: // dummy label
 		case E_APP_ID::_APPS_END_: // dummy label
 		default:
 			_spSetList[i_slot] =  { 0, i_slot, // slot#n (for app#1)
-				{ TWESTG_STAGE_BASE, NULL, NULL,
+				{ BASE, NULL, NULL,
 				  NULL, au8CustomDefault_Unuse, NULL }};
 			break;
 		}
@@ -144,17 +159,17 @@ void MyTweMenu::gen_SetList() {
 		switch(E_APP_ID(i)) {
 		case E_APP_ID::FIRM_PROG:
 			_spSetList[i_slot] =  { 0, i_slot, // slot#n (for app#1)
-				{ TWESTG_STAGE_BASE, NULL, TWESTG_SLOT_SCREEN_BUILD,
+				{ BASE, NULL, BUILD,
 				  NULL, au8CustomDefault_Unuse, NULL }};
 			break;
 		case E_APP_ID::INTERACTIVE:
 			_spSetList[i_slot] =  { 0, i_slot, // slot#n (for app#1)
-				{ TWESTG_STAGE_BASE, NULL, TWESTG_SLOT_SCREEN_INTRCT,
+				{ BASE, NULL, INTRCT,
 				  NULL, au8CustomDefault_Unuse_Baud, NULL }};
 			break;
 		default:
 			_spSetList[i_slot] =  { 0, i_slot, // slot#n (for app#1)
-				{ TWESTG_STAGE_BASE, NULL, NULL,
+				{ BASE, NULL, NULL,
 				  NULL, au8CustomDefault_Unuse, NULL }};
 			break;
 		}

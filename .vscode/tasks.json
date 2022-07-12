@@ -7,8 +7,9 @@
             "windows": {
                 "command": "sh",
                 "args": [
-                    "-c", "rm -rfv objs*"
-                ],
+                    "-c",
+                    "rm -rfv objs*"
+                ]
             },
             "linux": {
                 "command": "sh",
@@ -46,8 +47,7 @@
                     "-c",
                     "mingw32-make -j6"
                 ],
-                "options": {
-                }
+                "options": {}
             },
             "linux": {
                 "command": "sh",
@@ -61,7 +61,6 @@
                 "command": "sh",
                 "args": [
                     "-c",
-                    //"make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=gcc-9",
                     "make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=clang",
                     ""
                 ]
@@ -102,7 +101,6 @@
                 "command": "sh",
                 "args": [
                     "-c",
-                    //"make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=gcc-9 DEBUG_BUILD=1",
                     "make -j$(sysctl -n hw.physicalcpu) MACOS_COMPILERTYPE=clang DEBUG_BUILD=1",
                     ""
                 ]

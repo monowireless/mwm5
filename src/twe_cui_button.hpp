@@ -37,6 +37,7 @@ namespace TWECUI {
 		bool_type _b_go_by_mouse_down; // if true, selection completed by MOUSE_DOWN event instead of MOUSE_UP.
 
 		bool_type _b_sel_comp_pre; // if selection is performed, set this flag. (display as selected)
+		bool_type _b_sel_comp_pre_force; // forcing selection
 		bool_type _b_sel_comp; // after small timer(100ms), this flag will be set.
 		uint32_t _tick_selected; // millis when selection is performed.
 
@@ -108,6 +109,27 @@ namespace TWECUI {
 		 */
 		bool key_event(TWE::keyinput_type keycode);
 
+		/**
+		 * forcing press.
+		 * 
+		 */
+		void force_press() {
+			_b_selected = true;
+			_b_sel_comp_pre = true;
+			_b_sel_comp_pre_force = true;
+			_tick_selected = millis();
+			update_view();
+		}
+
+		/**
+		 * clean up selection state.
+		 * 
+		 */
+		void clear_selected_status() {
+			_b_selected = false;
+			_b_sel_comp_pre = false;
+			_b_sel_comp_pre_force = false;
+		}
 
 		/**
 		 * @fn	inline bool TWE_Button::is_selection_completed()
@@ -394,6 +416,20 @@ namespace TWECUI {
 
 			if (ptr) return *ptr;
 			else return _btn_null;
+		}
+
+
+		/**
+		 * perform button handlder.
+		 * 
+		 * \param i
+		 */
+		void press(int i) {
+			if (unsigned(i) < this->_btns.size()) {
+				if (_upapp) {
+					_upapp->call_ev_btn_press(i, i, _opt[i]);
+				}
+			}
 		}
 	};
 }

@@ -6,6 +6,7 @@
 #include <utility>
 #include <algorithm>
 #include <type_traits>
+#include <functional>
 
 #include "twe_common.hpp"
 #include "twe_utils.hpp"
@@ -665,6 +666,7 @@ namespace TWE {
 		TWEUTILS::SmplBuf_WChar _dir_launch;
 		TWEUTILS::SmplBuf_WChar _dir_exe;
         TWEUTILS::SmplBuf_WChar _dir_log;
+        TWEUTILS::SmplBuf_WChar _dir_docs;
         TWEUTILS::SmplBuf_WChar _filename_exe;
 		TWEUTILS::SmplBuf_WChar _dir_cur;
 		TWEUTILS::SmplBuf_WChar _dir_sdk;
@@ -697,6 +699,7 @@ namespace TWE {
 		void begin();
 		void change_dir(TWEUTILS::SmplBuf_WChar& dir);
         TWEUTILS::SmplBuf_WChar& get_dir_log() { return _dir_log; }
+        TWEUTILS::SmplBuf_WChar& get_dir_docs() { return _dir_docs; }
 		TWEUTILS::SmplBuf_WChar& get_dir_exe() { return _dir_exe; }
 		TWEUTILS::SmplBuf_WChar& get_filename_exe() { return _filename_exe; }
 		TWEUTILS::SmplBuf_WChar& get_dir_sdk() { return _dir_sdk; }
@@ -762,8 +765,8 @@ namespace TWE {
     // lang table
     struct E_TWE_LANG {
         typedef const uint8_t value_type;
-        static value_type ENGLISH = 0;
-        static value_type JAPANESE = 1;
+        static value_type JAPANESE = 0;
+        static value_type ENGLISH = 1;
         static value_type _COUNT_ = 2;
     };
 
@@ -800,18 +803,56 @@ namespace TWE {
         TWEUTILS::SmplBuf_WChar get_lang_text() { return TWEUTILS::SmplBuf_WChar((const wchar_t*)WSTR_LANG_NAMES[_lang]); }
     };
 
-    extern void shell_open_default(const wchar_t* wstr);
-    extern void shell_open_default(const char_t* str);
+    /**
+     * read configuration file with key.
+     */
+    class TweConf {
+    public:
+        TweConf() {}
+
+        /**
+         * query body.
+         * 
+         * \param key_name      key name (e.g. "MWSDK = ...")
+         * \param store_func    storing lambda function.
+         * \return              true: found key and stored data, false: not found.
+         */
+        static bool _read_conf_body(const char* key_name, std::function<void(const char* ptr)> store_func);
+
+        /**
+         * data is saved into stream.
+         * 
+         * \param key_name
+         * \param ostr
+         * \return 
+         */
+        template <typename OSTR>
+        static bool read_conf(const char *key_name, OSTR& ostr) {
+            return _read_conf_body(key_name, [&](const char* ptr) { ostr << ptr; });
+        }
+    };
+
+    extern void shell_open_default(const wchar_t* wstr, const wchar_t* file = nullptr);
+    extern void shell_open_default(const char_t* str, const char_t* file = nullptr);
     extern void shell_open_default(TWEUTILS::SmplBuf_WChar& str);
     extern void shell_open_default(TWEUTILS::SmplBuf_WChar&& str);
-    inline void shell_open_url(const wchar_t* wstr) { shell_open_default(wstr); }
-    inline void shell_open_url(const char_t* str) { shell_open_default(str); }
-    inline void shell_open_url(TWEUTILS::SmplBuf_WChar& str) { shell_open_default(str); };
-    inline void shell_open_url(TWEUTILS::SmplBuf_WChar&& str) { shell_open_default(str); };
-    inline void shell_open_folder(const wchar_t* wstr) { shell_open_default(wstr); }
-    inline void shell_open_folder(const char_t* str) { shell_open_default(str); }
-    inline void shell_open_folder(TWEUTILS::SmplBuf_WChar& str) { shell_open_default(str); };
-    inline void shell_open_folder(TWEUTILS::SmplBuf_WChar&& str) { shell_open_default(str); };
+    static inline void shell_open_url(const wchar_t* wstr) { shell_open_default(wstr); }
+    static inline void shell_open_url(const char_t* str) { shell_open_default(str); }
+
+    // open url starting with HTTP, otherwise open file from docs/ dir.
+    void shell_open_help(TWEUTILS::SmplBuf_WChar&& wstr);
+    static inline void shell_open_help(TWEUTILS::SmplBuf_WChar& wstr) { shell_open_help(std::forward<TWEUTILS::SmplBuf_WChar&&>(wstr)); }
+    static inline void shell_open_help(const wchar_t* p_wstr) { shell_open_help(TWEUTILS::SmplBuf_WChar(p_wstr)); }
+    static inline void shell_open_help(const char_t* p_str) { TWEUTILS::SmplBuf_WChar wstr; wstr << p_str; shell_open_help(wstr); };
+
+    static inline void shell_open_dir_file(const wchar_t* wdir, const wchar_t* wfile) { shell_open_default(wdir, wfile); }
+    static inline void shell_open_dir_file(const char_t* dir, const char_t* file) { shell_open_default(dir, file); }
+    static inline void shell_open_url(TWEUTILS::SmplBuf_WChar& str) { shell_open_default(str); };
+    static inline void shell_open_url(TWEUTILS::SmplBuf_WChar&& str) { shell_open_default(str); };
+    static inline void shell_open_folder(const wchar_t* wstr) { shell_open_default(wstr); }
+    static inline void shell_open_folder(const char_t* str) { shell_open_default(str); }
+    static inline void shell_open_folder(TWEUTILS::SmplBuf_WChar& str) { shell_open_default(str); };
+    static inline void shell_open_folder(TWEUTILS::SmplBuf_WChar&& str) { shell_open_default(str); };
     extern void shell_open_by_command(const wchar_t* wstr_url, const wchar_t* wstr_cmd);
     extern void shell_open_by_command(const char_t* wstr_url, const char_t* wstr_cmd);
     extern void shell_open_by_command(TWEUTILS::SmplBuf_WChar& url, const wchar_t* wstr_cmd);

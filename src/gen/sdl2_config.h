@@ -28,3 +28,8 @@
 #if !defined(MWM5_USE_SDL2_MUTEX)
 # define MWM5_USE_SDL2_MUTEX 0
 #endif
+
+// Timeout to generate ESC key when R-DBLCK performed.
+#if !defined(MWM5_MOUSE_RDBLCLK_TO_ESC_TIMEOUT)
+# define MWM5_MOUSE_RDBLCLK_TO_ESC_TIMEOUT 500
+#endif

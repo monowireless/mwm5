@@ -34,6 +34,7 @@ using namespace TWEUTILS;
 // defs
 #define STR_FIRM_BIN L"BIN"
 #define STR_LOG L"log"
+#define STR_DOCS L"docs"
 #define STR_MWSDK_CHIPLIB L"ChipLib"
 #define STR_ACTSAMPLES L"Act_samples"
 #define STR_ACTEXTRAS L"Act_extras"
@@ -42,12 +43,13 @@ using namespace TWEUTILS;
 
 #define STR_WKS_ACTS L"Wks_Acts"
 #define STR_WKS_TWEAPPS L"Wks_TweApps"
+#define STR_APP_LOC_DIR L"TWELITE_Stage"
 //#define STR_MANIFEST L"000manifest"
 
 #ifndef ESP32
 const wchar_t TWE::WSTR_LANG_NAMES[E_TWE_LANG::_COUNT_][16] = {
+	L"[JAPANESE]",
 	L"[ENGLISH]",
-	L"[JAPANESE]"
 };
 #endif
 
@@ -549,6 +551,7 @@ void TweCwd::begin() {
 	PRINT_VAR(_dir_wks_act_extras);
 	PRINT_VAR(_dir_wks_tweapps);
 	PRINT_VAR(_dir_log);
+	PRINT_VAR(_dir_docs);
 
 	#ifdef _DEBUG
 	# if defined(_MSC_VER) || defined(__MINGW32__)
@@ -571,13 +574,13 @@ void TweCwd::change_dir(SmplBuf_WChar& dir) {
 
 }
 
-
 void TweCwd::_get_sdk_dir() {
 	_dir_sdk.clear();
 
-	// get SDK name from {exe dir}/MWSDK.ini 
+	// get SDK name from {exe dir}/{TWESTAGE_EXE}.ini 
 	SmplBuf_ByteSL<1024> sdk_name;
-	// open TWENET/usever.mk
+	TweConf::read_conf("MWSDK", sdk_name);
+	/*
 	try {
 		auto reg_twenet_dir = std::regex(R"(^MWSDK[ \t]*=[ \t]*([a-zA-Z0-9_\-]+))");
 
@@ -603,6 +606,8 @@ void TweCwd::_get_sdk_dir() {
 			}
 		}
 	} catch (...) {}
+	*/
+
 	// if not found.
 	if (sdk_name.size() == 0) sdk_name << STR_MWSDK;
 	
@@ -873,6 +878,12 @@ void TweCwd::_get_wks_dir() {
 	if (!TweDir::is_dir(_dir_log.c_str())) _dir_log = make_full_path(get_dir_sdk(), L"..", STR_LOG); // should be STAGE DIR
 	if (!TweDir::is_dir(_dir_log.c_str())) _dir_log = make_full_path(get_dir_sdk(), STR_LOG);
 	_dir_log.c_str();
+
+	// [ドキュメントディレクトリ] as "docs"
+	_dir_docs = make_full_path(get_dir_sdk(), STR_DOCS); // should be at MWSDK dir.
+	if (!TweDir::is_dir(_dir_docs.c_str())) _dir_docs = make_full_path(get_dir_exe(), STR_DOCS);
+	if (!TweDir::is_dir(_dir_docs.c_str())) _dir_docs = make_full_path(get_dir_launch(), STR_DOCS);
+	_dir_docs.c_str();
 
 	// [Actビルド＆書換] firstly searches `Wks_Acts'
 	_dir_wks_acts = make_full_path(get_dir_launch(), STR_WKS_ACTS);
@@ -1216,15 +1227,24 @@ void _shell_open_default(T obj, S cmd) {
 #endif
 }
 
-void TWE::shell_open_default(const wchar_t* wstr) {
-	if (wstr) {
+void TWE::shell_open_default(const wchar_t* wstr, const wchar_t* file) {
+	if (file == nullptr && wstr) {
 		_shell_open_default<const wchar_t *>(wstr, nullptr);
+	}
+	else if (file && wstr) {
+		_shell_open_default<const wchar_t*>(make_full_path(wstr, file).c_str(), nullptr);
 	}
 }
 
-void TWE::shell_open_default(const char_t* str) {
-	if (str) {
+void TWE::shell_open_default(const char_t* str, const char_t* file) {
+	if (file == nullptr && str) {
 		_shell_open_default<const char_t*>(str, nullptr);
+	}
+	else if (file && str) {
+		SmplBuf_ByteSL<TWE_FILE_NAME_MAX> fullpath;
+		fullpath << make_full_path(str, file);
+
+		_shell_open_default<const char_t*>(fullpath.c_str(), nullptr);
 	}
 }
 
@@ -1261,6 +1281,20 @@ void TWE::shell_open_by_command(TWEUTILS::SmplBuf_WChar& str, const wchar_t* str
 void TWE::shell_open_by_command(TWEUTILS::SmplBuf_WChar&& str, const wchar_t* str_cmd) {
 	if (str.length() > 0 && str_cmd) {
 		_shell_open_default<const wchar_t*, const wchar_t *, true>(str.c_str(), str_cmd);
+	}
+}
+
+void TWE::shell_open_help(TWEUTILS::SmplBuf_WChar&& wstr) {
+	if (beginsWith_NoCase(wstr, L"HTTP:") || beginsWith_NoCase(wstr, L"HTTPS:")) {
+		// open URL
+		shell_open_default(wstr);
+	} else
+	if (beginsWith_NoCase(wstr, L"APP_LOC:")) {
+		shell_open_default(make_full_path(the_cwd.get_dir_exe().c_str(), STR_APP_LOC_DIR, wstr.c_str() + 8));
+	}
+	else {
+		// open from doc folder
+		shell_open_default(the_cwd.get_dir_docs().c_str(), wstr.c_str());
 	}
 }
 
@@ -1310,6 +1344,40 @@ void TWE::TweLogFile::close() {
 	_file_buf.reset();
 	_file_os.reset();
 	_is_opened = false;
+}
+
+bool TweConf::_read_conf_body(const char* key_name, std::function<void(const char* ptr)> store_func) {
+	bool b_ret = false;
+	try {
+		SmplBuf_ByteS regex_pat(1024), fname_usever(1024);
+		regex_pat << format(R"(^%s[ \t]*=[ \t]*([a-zA-Z0-9_\-]+))", key_name);
+		auto reg_twenet_dir = std::regex(regex_pat.c_str());
+
+		fname_usever << make_full_path(the_cwd.get_dir_exe(), make_file_ext(the_cwd.get_filename_exe(), L"ini"));
+
+		std::ifstream ifs(fname_usever.c_str());
+		std::string buff;
+
+		while (getline(ifs, buff)) {
+			// chop it.
+			remove_endl(buff);
+
+			// match object
+			std::smatch m_pat;
+
+			// parse lines
+			if (std::regex_search(buff, m_pat, reg_twenet_dir)) {
+				if (m_pat.size() >= 2) {
+					store_func(m_pat[1].str().c_str());
+					b_ret = true;
+					break;
+				}
+			}
+		}
+	}
+	catch (...) {}
+
+	return b_ret;
 }
 
 #endif // ESP32

@@ -262,6 +262,10 @@ struct _gen_preference {
 	int render_engine;    // choose rendering option (osx Metal)
 	int serial_safe_mode; // choose serial safe modes
 	int game_controller;  // 0: not use, 1: use game controller
+
+	bool b_geom;
+	int geom_x;
+	int geom_y;
 } the_pref;
 
 /***********************************************************
@@ -413,7 +417,7 @@ struct app_core_sdl {
 		, sp_btn_A(new twe_wid_button(L"[  A  ]", { 4, 480 - 24, 208, 24 }))
 		, sp_btn_B(new twe_wid_button(L"[  B  ]", { 4 + 208 + 4, 480 - 24, 208, 24 }))
 		, sp_btn_C(new twe_wid_button(L"[  C  ]", { 4 + 208 + 4 + 208 + 4, 480 - 24, 208, 24 }))
-		, sp_btn_quit(new twe_wid_button(L"[閉]", { 640 - 48, 0, 48, 24 }))
+		, sp_btn_quit(new twe_wid_button(MLSLW(L"[閉]", L"[×]"), {640 - 48, 0, 48, 24}))
 #endif
 		, M5_SUB(M5_LCD_SUB_WIDTH, M5_LCD_SUB_HEIGHT)
 		, M5_TEXTE(M5_LCD_TEXTE_WIDTH, M5_LCD_TEXTE_HEIGHT)
@@ -502,7 +506,7 @@ struct app_core_sdl {
 
 	void update_help_screen() {
 		sub_screen_tr << "\033[2J";
-		sub_screen_tr << "\033[31;1m[シリアルポート]\033[0m";
+		sub_screen_tr << MLSLW(L"\033[31;1m[シリアルポート]\033[0m", L"\033[31;1m[Serial Port]\033[0m");
 		
 		#if defined(__APPLE__)
 		# define STR_ALT "Cmd"
@@ -510,7 +514,7 @@ struct app_core_sdl {
 		# define STR_ALT "Alt"
 		#endif
 		
-		if (!Serial2.is_opened()) sub_screen_tr << " - ｵﾌﾗｲﾝ";
+		if (!Serial2.is_opened()) sub_screen_tr << MLSLW(L" - ｵﾌﾗｲﾝ", L" - offline");
 
 		if (Serial2.ser_count > 0) {
 			for (int i = 0; i < Serial2.ser_count; i++) {
@@ -535,48 +539,48 @@ struct app_core_sdl {
 				}
 			}
 		}
-		sub_screen_tr << crlf << STR_ALT "+0 : 切断&再スキャン";
+		sub_screen_tr << crlf << STR_ALT "+0 : " << MLSLW(L"切断 & 再スキャン", L"DisConn&ReScan");
 
 
 		sub_screen_tr << crlf;
-		sub_screen_tr << crlf << STR_ALT "+L : ログ";
+		sub_screen_tr << crlf << STR_ALT "+L : " << MLSLW(L"ログ", L"log");
 		if (_b_logging) {
-			sub_screen_tr << "\033[33;1m(記録中)\033[0m";
+			sub_screen_tr << "\033[33;1m(" <<  MLSLW(L"記録中", L"Recording") << ")\033[0m";
 		}
 #if (defined(_MSC_VER) || defined(__APPLE__) || defined(__MINGW32__))
-		sub_screen_tr << crlf << "  Shift+" STR_ALT " ログフォルダを開く";
+		sub_screen_tr << crlf << "  Shift+" STR_ALT << MLSLW(L" ログフォルダを開く", L"Open log folder");
 #endif
 
 		static bool b_static_message = false;
 		if (!b_static_message) {
 			b_static_message = true;
 
-			sub_screen << "[基本操作]";
-			sub_screen << crlf << "ESC   : 戻る";
-			sub_screen << crlf << "Enter/↑↓→← : 選択";
+			sub_screen << MLSLW(L"[基本操作]", L"[Basic Ops]");
+			sub_screen << crlf << "ESC   : " << MLSLW(L"戻る", L"Back");
+			sub_screen << crlf << "Enter/↑↓→← : " << MLSLW(L"選択", L"Sel");
 
-			sub_screen << crlf << crlf << "[TWELITE 操作]";
-			sub_screen << crlf << STR_ALT"+I : + + + (ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ)";
-			sub_screen << crlf << STR_ALT"+R : モジュールのリセット";
+			sub_screen << crlf << crlf << MLSLW(L"[TWELITE 操作]", L"[TWELITE Ops]");
+			sub_screen << crlf << STR_ALT"+I : + + + " << MLSLW(L"(ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ)", L"(Intrctv mode)");
+			sub_screen << crlf << STR_ALT"+R : " << MLSLW(L"モジュールのリセット", L"Reset Module");
 
-			sub_screen << crlf << crlf << "[ボタン操作]";
-			sub_screen << crlf << STR_ALT"+A : Ａ(左)ボタン";
-			sub_screen << crlf << STR_ALT"+S : Ｂ(中)ボタン";
-			sub_screen << crlf << STR_ALT"+D : Ｃ(右)ボタン";
+			sub_screen << crlf << crlf << MLSLW(L"[ボタン操作]", L"[Button Ops]");
+			sub_screen << crlf << STR_ALT"+A : Ａ" << MLSLW(L"(左)ボタン", L"(Left) Btn");
+			sub_screen << crlf << STR_ALT"+S : Ｂ" << MLSLW(L"(中)ボタン", L"(Mid) Btn");;
+			sub_screen << crlf << STR_ALT"+D : Ｃ" << MLSLW(L"(右)ボタン", L"(Right) Btn");;
 			sub_screen << crlf << "  Shift+" STR_ALT " 長押し";
 
-			sub_screen << crlf << crlf << "[コピー＆ペースト]";
-			sub_screen << crlf << STR_ALT"+C : ｸﾘｯﾌﾟﾎﾞｰﾄﾞへコピー";
-			sub_screen << crlf << STR_ALT"+V : ｸﾘｯﾌﾟﾎﾞｰﾄﾞよりペースト";
+			sub_screen << crlf << crlf << MLSLW(L"[コピー＆ペースト]", L"[Copy&Paste]");
+			sub_screen << crlf << STR_ALT"+C : " << MLSLW(L"ｸﾘｯﾌﾟﾎﾞｰﾄﾞへコピー", L"Copy to Clipbrd");
+			sub_screen << crlf << STR_ALT"+V : " << MLSLW(L"ｸﾘｯﾌﾟﾎﾞｰﾄﾞよりペースト", L"Past from Clipbrd");
 
-			sub_screen << crlf << crlf << "[その他]";
-			sub_screen << crlf << STR_ALT"+F : フルスクリーン";
-			sub_screen << crlf << "  Shift+" STR_ALT " 可能なら更に拡大";
-			sub_screen << crlf << STR_ALT"+G : 描画方法変更";
-			sub_screen << crlf << STR_ALT"+J : ｳｲﾝﾄﾞｳｻｲｽﾞ変更";
+			sub_screen << crlf << crlf << MLSLW(L"[その他]", L"[Misc]");
+			sub_screen << crlf << STR_ALT"+F : " << MLSLW(L"フルスクリーン", L"Full Screen");
+			sub_screen << crlf << "  Shift+" STR_ALT << MLSLW(L" 可能なら更に拡大", L" Expand more.");
+			sub_screen << crlf << STR_ALT"+G : " << MLSLW(L"描画方法変更", L"Render method");
+			sub_screen << crlf << STR_ALT"+J : " << MLSLW(L"ｳｲﾝﾄﾞｳｻｲｽﾞ変更", L"Window size");
 
 			sub_screen << crlf;
-			sub_screen << crlf << STR_ALT"+Q : 終了";
+			sub_screen << crlf << STR_ALT"+Q : " << MLSLW(L"終了", L"Exit");
 		}
 	}
 
@@ -910,7 +914,7 @@ struct app_core_sdl {
 				}
 				else if (e.button.clicks == 2) {
 					if (e.button.button == SDL_BUTTON_RIGHT) {
-						if (e.button.timestamp - t_last_R_clk < 400) {
+						if (e.button.timestamp - t_last_R_clk < MWM5_MOUSE_RDBLCLK_TO_ESC_TIMEOUT) {
 							the_keyboard_sdl2.push(KeyInput::KEY_ESC);
 						}
 					}
@@ -1079,9 +1083,9 @@ struct app_core_sdl {
 
 					if (b_long_press) {
 						switch (b) {
-						case JOY_BTN_A: M5.BtnB._lpress = true; sp_btn_B->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); true; break;
-						case JOY_BTN_B: M5.BtnC._lpress = true; sp_btn_C->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); true; break;
-						case JOY_BTN_X: M5.BtnA._lpress = true; sp_btn_A->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); true; break;
+						case JOY_BTN_A: M5.BtnB._lpress = true; sp_btn_B->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); break;
+						case JOY_BTN_B: M5.BtnC._lpress = true; sp_btn_C->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); break;
+						case JOY_BTN_X: M5.BtnA._lpress = true; sp_btn_A->show_button((int)twe_wid_button::E_BTN_STATE::BTNUP_LONG); break;
 						default: break;
 						}
 					}
@@ -1147,29 +1151,33 @@ struct app_core_sdl {
 			return;
 		}
 		
+		// Pass a key event to the app.
+		// note: Alt+ key is ignored at the_keyboard_sdl2.handle_event()
 		if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
 			// normal keyinput
 			if (the_keyboard_sdl2.handle_event(e)) {
 				return;
 			}
+		}
 
-			if (e.key.keysym.mod & (KMOD_STG)) {
-				if (
-#ifdef __APPLE__
-					   e.key.keysym.scancode == SDL_SCANCODE_LGUI
-					|| e.key.keysym.scancode == SDL_SCANCODE_RGUI
-#else
-					   e.key.keysym.scancode == SDL_SCANCODE_LALT
-					|| e.key.keysym.scancode == SDL_SCANCODE_RALT
-#endif
-					) {
-					nAltDown = N_ALTDOWN_ON_KEY;
-					nAltState = 1;
-					update_help_desc(L"");
-				}
-			}
-
+		// Keys used in HELP SCREEN
+		if ((e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) && e.key.keysym.mod & (KMOD_STG)) {
 			bool bhandled = false;
+
+			if (
+#ifdef __APPLE__
+				e.key.keysym.scancode == SDL_SCANCODE_LGUI
+				|| e.key.keysym.scancode == SDL_SCANCODE_RGUI
+#else
+				e.key.keysym.scancode == SDL_SCANCODE_LALT
+				|| e.key.keysym.scancode == SDL_SCANCODE_RALT
+#endif
+				) {
+				nAltDown = N_ALTDOWN_ON_KEY;
+				nAltState = 1;
+				update_help_desc(L"");
+			}
+	
 			switch (e.key.keysym.scancode) {
 			case SDL_SCANCODE_1:
 			case SDL_SCANCODE_2:
@@ -1179,39 +1187,46 @@ struct app_core_sdl {
 			case SDL_SCANCODE_6:
 			case SDL_SCANCODE_7:
 			case SDL_SCANCODE_8:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"シリアルポートをオープンします");
-					} else {
-						int n = e.key.keysym.scancode - SDL_SCANCODE_1;
-						if (n >= 0 && n < Serial2.ser_count) {
-							Serial2.close();
-							Serial2.open(Serial2.ser_devname[n]);
-						}
-						
-						bhandled = true;
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"シリアルポートをオープンします",
+						L"Open SERIAL port"
+					));
+				} else {
+					int n = e.key.keysym.scancode - SDL_SCANCODE_1;
+					if (n >= 0 && n < Serial2.ser_count) {
+						Serial2.close();
+						Serial2.open(Serial2.ser_devname[n]);
+
+						update_help_screen();
 					}
+						
+					bhandled = true;
 				}
 				break;
 			case SDL_SCANCODE_0:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"シリアルポートをクローズします");
-					} else {
-						Serial2.close();
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"シリアルポートをクローズします",
+						L"Close SERIAL port"
+					));
+				} else {
+					Serial2.close();
 						
-						Serial2.list_devices();
-						update_help_screen();
+					Serial2.list_devices();
+					update_help_screen();
 						
-						bhandled = false;
-					}
+					bhandled = false;
 				}
 				break;
 
 			case SDL_SCANCODE_C:
 				if (e.key.keysym.mod & (KMOD_STG)) {
 					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"画面文字列をクリップボードにコピーします");
+						update_help_desc(MLSLW(
+							L"画面文字列をクリップボードにコピーします",
+							L"Copies screen strings to the clipboard"
+						));
 					}
 					else {
 						the_generic_ops.clip_copy_request();
@@ -1221,151 +1236,157 @@ struct app_core_sdl {
 				break;
 
 			case SDL_SCANCODE_V:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"クリップボードの文字列をペーストします");
-					}
-					else {
-						the_generic_ops.clip_paste();
-						bhandled = true;
-					}
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"クリップボードの文字列をペーストします",
+						L"Paste a string from the clipboard."
+					));
+				}
+				else {
+					the_generic_ops.clip_paste();
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_A:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"ボタンAを入力します");
-					} else {
-						if (e.key.keysym.mod & (KMOD_SHIFT))
-							M5.BtnA._lpress = true;
-						else
-							M5.BtnA._press = true;
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"ボタンAを入力します",
+						L"Enter button A"
+					));
+				} else {
+					if (e.key.keysym.mod & (KMOD_SHIFT))
+						M5.BtnA._lpress = true;
+					else
+						M5.BtnA._press = true;
 
-						bhandled = true;
-					}
+					bhandled = true;
 				}
 				break;
 			case SDL_SCANCODE_S:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"ボタンBを入力します");
-					} else {
-						if (e.key.keysym.mod & (KMOD_SHIFT))
-							M5.BtnB._lpress = true;
-						else
-							M5.BtnB._press = true;
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"ボタンBを入力します",
+						L"Enter button B"
+					));
+				} else {
+					if (e.key.keysym.mod & (KMOD_SHIFT))
+						M5.BtnB._lpress = true;
+					else
+						M5.BtnB._press = true;
 
-						bhandled = true;
-					}
+					bhandled = true;
 				}
 				break;
 			case SDL_SCANCODE_D:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"ボタンCを入力します");
-					} else {
-						if (e.key.keysym.mod & (KMOD_SHIFT))
-							M5.BtnC._lpress = true;
-						else
-							M5.BtnC._press = true;
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"ボタンCを入力します", 
+						L"Enter button C"
+					));
+				} else {
+					if (e.key.keysym.mod & (KMOD_SHIFT))
+						M5.BtnC._lpress = true;
+					else
+						M5.BtnC._press = true;
 							
-						bhandled = true;
-					}
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_R:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"TWELITE無線モジュールのハードウェアリセットをします");
-					} else {
-						the_generic_ops.module_reset();
-						bhandled = true;
-					}
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"TWELITE無線モジュールのハードウェアリセットをします",
+						L"Perform a hardware reset of the TWELITE radio module."
+					));
+				} else {
+					the_generic_ops.module_reset();
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_RETURN:
 			case SDL_SCANCODE_F:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"フルスクリーン画面に設定します。Shift+で、スクリーン最大に拡大します");
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"フルスクリーン画面に設定します。Shift+で、スクリーン最大に拡大します",
+						L"Set to full screen, Shift+ to zoom to maximum screen size."
+					));
+				} else {
+					_bfullscr = (_bfullscr == 0);
+
+					if (_bfullscr && e.key.keysym.mod & (KMOD_SHIFT)) _bfullscr = 2;
+
+					if (_bfullscr) {
+						SDL_SetWindowFullscreen(gWindow, SDL_WINDOW_FULLSCREEN);
 					} else {
-						_bfullscr = (_bfullscr == 0);
-
-						if (_bfullscr && e.key.keysym.mod & (KMOD_SHIFT)) _bfullscr = 2;
-
-						if (_bfullscr) {
-							SDL_SetWindowFullscreen(gWindow, SDL_WINDOW_FULLSCREEN);
-						} else {
-							SDL_SetWindowFullscreen(gWindow, 0);
-						}
-
-						refresh_entirescreen();
-						bhandled = true;
+						SDL_SetWindowFullscreen(gWindow, 0);
 					}
+
+					refresh_entirescreen();
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_I:
 			case SDL_SCANCODE_P:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"TWELITE無線モジュールに + + + を入力します");
-					} else {
-						the_generic_ops.type_plus3();
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"TWELITE無線モジュールに + + + を入力します",
+						L"Enter + + + into the TWELITE wireless module."
+					));
+				} else {
+					the_generic_ops.type_plus3();
 						
-						bhandled = true;
-					}
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_J:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"画面サイズを変更します。"
-						                 L"キーの入力ごとに640x480/960x720/1280x720/1920x1080/320x240の順で変更します");
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"キーの入力ごとに画面サイズを変更します。",
+						L"Changes the screen size per key entry"
+					));
 
-					} else {
-						sdlop_window_size(SDLOP_NEXT);
+				} else {
+					sdlop_window_size(SDLOP_NEXT);
 
-						bhandled = true;
-					}
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_G:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"画面の描画方式を変更します。キーを押すたびにLCD風/CRT風/ぼやけ/ブロックの順で切り替えます");
-					} else {
-						sdlop_render_mode(SDLOP_NEXT);
-						bhandled = true;
-					}
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(
+						L"画面の描画方式を変更します。キーを押すたびにLCD風/CRT風/ぼやけ/ブロックの順で切り替えます",
+						L"Changes the screen rendering method. Each time the key is pressed, it switches in the order of LCD style/CRT style/blurry/block."
+					)
+					);
+				} else {
+					sdlop_render_mode(SDLOP_NEXT);
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_Q:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"TWELITE STAGEの終演です。ごきげんよう");
-					} else {
-						if (_bfullscr) {
-							// exit wiht fullscr will cause hang up! (SDL2.0.12, OSX)
-							SDL_SetWindowFullscreen(gWindow, 0);
-							_bfullscr = 0;
-						}
-						
-						g_quit_sdl_loop = true;
-						bhandled = true;
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(L"TWELITE STAGEの終演です。ごきげんよう", L"TWELITE STAGE fins, Good byte!"));
+				} else {
+					if (_bfullscr) {
+						// exit wiht fullscr will cause hang up! (SDL2.0.12, OSX)
+						SDL_SetWindowFullscreen(gWindow, 0);
+						_bfullscr = 0;
 					}
+						
+					g_quit_sdl_loop = true;
+					bhandled = true;
 				}
 				break;
 
 			case SDL_SCANCODE_T: // open TWENET/current/src/twesettigns via `code'
-				if ((e.key.keysym.mod & KMOD_STG)
-					&& (e.key.keysym.mod & KMOD_SHIFT)
+				if (   (e.key.keysym.mod & KMOD_SHIFT)
 					&& (e.key.keysym.mod & KMOD_CTRL)
 					) {
 					if (e.type == SDL_KEYDOWN) {
@@ -1375,8 +1396,7 @@ struct app_core_sdl {
 				break;
 
 			case SDL_SCANCODE_M: // open TWENET/current/src/mwx via `code'
-				if ((e.key.keysym.mod & KMOD_STG) 
-					&& (e.key.keysym.mod & KMOD_SHIFT)
+				if (   (e.key.keysym.mod & KMOD_SHIFT)
 					&& (e.key.keysym.mod & KMOD_CTRL)
 				) {
 					if (e.type == SDL_KEYDOWN) {
@@ -1386,101 +1406,99 @@ struct app_core_sdl {
 				break;
 
 			case SDL_SCANCODE_L:
-				if (e.key.keysym.mod & (KMOD_STG)) {
-					if (e.type == SDL_KEYDOWN) {
-						update_help_desc(L"twestage.logにシリアルログを追記します");
-					} else
-					if (e.key.keysym.mod & (KMOD_SHIFT)) { // KEY UP WITH SHIFT
-						// opens log storing dir
-						if (the_cwd.get_dir_log().length() > 0) {
-							shell_open_default(the_cwd.get_dir_log());
+				if (e.type == SDL_KEYDOWN) {
+					update_help_desc(MLSLW(L"twestage.logにシリアルログを追記します", L"Add SERAIL logs to twestage.log"));
+				} else
+				if (e.key.keysym.mod & (KMOD_SHIFT)) { // KEY UP WITH SHIFT
+					// opens log storing dir
+					if (the_cwd.get_dir_log().length() > 0) {
+						shell_open_default(the_cwd.get_dir_log());
+					}
+					else {
+						SDL_ShowSimpleMessageBox(
+							SDL_MESSAGEBOX_INFORMATION,
+							"TWELITE Stage",
+							MLSL("ログファイルを格納するディレクトリが存在しません", "No dir to store log files."),
+							gWindow
+						);
+					}
+
+					bhandled = true;
+				} else { // KEY UP
+					if (!_b_logging) {
+						_file_fullpath.get().emptify(); // clear buffer
+						SmplBuf_ByteSL<64> _txt_date;   // date text "YYYYMMDD_hhmmss"
+						SmplBuf_WChar _file_name;       // "twestage_YYYYMMDD_hhmmss.log"
+
+						// create time text as "YYYYMMDD_hhmmss" format
+#if (defined(_MSC_VER) || defined(__MINGW32__))
+						SYSTEMTIME sysTime;
+						GetLocalTime(&sysTime);
+
+						_txt_date  << printfmt("%04d%02d%02d",
+												sysTime.wYear, sysTime.wMonth, sysTime.wDay)
+									<< printfmt("-%02d%02d%02d",
+												sysTime.wHour, sysTime.wMinute, sysTime.wSecond);							
+#elif defined(__APPLE__) || defined(__linux)
+						time_t rawtime;
+						struct tm* info;
+						time(&rawtime);
+						info = localtime(&rawtime);
+
+						_txt_date  << printfmt("%04d%02d%02d",
+												(info->tm_year + 1900), (info->tm_mon + 1), info->tm_mday)
+									<< printfmt("-%02d%02d%02d",
+												info->tm_hour, info->tm_min, info->tm_sec);
+
+#endif
+						// create filename and fullpath
+						_file_name << LOG_FINENAME << '_' << (const char*)_txt_date.c_str() << '.' << LOG_FILEEXT;
+						_file_fullpath << make_full_path(the_cwd.get_dir_log(), _file_name);
+
+						// open log file
+						try {
+							if (the_cwd.get_dir_log().length() == 0) throw nullptr;
+
+							_file_buf.reset(new std::filebuf());
+							_file_buf->open((const char*)_file_fullpath.c_str(), std::ios::binary |std::ios::app);
+							_file_os.reset(new std::ostream(_file_buf.get()));
+
+							// output timestamp string as the first line.
+							*_file_os << "[" << (const char*)_txt_date.c_str() << "]" << std::endl;
+
+							_b_logging = true;
 						}
-						else {
+						catch (...) {
+							_file_buf.reset();
+							_file_os.reset();
+							_b_logging = false;
+
 							SDL_ShowSimpleMessageBox(
 								SDL_MESSAGEBOX_INFORMATION,
 								"TWELITE Stage",
-								"ログファイルを格納するディレクトリが存在しません",
+								MLSL("ログファイルの作成に失敗しました", "Failed to create a log file"),
 								gWindow
 							);
 						}
-
-						bhandled = true;
-					} else { // KEY UP
-						if (!_b_logging) {
-							_file_fullpath.get().emptify(); // clear buffer
-							SmplBuf_ByteSL<64> _txt_date;   // date text "YYYYMMDD_hhmmss"
-							SmplBuf_WChar _file_name;       // "twestage_YYYYMMDD_hhmmss.log"
-
-							// create time text as "YYYYMMDD_hhmmss" format
-#if (defined(_MSC_VER) || defined(__MINGW32__))
-							SYSTEMTIME sysTime;
-							GetLocalTime(&sysTime);
-
-							_txt_date  << printfmt("%04d%02d%02d",
-													sysTime.wYear, sysTime.wMonth, sysTime.wDay)
-									   << printfmt("-%02d%02d%02d",
-													sysTime.wHour, sysTime.wMinute, sysTime.wSecond);							
-#elif defined(__APPLE__) || defined(__linux)
-							time_t rawtime;
-							struct tm* info;
-							time(&rawtime);
-							info = localtime(&rawtime);
-
-							_txt_date  << printfmt("%04d%02d%02d",
-													(info->tm_year + 1900), (info->tm_mon + 1), info->tm_mday)
-									   << printfmt("-%02d%02d%02d",
-													info->tm_hour, info->tm_min, info->tm_sec);
-
-#endif
-							// create filename and fullpath
-							_file_name << LOG_FINENAME << '_' << (const char*)_txt_date.c_str() << '.' << LOG_FILEEXT;
-							_file_fullpath << make_full_path(the_cwd.get_dir_log(), _file_name);
-
-							// open log file
-							try {
-								if (the_cwd.get_dir_log().length() == 0) throw nullptr;
-
-								_file_buf.reset(new std::filebuf());
-								_file_buf->open((const char*)_file_fullpath.c_str(), std::ios::binary |std::ios::app);
-								_file_os.reset(new std::ostream(_file_buf.get()));
-
-								// output timestamp string as the first line.
-								*_file_os << "[" << (const char*)_txt_date.c_str() << "]" << std::endl;
-
-								_b_logging = true;
-							}
-							catch (...) {
-								_file_buf.reset();
-								_file_os.reset();
-								_b_logging = false;
-
-								SDL_ShowSimpleMessageBox(
-									SDL_MESSAGEBOX_INFORMATION,
-									"TWELITE Stage",
-									"ログファイルの作成に失敗しました",
-									gWindow
-								);
-							}
-						}
-						else {
-							// close log file
-							if(_file_buf) _file_buf->close();
-							_file_os.reset();
-							_file_buf.reset();
-
-							_b_logging = false;
-
-							// open a log file
-							SDL_Delay(100);
-
-							// open log file
-							shell_open_default(_file_fullpath.c_str());
-						}
-
-						update_help_screen();
-
-						bhandled = true;
 					}
+					else {
+						// close log file
+						if(_file_buf) _file_buf->close();
+						_file_os.reset();
+						_file_buf.reset();
+
+						_b_logging = false;
+
+						// open a log file
+						SDL_Delay(100);
+
+						// open log file
+						shell_open_default(_file_fullpath.c_str());
+					}
+
+					update_help_screen();
+
+					bhandled = true;
 				}
 				break;
 
@@ -1927,6 +1945,37 @@ static void s_init() {
 	the_cwd.change_dir(the_cwd.get_dir_exe());
 #endif
 
+	// check system lang
+	{
+		SmplBuf_WChar lang;
+		if (TweConf::read_conf("LANG", lang)) {
+			if (lang == L"en" || lang == L"EN") {
+				g_lang = TWE::LANG_EN;
+			}
+		}
+	}
+
+	// check other settings
+	if (!the_pref.b_geom){
+		SmplBuf_ByteS str(128);
+		if (TweConf::read_conf("GEOM_X", str)) {
+			the_pref.geom_x = atoi(str.c_str());
+			the_pref.b_geom = true;
+		}
+		else {
+			the_pref.geom_x = SDL_WINDOWPOS_UNDEFINED;
+		}
+	
+		str.clear();
+		if (TweConf::read_conf("GEOM_Y", str)) {
+			the_pref.geom_y = atoi(str.c_str());
+			the_pref.b_geom = true;
+		}
+		else {
+			the_pref.geom_y = SDL_WINDOWPOS_UNDEFINED;
+		}
+	}
+
 	// find physical CPU count
 	_physical_cpu_count = _Get_Physical_CPU_COUNT_query_by_external_command();
 
@@ -2009,9 +2058,13 @@ static void s_init_sdl() {
 	DBGOUT("\nTILTLE=%s",title);
 
 	// Create Main window.
-	gWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-										SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN
-										); // | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	if (!the_pref.b_geom) {
+		the_pref.geom_x = SDL_WINDOWPOS_UNDEFINED;
+		the_pref.geom_y = SDL_WINDOWPOS_UNDEFINED;
+	}
+	gWindow = SDL_CreateWindow(title, the_pref.geom_x, the_pref.geom_y,
+				SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN
+				); // | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (gWindow == NULL)
 		exit_err("SDL_CreateWindow()");
 	
@@ -2193,10 +2246,14 @@ static void s_getopt(int argc, char* args[]) {
 	memset(&the_pref, 0, sizeof(the_pref));
 	the_pref.game_controller = MWM5_USE_GAMECONTROLLER;
 
+	the_pref.geom_x = SDL_WINDOWPOS_UNDEFINED;
+	the_pref.geom_y = SDL_WINDOWPOS_UNDEFINED;
+
+	// process getopt
 	int opt = 0;
 	ts_opt_getopt* popt = oss_getopt_ref();
 
-    while ((opt = oss_getopt(argc, args, "E:R:")) != -1) {
+    while ((opt = oss_getopt(argc, args, "E:R:x:y:")) != -1) {
         switch (opt) {
 		case 'E': // effects
 			{
@@ -2214,6 +2271,16 @@ static void s_getopt(int argc, char* args[]) {
 
 		case 'J':
 			the_pref.game_controller = 1;
+			break;
+
+		case 'x':
+			the_pref.geom_x = atoi(popt->optarg);
+			the_pref.b_geom = true;
+			break;
+
+		case 'y':
+			the_pref.geom_y = atoi(popt->optarg);
+			the_pref.b_geom = true;
 			break;
 
         default: /* '?' */
@@ -2375,6 +2442,7 @@ static uint32_t callbackTimerApp(uint32_t interval, void* param) {
 		if (!l) WrtCon << "*"; // lock fails (timeout)
 		for (int i = 0; i < 8; i++) {
 			::s_sketch_loop(); // loop last (w/ keeping lock)
+			if (!twe_prog.is_protocol_busy() && i >= 1) break; // on finish, return normal behavior quickly.
 		}
 
 		return 1;
@@ -2393,6 +2461,65 @@ static uint32_t callbackTimerApp(uint32_t interval, void* param) {
 #endif
 
 /**
+ * Check the MWSDK directory for spaces, symbols, and non-ASCII and display a warning dialog.
+ */
+void check_mwsdk_rootdir() {
+	bool b_fail = false;
+
+	auto& d = the_cwd.get_dir_sdk();
+
+	wchar_t* p = d.begin().raw_ptr();
+	wchar_t* e = d.end().raw_ptr();
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	if (d.length() >= 2 && p[1] == L':') p += 2; // skip drive letter
+#endif
+
+	for (; p != e; p++) {
+		if (   (*p >= L'A' && *p <= L'Z') 
+			|| (*p >= L'a' && *p <= L'z')
+			|| (*p >= L'0' && *p <= L'9')
+			|| (*p == L'_')
+			|| (*p == L'-')
+			|| (*p == L'.')
+			|| (*p == WCHR_PATH_SEP)
+		) {
+			continue;
+		}
+		else {
+			b_fail = true;
+			break;
+		}
+	}
+
+	// if found an illegal char in MWSDK DIR, open a dialogue box to warn it.
+	if (b_fail) {
+		SmplBuf_ByteS msg(1024);
+		IStreamOut& m = msg; // sofar, definition of SmplBuf_ByteS is not complete for IStreamOut interface override.
+
+		m << MLSL(
+			"TWELITE STAGEの格納ディレクトリに空白、記号(_-は可)、非ASCII文字が含まれています。"
+			"\r\nビルドなど動作しない場合があります。インストール場所の変更を推奨します。"
+			,
+			"TWELITE STAGE contains spaces, symbols (_- is acceptable), and non-ASCII characters in the storage directory."
+			"\r\nBuild and other operations may not work. Change of installation location is recommended."
+		);
+		m << crlf << crlf << '[';
+		m << the_cwd.get_dir_sdk();
+		m << ']';
+
+		// open modal dialigue box.
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING
+			, MLSL(
+				"MWSDK_ROOTに問題があります",
+				"There is a problem with MWSDK_ROOT")
+			, msg
+			, gWindow
+		);
+	}
+}
+
+/**
  * @fn	int main(int argc, char* args[])
  *
  * @brief	Main entry-point for this application
@@ -2402,17 +2529,24 @@ static uint32_t callbackTimerApp(uint32_t interval, void* param) {
  *
  * @returns	Exit-code for the process - 0 for success, else an error code.
  */
+
 int main(int argc, char* args[]) {
+	// clear terminal
+	printf("\033[2J\033[H");
+
 	// check command line agrs
 	s_getopt(argc, args);
 
-	printf("\033[2J\033[H");
-
 	// initialize
-	the_app_core.reset(new app_core_sdl());
 	s_init();
+
+	// SDL initialize
+	the_app_core.reset(new app_core_sdl());
 	s_init_sdl();
-	
+
+	// check MWSDK_DIR
+	check_mwsdk_rootdir();
+
 	// console setup
 	con_screen.setup();
 	con_screen << printfmt("*** TWELITE STAGE (v%d-%d-%d) ***", MWM5_APP_VERSION_MAIN, MWM5_APP_VERSION_SUB, MWM5_APP_VERSION_VAR) << crlf;
@@ -2431,10 +2565,7 @@ int main(int argc, char* args[]) {
 	// SDL MainLoop
 	the_app_core->loop();
 
-	// delete app instance
-	TWE::the_app._destroy_app_instance();
-
-	// force exit
+	// exiting thread.
 	auto func = [](uint32_t timeout) {
 		#if defined(_MSC_VER) || defined(__MINGW32__)
 		Sleep(timeout);
@@ -2446,9 +2577,12 @@ int main(int argc, char* args[]) {
 		_exit(0);
 		#endif
 	};
-	std::thread th_exit(func, 1000);
+	std::thread th_exit(func, 500);
 
-	// delete instance
+	// delete app instance
+	TWE::the_app._destroy_app_instance();
+
+	// delete sdl mail loop instance
 	try {
 		the_app_core.reset();
 	}
@@ -2456,7 +2590,7 @@ int main(int argc, char* args[]) {
 		; /* exception */
 	}
 	
-	// on exit 
+	// close serial terms
 	con_screen.close_term(); // shall take the screen back before calling _exit().
 
 #if defined(__APPLE__) && defined(MWM5_SERIAL_NO_FTDI)
@@ -2469,8 +2603,10 @@ int main(int argc, char* args[]) {
 	int apiret = system("clear"); (void)apiret;
 #endif
 
+	// wait until thread to kill this app
 	th_exit.join();
 
+	// may not be here
 	return 0;
 }
 

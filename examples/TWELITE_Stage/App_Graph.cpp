@@ -5,15 +5,27 @@
 
 using APP_BASE = App_Graph;
 
-const wchar_t App_Graph::LAUNCH_MSG[] =
-//....+....1....+....2....+....3....+....4| // 16dots 40cols
-L" \033[4m"
-   L"グラフ表示\033[0m"
-	                      L" ""\r\n"
-L"\r\n"
-L"TWELITE からの電文を解釈してグラフを" "\r\n"
-L"表示します" "\r\n"
-;
+template<>
+const wchar_t* APP_BASE::APP_DESC<APP_BASE>::TITLE_LONG[] = {
+	L"グラフ表示 (加速度ﾘｱﾙﾀｲﾑ,ｾﾝｻｰ)",
+	L"Graph View (Accl, Sensors)",
+};
+
+template<>
+const wchar_t* App_Graph::APP_DESC<APP_BASE>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"TWELITE からの電文を解釈してグラフを" "\r\n"
+	L"表示します。" "\r\n"
+	L"・加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ - CUE/MOTの加速度・" "\r\n"
+	L"　周波数領域の表示,CSV出力" "\r\n"
+	L"・センサーグラフ   - App_TweLite, PAL," "\r\n"
+	L"　CUE, ARIA からのﾃﾞｰﾀをsqlite3ﾃﾞｰﾀﾍﾞｰｽ" "\r\n"
+	L"　に保存,日付検索,CSV出力" "\r\n"
+	,
+	L"Interprets messages from TWELITE and displays graphs." "\r\n"
+	L"- Real-time accl view: accl of CUE/MOT, show in freq domain, output in CSV format" "\r\n"
+	L"- Sensors view: store messages from App_TweLite, PAL, CUE, ARIA into sqlite3 database, query by data, output in CSV format." "\r\n"
+};
 
 // color table
 static uint16_t COLTBL_MAIN[8] = {
@@ -29,7 +41,7 @@ static uint16_t COLTBL_MAIN[8] = {
 
 void App_Graph::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
@@ -41,9 +53,9 @@ void App_Graph::setup() {
 	for (int i = 0; i < PAGE_ID::_PAGE_END_; i++) {
 		switch (i) {
 		case PAGE_ID::PAGE_OPEN: _tabs.add(L"---", &App_Graph::hndr_SCR_OPEN); break;
-		case PAGE_ID::PAGE_CUE_FIFO: _tabs.add(L"CUEｸﾞﾗﾌ", &App_Graph::hndr_SCR_CUE_FIFO); break;
-		case PAGE_ID::PAGE_WSNS_DB: _tabs.add(L"ｾﾝｻｰｸﾞﾗﾌ", &App_Graph::hndr_SCR_WSNS_DB); break;
-		case PAGE_ID::PAGE_HELP: _tabs.add(L"解説", &App_Graph::hndr_SCR_HELP); break;
+		case PAGE_ID::PAGE_CUE_FIFO: _tabs.add(MLSLW(L"CUEｸﾞﾗﾌ", L"CUE Graph"), &App_Graph::hndr_SCR_CUE_FIFO); break;
+		case PAGE_ID::PAGE_WSNS_DB: _tabs.add(MLSLW(L"ｾﾝｻｰｸﾞﾗﾌ", L"Sensor Graph"), &App_Graph::hndr_SCR_WSNS_DB); break;
+		case PAGE_ID::PAGE_HELP: _tabs.add(MLSLW(L"解説", L"Info"), &App_Graph::hndr_SCR_HELP); break;
 		default: break;
 		}
 	}
@@ -64,31 +76,23 @@ void App_Graph::loop() {
 	do {
 		int c = the_keyboard.peek_a_byte();
 
-		if (c == KeyInput::KEY_BUTTON_A) {
-			_tabs.select_prev();
-		}
-		else if (c == KeyInput::KEY_BUTTON_C) {
-			_tabs.select_next();
-		}
-		else if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
+		if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
 			// handle double ESC/double right click
 			static uint32_t t_last;
 			uint32_t t_now = millis();
 
-			if (t_now - t_last < 300) {
-				the_app.exit(APP_ID);
+			if (t_now - t_last < STAGE_DOUBLE_ESC_EXIT_TIMEOUT) {
+				the_app.exit(get_APP_ID());
 			}
 			else {
 				b_loop = false;
 			}
 			t_last = t_now;
 		}
-		else if (c == KeyInput::KEY_BUTTON_A_LONG) {
-			the_app.exit(APP_ID);
-		}
-		else if (c == KeyInput::KEY_BUTTON_C_LONG) {
-			twe_prog.reset_module();
-		}
+		//else if (c == KeyInput::KEY_BUTTON_A) { _tabs.select_prev(); }
+		//else if (c == KeyInput::KEY_BUTTON_C) { _tabs.select_next(); }
+		else if (c == KeyInput::KEY_BUTTON_A_LONG) { the_app.exit(get_APP_ID()); }
+		else if (c == KeyInput::KEY_BUTTON_C_LONG) { twe_prog.reset_module(); }
 		else {
 			b_loop = false; // message is not used, pass the event to TAB content.
 		}
@@ -127,6 +131,7 @@ void App_Graph::setup_screen() {
 
 	font_IDs.main = 11;
 	font_IDs.smaller = 14;
+	font_IDs.medium = 15;
 	font_IDs.tiny = 1;
 
 	TWEFONT::createFontMP10_std(1, 0, 0);
@@ -140,6 +145,8 @@ void App_Graph::setup_screen() {
 	TWEFONT::createFontShinonome16(13, 0, 0, 0 /* TWEFONT::U32_OPT_FONT_YOKOBAI */);
 
 	TWEFONT::createFontMP12_std(font_IDs.smaller, 0, 0);
+
+	TWEFONT::createFontShinonome14(font_IDs.medium, 0, 1);
 
 	the_screen_t.set_font(13);
 	the_screen_tab.set_font(10);
@@ -199,7 +206,10 @@ void App_Graph::set_nav_bar(const char *msg) {
 
 	if (msg == nullptr) {
 		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "  前TAB/長押:戻る            --/--             次TAB/ﾘｾｯﾄ";
+		the_screen_c << MLSLW(
+			L"    ↑/長押:戻る           決定/--                ↓/ﾘｾｯﾄ",
+			L"    ↑/Long:BACK         SELECT/--                ↓/RST"
+			);
 	}
 	else {
 		the_screen_c << msg;
@@ -208,20 +218,34 @@ void App_Graph::set_nav_bar(const char *msg) {
 
 // set title bar
 void App_Graph::set_title_bar(int page_id) {
-	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m CUE/ARIAﾋﾞｭｰｱ\033[0m";
+	const char* title = MLSL("\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m グラフ表示\033[0m", "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Graph view\033[0m");
 
 	the_screen_t.clear_screen();
 
 	switch (page_id) {
 	case PAGE_ID::PAGE_CUE_FIFO:
-		the_screen_t << title << ":加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ"; break;
+		the_screen_t << title << MLSLW(L":加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ", L":Accel realtime graph"); break;
 	case PAGE_ID::PAGE_WSNS_DB:
-		the_screen_t << title << ":センサーグラフ"; break;
+		the_screen_t << title << MLSLW(L":センサーグラフ", L":Sensor Graph"); break;
 	default:
 		the_screen_t << title; break;
 	}
 }
 
+void App_Graph::screen_restore() {
+	if (layout.b_set) {
+		// full screen clear
+		the_screen.set_draw_area(layout.the_screen);
+		the_screen.set_font(font_IDs.main);
+		the_screen.clear_screen();
+		the_screen.force_refresh();
+
+		the_screen_b.set_draw_area(layout.the_screen_b);
+		the_screen_b.set_font(font_IDs.smaller);
+		the_screen_b.clear_screen();
+		the_screen_b.force_refresh();
+	}
+}
 
 /*****************************************************************************************
  * SCREEN OPENING
@@ -233,42 +257,57 @@ struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
 
 	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
+	TWE_ListView _lv;
 
-	SCR_OPEN(APP_BASE& app) : _app(app), _btns(*this, app.the_screen), APP_HANDLR_DC(CLS_ID) {}
+	SCR_OPEN(APP_BASE& app) : _app(app), _btns(*this, app.the_screen), _lv(16), APP_HANDLR_DC(CLS_ID) {}
 	~SCR_OPEN() {}
 
-	void show_message() {
-		auto& t = _app.the_screen;
+	void layout_screen() {
+		auto& layout = _app.layout;
+		auto& the_screen = _app.the_screen;
+		auto& the_screen_b = _app.the_screen_b;
+		auto& font_IDs = _app.font_IDs;
 
-		//     "0....+....1....+....2....+....3....+....4....+....5...
-		t << "TWELITEから受信した無線ﾊﾟｹｯﾄをｸﾞﾗﾌ表示します。" << crlf
-			<< "(App_Wingsを書き込んだ親機に接続します)" << crlf
-			<< crlf
-			<< "App_Wingsと子機ｱﾌﾟﾘ(TWELITE標準ｱﾌﾟﾘやPALｱﾌﾟﾘ)の設定" << crlf
-			<< "(\033[7;41mｱﾌﾟﾘｹｰｼｮﾝID,無線ﾁｬﾈﾙ,暗号化有無･鍵\033[0m)が同じで" << crlf
-			<< "ないと無線通信しないようになっています。" << crlf
-			<< crlf
-			<< "ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞで\033[41;7m親機側(App_Wings)と子機側双方\033[0mの設定を" << crlf
-			<< "確認してください。"
-			;
+		Rect r = layout.the_screen;
+		Rect r_b = layout.the_screen_b;
+
+		// move boundary by 100pix
+		r.h -= 100;
+		r_b.h += 100;
+		r_b.y -= 100;
+
+		the_screen_b.set_draw_area(r_b);
+		the_screen_b.set_font(font_IDs.medium);
+		the_screen_b.clear_screen();
+		the_screen_b.force_refresh();
+
+		the_screen.set_draw_area(r);
+		the_screen.clear_screen();
+		the_screen.force_refresh();
 	}
 
 	void setup() {
-		_app.the_screen.clear_screen();
-		_app.the_screen_b.clear_screen();
+		layout_screen();
+		
 		_app.set_title_bar(int(PAGE_ID::PAGE_OPEN));
+		_app.set_nav_bar();
 
-		show_message();
+		// list view
+		_lv.attach_term(_app.the_screen, 1, int(PAGE_ID::_PAGE_END_) - 1);
+		_lv.set_view();
 
-		_btns.add(2, 13, L"加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ"
-			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_CUE_FIFO)); }
-			, 0
-		);
 
-		_btns.add(2, 15, L"センサーグラフ"
-			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_WSNS_DB)); }
-			, 0
-		);
+		for (int i = 0; PAGE_ID(i) < PAGE_ID::_PAGE_END_; i++) {
+			switch (PAGE_ID(i)) {
+				// case PAGE_ID::PAGE_OPEN: _lv.push_back(L"---", uint16_t(PAGE_ID::PAGE_OPEN)); break;
+			case PAGE_ID::PAGE_CUE_FIFO: _lv.push_back(MLSLW(L"加速度ﾘｱﾙﾀｲﾑｸﾞﾗﾌ", L"Accel realtime graph"), uint16_t(PAGE_ID::PAGE_CUE_FIFO)); break;
+			case PAGE_ID::PAGE_WSNS_DB: _lv.push_back(MLSLW(L"センサーグラフ", L"Sensor Graph"), uint16_t(PAGE_ID::PAGE_WSNS_DB)); break;
+			case PAGE_ID::PAGE_HELP: _lv.push_back(MLSLW(L"解説", L"Info"), uint16_t(PAGE_ID::PAGE_HELP)); break;
+			default: break;
+			}
+		}
+
+		_lv.update_view(true);
 	}
 
 	void loop() {
@@ -276,13 +315,65 @@ struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
 
 		do {
 			int c = the_keyboard.read();
+			if (_lv.key_event(c)) {
+				int isel = _lv.get_selected_index();
+				auto sel = _lv.get_selected();
+				int itab = sel.second[0]; // tab index
 
-			switch (c) {
+				if (isel >= 0 && isel < _lv.size()) {
+					if (_lv.is_selection_completed()) {
+						// selection
+						_app._tabs.select(itab);
+					}
+					else if (int n_sel = _lv.is_info_selected()) { // 1:primary 2:secondary
+						// select sub item
+					}
+					else {
+						// over
+						auto& t = _app.the_screen_b;
+						t.clear_screen();
+						t << "\033[32m";
+
+						switch (PAGE_ID(itab)) {
+						case PAGE_ID::PAGE_CUE_FIFO:
+							t << MLSLW(
+								L"加速度センサー(TWELITE CUE, PAL MOT)のFIFOモードのデータをリアルタイム表示します。",
+								L"Real-time display of FIFO mode data from acceleration sensors (TWELITE CUE, PAL MOT)."
+							);
+							t << crlf << MLSLW(
+								L"画面上では周波数領域のグラフも同時に表示します（パケット欠落のない連続した一定数のサンプルが必要です）。また、CSVファイルへの出力も可能です。",
+								L"A graph in the frequency domain is simultaneously displayed on the screen (a certain number of consecutive samples without missing packets is required). The data can also be exported to a CSV file."
+							);
+							break;
+						case PAGE_ID::PAGE_WSNS_DB:
+							t << MLSLW(
+								L"各種TWELITE (App_Twelite, PAL-AMB, PAL-MOT, PAL-MAG, CUE, ARIA) からのパケットを sqlite3 データベースに保存し、グラフとして表示することが可能です。",
+								L"Packets from various TWELITEs (App_Twelite, PAL-AMB, PAL-MOT, PAL-MAG, CUE, ARIA) can be stored in a sqlite3 database and displayed as a graph.");
+							t << crlf << MLSLW(
+								L"画面上では、過去の1日分のグラフを表示（ﾎｲｰﾙによる拡大表示も可）、リアルタイム表示、CSV出力が可能です。",
+								L"On the screen, graphs for the past day can be displayed (zoomed in using the wheel), displayed in real time, and exported to CSV.");
+							break;
+						case PAGE_ID::PAGE_HELP:
+							t << MLSLW(
+								L"簡易的な解説です。より詳細は各タブ画面中のヘルプリンクから情報を得てください。",
+								L"This is a simplified explanation. For more detailed information, please refer to the help links in each tab.");
+							break;
+						default: break;
+						}
+
+						t << "\033[0m";
+					}
+				}
+			}
+			else switch (c) {
 			case KeyInput::KEY_BUTTON_A:
+				the_keyboard.push(KeyInput::KEY_UP);
 				break;
 			case KeyInput::KEY_BUTTON_B:
+				the_keyboard.push(KeyInput::KEY_ENTER);
 				break;
 			case KeyInput::KEY_BUTTON_C:
+				the_keyboard.push(KeyInput::KEY_DOWN);
 				break;
 
 			default:
@@ -293,7 +384,7 @@ struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
 	}
 
 	void on_close() {
-
+		_app.screen_restore();
 	}
 };
 

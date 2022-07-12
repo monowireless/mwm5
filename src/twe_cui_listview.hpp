@@ -232,6 +232,7 @@ namespace TWECUI {
 		 * \param idx
 		 */
 		void set_view_with_select_item(index_type idx) {
+			_n_selected = idx;
 			int page = idx / _n_view_rows;
 			int idx_on_page = idx % _n_view_rows;
 

@@ -15,8 +15,11 @@ namespace TWE {
 	 */
 	class APP_DEF {
 		void* _pobj;
+		int _app_id;
 	public:
-		APP_DEF() : _pobj(nullptr) {}
+		APP_DEF(int appid = -1) : _app_id(appid), _pobj(nullptr) {}
+
+		int get_APP_ID() { return _app_id; }
 
 		virtual void setup() = 0;
 		virtual void loop() = 0;
@@ -30,6 +33,36 @@ namespace TWE {
 			return _pobj;
 		}
 	};
+
+	/**
+	 * save application descriptions. (for help message)
+	 */
+	template <class T>
+	class APP_DESC {
+		static const wchar_t* TITLE_LONG[TWE::LANG_CT];
+		static const wchar_t* LAUNCH_MSG[TWE::LANG_CT];
+
+	public:
+		APP_DESC() {}
+
+		static const wchar_t* get_TITLE_LONG() {
+			const wchar_t* p = nullptr;
+			if (g_lang < TWE::LANG_CT) {
+				p = APP_DESC<T>::TITLE_LONG[g_lang];
+			}
+			return p ? p : L"";
+		}
+
+		static const wchar_t* get_LAUNCH_MSG() {
+			const wchar_t* p = nullptr;
+			if (g_lang < TWE::LANG_CT) {
+				p = APP_DESC<T>::LAUNCH_MSG[g_lang];
+			}
+			return p ? p : L"";
+		}
+	};
+	template <class T> const wchar_t* APP_DESC<T>::TITLE_LONG[TWE::LANG_CT];
+	template <class T> const wchar_t* APP_DESC<T>::LAUNCH_MSG[TWE::LANG_CT];
 
 	/**
 	 * @class	APP_MGR

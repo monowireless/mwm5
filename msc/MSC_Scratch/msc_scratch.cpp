@@ -144,11 +144,11 @@ public:
 			const int B = 256;
 			char fmt[B];
 
-			if (u32Dirty == U32DIRTY_FULL) {
+			if (dirtyLine.is_full()) {
 				_cputs("\033[2J\033[H"); // clear all screen and HOME
 			}
 			for (int i = 0; i <= max_line; i++) {
-				if ((1UL << i) & u32Dirty) {
+				if (dirtyLine.is_dirty(i)) {
 					sprintf_s(fmt, "\033[%d;%dH", i + 1, 1); // move cursor
 					_cputs(fmt);
 
@@ -181,7 +181,7 @@ public:
 			sprintf_s(fmt, "\033[%d;%dH", cursor_l + 1, c_vis + 1); // move cursor
 			_cputs(fmt);
 		}
-		u32Dirty = 0UL;
+		dirtyLine.clear();
 	}
 };
 
@@ -483,7 +483,7 @@ void test_parser() {
 	{
 		obj_vputchar << TWE::printfmt("10=%d, ", 10) << TWE::printfmt("11=%d\n", 11);
 		//obj_vputchar << TWE::printfmt("%d%d%d%d%d%d%d%d%d%d", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-		obj_vputchar << 12;
+		obj_vputchar << TWE::printfmt("%d", 12);
 	}
 
 	fprintf(stdout, "\r\nAscii mode test:\r\n");

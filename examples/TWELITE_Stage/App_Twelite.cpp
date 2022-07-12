@@ -3,30 +3,39 @@
 
 #include "App_Twelite.hpp"
 
-const wchar_t App_TweLite::LAUNCH_MSG[] =
-//....+....1....+....2....+....3....+....4| // 16dots 40cols
-L"    " L"\033[4m"
-    L"標準アプリ (0x81ｽﾃｰﾀｽ) ビューア" L"\033[0m"
-		                           L"     ""\r\n"
-L"\r\n"
-L"標準アプリで受信した0x81ｽﾃｰﾀｽを画面に表 ""\r\n"
-L"示します。TWELITEには標準アプリを書込ん ""\r\n"
-L"でおきます。STAGEボード上のLEDの点灯状態""\r\n"
-L"などが画面上で再現されます。";
+template<>
+const wchar_t* App_TweLite::APP_DESC<App_TweLite>::TITLE_LONG[] = {
+	L"標準アプリ (0x81ｽﾃｰﾀｽ) ビューア",
+	L"Std App (0x81 stat) Viewer",
+};
+
+template<>
+const wchar_t* App_TweLite::APP_DESC<App_TweLite>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"標準アプリで受信した0x81ｽﾃｰﾀｽを画面に表 ""\r\n"
+	L"示します。TWELITEには標準アプリを書込ん ""\r\n"
+	L"でおきます。STAGEボード上のLEDの点灯状態""\r\n"
+	L"などが画面上で再現されます。"
+	,
+	L"The 0x81 status received by the standard app is displayed on the screen. The status of the LEDs on the STAGE board is reproduced on the screen."
+};
 
 void App_TweLite::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 	
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[G\033[1mSTAGE\033[0m 標準ｱﾌﾟﾘ (ｽﾃｰﾀｽ 0x81)";
+	the_screen_t.clear_screen();
+	the_screen_t << MLSLW(L"\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m 標準ｱﾌﾟﾘ (ｽﾃｰﾀｽ 0x81)",
+						  L"\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Std App (stat 0x81)");
 
 	// button navigation
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     --/長押:MENU          ﾌｫﾝﾄ/ﾃｽﾄdat            --/ﾘｾｯﾄ";
+	the_screen_c << MLSLW(L"     --/長押:MENU          ﾌｫﾝﾄ/ﾃｽﾄdat            --/ﾘｾｯﾄ",
+						  L"     --/Long:MENU          Font/test              --/RST");
 
 	// init screen
 	update_screen(true);
@@ -35,16 +44,24 @@ void App_TweLite::setup() {
 void App_TweLite::loop() {
 	// KEYBOARD
 	while (the_keyboard.available()) {
-		switch (int c = the_keyboard.read()) {
-		case KeyInput::KEY_ESC:
-			the_app.exit(APP_ID);
-			return;
+		int c = the_keyboard.read();
 
+		if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
+			// handle double ESC/double right click
+			static uint32_t t_last = 0;
+			uint32_t t_now = millis();
+
+			if (t_now - t_last < STAGE_DOUBLE_ESC_EXIT_TIMEOUT) {
+				the_app.exit(get_APP_ID());
+			}
+			t_last = t_now;
+		}
+		else switch (c) {
 		case KeyInput::KEY_BUTTON_A:
 			break;
 
 		case KeyInput::KEY_BUTTON_A_LONG:
-			the_app.exit(APP_ID);
+			the_app.exit(get_APP_ID());
 			return;
 
 		case KeyInput::KEY_BUTTON_B:
@@ -65,19 +82,17 @@ void App_TweLite::loop() {
 					"DATA2",
 					"DATA3" };
 
-				static int s_idx = 0;
+				_idx_test_data++;
+				if (_idx_test_data >= 3) _idx_test_data = 0;
 
-				s_idx++;
-				if (s_idx >= 3) s_idx = 0;
-
-				const char* p = pktdata[s_idx];
+				const char* p = pktdata[_idx_test_data];
 				while (*p != 0) {
 					parse_a_byte(char_t(*p));
 					p++;
 				}
 
 				the_screen_b.clear_screen();
-				the_screen_b << "TEST DATA: " << msgs[s_idx];
+				the_screen_b << "TEST DATA: " << msgs[_idx_test_data];
 			}
 			break;
 
@@ -143,7 +158,7 @@ void App_TweLite::setup_screen() {
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 	TWEFONT::createFontMP12(13, 0, 0);
 
-	TWEFONT::createFontShinonome16(14, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(14, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */ 0);
 
 	change_screen_font();
 	the_screen_b.set_font(13);
@@ -175,34 +190,31 @@ void App_TweLite::setup_screen() {
 
 // screen refresh timing (every 32ms)
 void App_TweLite::screen_refresh() {
-	static uint32_t u32mills;
-
 	uint32_t u32now = millis();
-	if (u32now - u32mills > 32) {
+	if (u32now - _u32_millis_last_screen_update > 32) {
 		the_screen.refresh();
 		the_screen_b.refresh();
 		the_screen_c.refresh();
 		the_screen_t.refresh();
 
-		u32mills = u32now;
+		_u32_millis_last_screen_update = u32now;
 	}
 }
 
 // change screen font
 void App_TweLite::change_screen_font() {
-	static uint8_t idx = 0;
 	uint8_t modes[] = { 11, 10, 12, 13 }; // toggle screen 10 .. 13
 
-	the_screen.set_font(modes[idx & 0x3], APP_COLUMN, APP_ROW);
+	the_screen.set_font(modes[_screen_font_idx & 0x3], APP_COLUMN, APP_ROW);
 	the_screen.clear_screen();
 	the_screen.force_refresh();
 
-	auto font = TWEFONT::queryFont(the_screen.font_id());
+	auto& font = TWEFONT::queryFont(the_screen.font_id());
 	the_screen_b.clear_screen();
 	TWE::fPrintf(the_screen_b, "\nFont: %s\n      ID=%d H:%d W:%d W_CHRs:%d",
 		font.font_name, font.get_font_code(), font.height, font.width, font.font_wide_count);
 
-	idx++;
+	_screen_font_idx++;
 }
 
 /**
@@ -224,9 +236,9 @@ void App_TweLite::update_screen(bool b_redraw ) {
 
 	if (b || c) {
 		if (b) trm << "\033[1;1H"
-			"\033[1;30;45mﾀｲﾑCT\033[0m" "  "
-			"\033[1;30;45mId#\033[0m" " "
-			"\033[1;30;45mｼﾘｱﾙ番号\033[0m";
+			<< MLSLW(L"\033[1;30;45mﾀｲﾑCT\033[0m" L"  ", L"\033[1;30;45mTimCT\033[0m" L"  ")
+			<< L"\033[1;30;45mId#\033[0m" L" "
+			<< MLSLW(L"\033[1;30;45mｼﾘｱﾙ番号\033[0m", L"\033[1;30;45mSerialNo\033[0m");
 		if (b) trm << "\033[3;1H"
 			"\033[1;30;45m D1 \033[0m"
 			" \033[1;30;45m D2 \033[0m"
@@ -289,8 +301,7 @@ void App_TweLite::parse_a_byte(char_t u8b) {
 		// output as parser format
 		// the_screen_b << parse_ascii;
 		the_screen_b.clear_screen();
-		static int ct;
-		the_screen_b << "PKT(" << ct++ << ')';
+		the_screen_b << "PKT(" << _ct_packets++ << ')';
 
 		// EEPROM TEST
 		auto&& p = parse_ascii.get_payload();

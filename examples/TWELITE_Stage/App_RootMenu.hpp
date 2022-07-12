@@ -21,6 +21,9 @@ private:
 	// main screen
 	TWETerm_M5_Console the_screen; // init the screen.
 
+	// main screen_list
+	TWETerm_M5_Console the_screen_l; // init the screen.
+
 	// bottom area (for debug information)
 	TWETerm_M5_Console the_screen_b; // init the screen.
 
@@ -44,15 +47,18 @@ private:
 
 public:
 	App_RootMenu(int nSel = 0)
+		: APP_DEF(int(E_APP_ID::ROOT_MENU))
 #if M5_SCREEN_HIRES == 0
-		: the_screen(64, 20, { 0, 18, 320, 240 - 30 - 18 }, M5)
+		, the_screen(64, 20, {0,  18, 320, 144}, M5)
+		, the_screen_l(64, 2, { 0,  18 + 144, 320, 28 }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
-		, the_screen_b(64, 4, { 0, 18 + 192, 320, 20 }, M5)
+		, the_screen_b(64, 4, { 0, 18 + 172, 320, 40 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
 #elif M5_SCREEN_HIRES == 1
-		: the_screen  (56, 16, { 0,  24, 640, 400 }, M5)
 		, the_screen_t(80,  1, { 0,   0, 640,  24 }, M5)
-		, the_screen_b(120,  2, { 0, 424, 640,  32 }, M5)
+		, the_screen  (80, 25, { 0,  24, 640, 281 }, M5)
+		, the_screen_l(80,  4, { 0, 305, 640,  21 }, M5)
+		, the_screen_b(64, 10, { 0, 326, 640, 130 }, M5)
 		, the_screen_c(64,  1, { 0, 456, 640,  24 }, M5)
 #endif
 		, default_bg_color(0)

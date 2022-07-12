@@ -146,6 +146,11 @@ namespace TWEARD {
 		// re-set drawing area (call set_font() afterward to calculate view area)
 		void set_draw_area(Rect drawArea) {
 			_rect = drawArea;
+			_rect_view.w = _rect.w;
+			_rect_view.h = _rect.h;
+			_rect_view.x = 0;
+			_rect_view.y = 0;
+			set_font(_font_id); //resize screen with current font
 		}
 
 		// get drawing area

@@ -10,17 +10,25 @@
 
 using APP_BASE = App_Glancer; //! alias to parent class
 
+template<>
+const wchar_t* APP_BASE::APP_DESC<APP_BASE>::TITLE_LONG[] = {
+	L"簡易確認アプリ (CUE/ARIA/Glancer)",
+	L"Simple Confirmation App (CUE/ARIA/Glancer)",
+};
 
-const wchar_t APP_BASE::LAUNCH_MSG[] =
-//....+....1....+....2....+....3....+....4| // 16dots 40cols
-L"            \033[4m"
-L"簡易確認アプリ\033[0m"
-L"          ""\r\n"
-L"\r\n"
-L"無線パケットの到着を簡易的に確認します。" "\r\n"
-L"CUE -> 標準形式のﾊﾟｹｯﾄを解釈します。" "\r\n"
-L"Glancer -> 多くのﾊﾟｹｯﾄを簡易リスト""\r\n"
-;
+template<>
+const wchar_t* APP_BASE::APP_DESC<APP_BASE>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"無線パケットの到着を簡易的に確認します。" "\r\n"
+	L"CUE -> CUE のﾊﾟｹｯﾄを解釈します。" "\r\n"
+	L"CUE -> ARIA のﾊﾟｹｯﾄを解釈します。" "\r\n"
+	L"Glancer -> 多くのﾊﾟｹｯﾄを簡易リスト""\r\n"
+	,
+	L"Simplified confirmation of wireless packet arrival." "\r\n"
+	L"CUE -> Interprets CUE packets." "\r\n"
+	L"CUE -> Interprets ARIA packets." "\r\n"
+	L"Glancer -> List many kinds of packets from TWELITE.""\r\n"
+};
 
 /*****************************************************************************************
  * App_Glancer
@@ -40,13 +48,15 @@ static uint16_t COLTBL_MAIN[8] = {
 
 void APP_BASE::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 
 	// init the TWE M5 support
 	setup_screen(); // initialize TWE M5 support.
 
-	// button navigation
-	set_nav_bar();
+	// save layout
+	layout.the_screen = the_screen.get_draw_area();
+	layout.the_screen_b = the_screen_b.get_draw_area();
+	layout.b_saved = true;
 
 	// add tab item by page id order.
 	for (int i = 0; PAGE_ID(i) < PAGE_ID::_PAGE_END_; i++) {
@@ -79,18 +89,21 @@ void APP_BASE::loop() {
 		int c = the_keyboard.peek_a_byte();
 
 		if (c == KeyInput::KEY_BUTTON_A) {
-			_tabs.select_prev();
+			the_keyboard.push(KeyInput::KEY_UP);
+		}
+		else if (c == KeyInput::KEY_BUTTON_B) {
+			the_keyboard.push(KeyInput::KEY_ENTER);
 		}
 		else if (c == KeyInput::KEY_BUTTON_C) {
-			_tabs.select_next();
+			the_keyboard.push(KeyInput::KEY_DOWN);
 		}
 		else if (c == KeyInput::KEY_ESC || KeyInput::is_mouse_right_up(c)) {
 			// handle double ESC/double right click
 			static uint32_t t_last;
 			uint32_t t_now = millis();
 
-			if (t_now - t_last < 300) {
-				the_app.exit(APP_ID);
+			if (t_now - t_last < STAGE_DOUBLE_ESC_EXIT_TIMEOUT) {
+				the_app.exit(get_APP_ID());
 			}
 			else {
 				b_loop = false;
@@ -98,7 +111,7 @@ void APP_BASE::loop() {
 			t_last = t_now;
 		}
 		else if (c == KeyInput::KEY_BUTTON_A_LONG) {
-			the_app.exit(APP_ID);
+			the_app.exit(get_APP_ID());
 		}
 		else if (c == KeyInput::KEY_BUTTON_C_LONG) {
 			twe_prog.reset_module();
@@ -140,9 +153,10 @@ void APP_BASE::setup_screen() {
 #elif M5_SCREEN_HIRES == 1
 	font_IDs.main = 11;
 	font_IDs.smaller = 14;
+	font_IDs.medium = 15;
 	font_IDs.tiny = 1;
 
-	TWEFONT::createFontMP10_std(1, 0, 0);
+	TWEFONT::createFontMP10_std(font_IDs.tiny, 0, 0);
 
 	TWEFONT::createFontShinonome16(10, 0, 0); // normal font
 
@@ -153,6 +167,8 @@ void APP_BASE::setup_screen() {
 	TWEFONT::createFontShinonome16(13, 0, 0, 0 /* TWEFONT::U32_OPT_FONT_YOKOBAI */);
 
 	TWEFONT::createFontMP12_std(font_IDs.smaller, 0, 0);
+
+	TWEFONT::createFontShinonome14(font_IDs.medium, 1, 0);
 
 	the_screen_t.set_font(13);
 	the_screen_tab.set_font(10);
@@ -189,33 +205,24 @@ void APP_BASE::setup_screen() {
 	the_screen_c.force_refresh();
 }
 
-void APP_BASE::set_nav_bar(const char* msg) {
-	the_screen_c.clear_screen();
-
-	if (msg == nullptr) {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "  前TAB/長押:戻る            --/--             次TAB/ﾘｾｯﾄ";
-	}
-	else {
-		the_screen_c << msg;
-	}
-}
-
 // set title bar
 void APP_BASE::set_title_bar(int page_id) {
-	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m CUE/ARIAﾋﾞｭｰｱ\033[0m";
+	const char* title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ";
+	const wchar_t* title_2 = MLSLW(L"簡易モニタ\033[0m", L"Simple Monitor\033[0m");
 
 	the_screen_t.clear_screen();
 
 	switch (PAGE_ID(page_id)) {
 	case PAGE_ID::PAGE_OPEN:
-		the_screen_t << title << ": ---"; break;
+		the_screen_t << title << title_2 << ": ---"; break;
 	case PAGE_ID::PAGE_SCR_CUE:
-		the_screen_t << title << ": CUEパケット確認"; break;
+		the_screen_t << title << title_2 << MLSLW(L": CUEパケット確認", L": CUE Packet Mon"); break;
+	case PAGE_ID::PAGE_SCR_ARIA:
+		the_screen_t << title << title_2 << MLSLW(L": ARIAパケット確認", L": ARIA Packet Mon"); break;
 	case PAGE_ID::PAGE_SCR_GLANCER:
-		the_screen_t << title << ": Glancer ｸﾞﾗﾝｻｰ"; break;
+		the_screen_t << title << title_2 << MLSLW(L": Glancer ｸﾞﾗﾝｻｰ", L": Glancer"); break;
 	default:
-		the_screen_t << title; break;
+		the_screen_t << title << title_2; break;
 	}
 }
 
@@ -234,6 +241,37 @@ void APP_BASE::screen_refresh() {
 	}
 }
 
+void APP_BASE::screen_layout_opening() {
+	if (layout.b_saved) {
+		// full screen clear
+		the_screen.set_draw_area(layout.the_screen);
+		the_screen_b.set_draw_area(layout.the_screen_b);
+		the_screen_b.set_font(font_IDs.medium);
+		the_screen.clear_screen();
+		the_screen_b.clear_screen();
+		the_screen.force_refresh();
+		the_screen_b.force_refresh();
+	}
+}
+
+void APP_BASE::screen_layout_apps() {
+	Rect r = layout.the_screen;
+	Rect r_b = layout.the_screen_b;
+
+	// move boundary by 100pix
+	r.h += 100;
+	r_b.h -= 100;
+	r_b.y += 100;
+
+	the_screen_b.set_draw_area(r_b);
+	the_screen_b.set_font(font_IDs.smaller);
+	the_screen_b.clear_screen();
+	the_screen_b.force_refresh();
+
+	the_screen.set_draw_area(r);
+	the_screen.clear_screen();
+	the_screen.force_refresh();
+}
 
 /*****************************************************************************************
  * SCREEN OPENING
@@ -245,47 +283,39 @@ struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
 
 	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
+	TWE_ListView _lv;
 
-	SCR_OPEN(APP_BASE& app) : _app(app), _btns(*this, app.the_screen), APP_HANDLR_DC(CLS_ID) {}
+	SCR_OPEN(APP_BASE& app) : _app(app), _lv(8), _btns(*this, app.the_screen), APP_HANDLR_DC(CLS_ID) {}
 	virtual ~SCR_OPEN() {}
 
-	void show_message() {
-		auto& t = _app.the_screen;
-
-		//     "0....+....1....+....2....+....3....+....4....+....5...
-		t << "TWELITE の無線パケットを簡易確認します。 " << crlf
-			<< "(App_Wingsを書き込んだ親機に接続します)" << crlf
-			<< crlf
-			<< "App_Wingsは様々な種類のTWELITE Apps無線ﾊﾟｹｯﾄに対応し" << crlf
-			<< "ます。親子間の通信設定が一致しないと受信できません。" << crlf
-			<< "(\033[1mｱﾌﾟﾘｹｰｼｮﾝID,無線ﾁｬﾈﾙ,暗号化有無･鍵\033[0m)" << crlf
-			<< crlf
-			<< "ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞで\033[1m親機側(App_Wings)と子機側双方\033[0mの設定を" << crlf
-			<< "確認してください。"
-			;
-	}
-
 	void setup() {
+		_app.screen_layout_opening();
+
 		_app.the_screen.clear_screen();
 		_app.the_screen_b.clear_screen();
 		_app.set_title_bar(int(PAGE_ID::PAGE_OPEN));
 
-		show_message();
+		auto& t = _app.the_screen_c; t.clear_screen();
+		//    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		t << MLSLW(L"    ↑/長押:戻る           選択/--                ↓/ﾘｾｯﾄ",
+			       L"    ↑/Long:BACK         SELECT/--                ↓/RST"
+			);
 
-		_btns.add(2, 12, L"Glancer - ｸﾞﾗﾝｻｰ(多種ﾊﾟｹｯﾄ情報確認)"
-			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_SCR_GLANCER)); }
-			, 0
-		);
+		// list view
+		_lv.attach_term(_app.the_screen, 1, int(PAGE_ID::_PAGE_END_) - 1);
+		_lv.set_view();
 
-		_btns.add(2, 14, L"TWELITE CUE 簡易確認"
-			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_SCR_CUE)); }
-			, 0
-		);
+		for (int i = 0; PAGE_ID(i) < PAGE_ID::_PAGE_END_; i++) {
+			switch (PAGE_ID(i)) {
+			// case PAGE_ID::PAGE_OPEN: _lv.push_back(L"---", uint16_t(PAGE_ID::PAGE_OPEN)); break;
+			case PAGE_ID::PAGE_SCR_CUE: _lv.push_back(MLSLW(L"TWELITE CUE の簡易モニタ", L"Simple Monitor for TWELITE CUE"), uint16_t(PAGE_ID::PAGE_SCR_CUE)); break;
+			case PAGE_ID::PAGE_SCR_ARIA: _lv.push_back(MLSLW(L"TWELITE ARIA の簡易モニタ", L"Simple Monitor for TWELITE ARIA"), uint16_t(PAGE_ID::PAGE_SCR_ARIA)); break;
+			case PAGE_ID::PAGE_SCR_GLANCER: _lv.push_back(MLSLW(L"Glancer グランサー", L"Glancer"), uint16_t(PAGE_ID::PAGE_SCR_GLANCER)); break;
+			default: break;
+			}
+		}
 
-		_btns.add(2, 16, L"TWELITE ARIA 簡易確認"
-			, [&](int, uint32_t) { _app._tabs.select(int(PAGE_ID::PAGE_SCR_ARIA)); }
-			, 0
-		);
+		_lv.update_view(true);
 	}
 
 	void loop() {
@@ -294,13 +324,63 @@ struct APP_BASE::SCR_OPEN : public APP_HANDLR_DC {
 		do {
 			int c = the_keyboard.read();
 
-			switch (c) {
-			case KeyInput::KEY_BUTTON_A:
-				break;
-			case KeyInput::KEY_BUTTON_B:
-				break;
-			case KeyInput::KEY_BUTTON_C:
-				break;
+			if (_lv.key_event(c)) {
+				int isel = _lv.get_selected_index();
+				auto sel = _lv.get_selected();
+				int itab = sel.second[0]; // tab index
+
+				if (isel >= 0 && isel < _lv.size()) {
+					if (_lv.is_selection_completed()) {
+						// selection
+						_app._tabs.select(itab);
+					}
+					else if (int n_sel = _lv.is_info_selected()) { // 1:primary 2:secondary
+						// select sub item
+					}
+					else {
+						// over
+						auto& t = _app.the_screen_b;
+						t.clear_screen();
+						t << "\033[32m";
+
+						switch (PAGE_ID(itab)) {
+						case PAGE_ID::PAGE_SCR_CUE: 
+							t << MLSLW(
+								L"TWELITE CUE の無線パケットの情報を表示します。TWELITE CUE には加速度情報のほかに動作などのイベント情報が含まれます。インタラクティブモードの設定によっては情報が出ない場合もあります。",
+								L"Displays information on TWELITE CUE radio packets; TWELITE CUE includes acceleration information as well as motion and other event information. Depending on the interactive mode setting, some information may not be displayed."
+							);
+							t << crlf << MLSLW(
+								L"(連続的に加速度情報を得るFIFOモードでは、別ページにあるグラフ機能を用いることで、より詳細な情報を得ることができます。)", 
+								L"(In FIFO mode, where acceleration information is obtained continuously, more detailed information can be obtained by using the graph function on a separate page.)"
+							);
+						break;
+						case PAGE_ID::PAGE_SCR_ARIA:
+							t << MLSLW(
+								L"TWELITE ARIA の無線パケットの情報を表示します。到着順に温湿度情報をリスト表示するのみの単純なものです。",
+								L"Displays information on TWELITE ARIA radio packets. It is simple enough to list temperature and humidity information in order of arrival."
+							);
+							t << crlf << MLSLW(
+								L"(別ページのセンサーグラフ機能を用いることで、センサー情報の記録とグラフ表示を行えます)",
+								L"(The sensor information can be recorded and displayed in a graph by using the sensor graph function on a separate page.)"
+							);
+						break;
+						case PAGE_ID::PAGE_SCR_GLANCER:
+							t << MLSLW(
+								L"TWELITEの多くの種別の無線パケット(App_Twelite, PAL各種など)をリスト表示します。表示内容はアドレスやLQIなど最小限です。",
+								L"Displays a list of many types of TWELITE radio packets (App_Twelite, various PALs, etc.). Displayed content is minimal, like addresses and LQI."
+							);
+						break;
+						default: break;
+						}
+
+						t << "\033[0m";
+					}
+				}
+			} 
+			else switch (c) {
+			case KeyInput::KEY_BUTTON_A: the_keyboard.push(KeyInput::KEY_UP); break;
+			case KeyInput::KEY_BUTTON_B: the_keyboard.push(KeyInput::KEY_ENTER); break;
+			case KeyInput::KEY_BUTTON_C: the_keyboard.push(KeyInput::KEY_DOWN); break;
 
 			default:
 				break;
@@ -551,16 +631,23 @@ void APP_BASE::hndr_SCR_GLANCER(event_type ev, arg_type arg) { hndr<SCR_GLANCER>
 
 void APP_BASE::SCR_GLANCER::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(_base.get_APP_ID()));
 	
 	// put a init message
-	const char* fmt_title = "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m グランサー\033[0m : %s";
+	const char* fmt_title = MLSL(
+		"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m 簡易モニタ: ｸﾞﾗﾝｻｰ\033[0m : %s", 
+		"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Simple Mon: Glancer\033[0m : %s");
 	the_screen_t << printfmt(fmt_title, "---"); // accepts UTF-8 codes
 	pkt_data.init_screen(fmt_title);
 
+	// change screen size
+	_base.screen_layout_apps();
+
 	//     "0....+....1....+....2....+....3....+....4....+....5..
 	the_screen(0, 6)
-		<< "  -- TWELITE Wings で受信したパケット情報を表示します --" << crlf
+		<< MLSLW(L"  -- TWELITE Wings で受信したパケット情報を表示します --",
+			     L"-- Displays packet information received in TWELITE Wings --")
+		<< crlf
 		;
 
 	// button navigation
@@ -573,12 +660,19 @@ void APP_BASE::SCR_GLANCER::set_nav_bar() {
 	the_screen_c.clear_screen();
 
 	if (pkt_data._bsolo) {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     --/長押:戻る            --/--                --/ﾘｾｯﾄ";
+		//e_s"....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(
+			L"     --/長押:戻る            --/--                --/ﾘｾｯﾄ",
+			L"     --/Long:BACK            --/--                --/RST"
+		);
+
 	}
 	else {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     ↑/長押:戻る          決定/ｿｰﾄ               ↓/ﾘｾｯﾄ";
+		//e_s"....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(
+			L"     ↑/長押:戻る          決定/ｿｰﾄ               ↓/ﾘｾｯﾄ",
+			L"     ↑/Long:BACK         ELECT/SORT              ↓/RST"
+		);
 	}
 }
 
@@ -593,13 +687,14 @@ void APP_BASE::SCR_GLANCER::loop() {
 		case KeyInput::KEY_BUTTON_A_LONG:
 		case KeyInput::KEY_ESC:
 			if (pkt_data._bsolo) {
+				// if going into single node list, go back to nodes list.
 				pkt_data._bsolo = false;
 				pkt_data._dat_solo.clear();
 				
 				pkt_data.update_term();
 				set_nav_bar();
 			} else {
-				the_app.exit(APP_BASE::APP_ID);
+				// the_app.exit(APP_BASE::APP_ID); // APP EXIT is handled by APP_BASE.
 				return;
 			}
 			break;
@@ -644,19 +739,21 @@ void APP_BASE::SCR_GLANCER::loop() {
 			{
 				int sort_key = pkt_data._sort_key;
 
-				const char str_srt_key[_SORT_KEYS_COUNT][32] = {
-					"論理ID",
-					"シリアル番号",
-					"リンク品質 Lq",
-					"電圧 mV",
-					"時間 s"
+				const char str_srt_key[_SORT_KEYS_COUNT][TWE::LANG_CT][32] = {
+					{ "論理ID", "LID" },
+					{ "シリアル番号", "SerialNo" },
+					{ "リンク品質 Lq", "Link Quality" },
+					{ "電圧 mV", "Vcc mV" },
+					{ "時間 s", "Time s" }
 				};
 				// sort entries
 				pkt_data.sort_entries();
 				pkt_data.update_term();
 
 				the_screen_b.clear_screen();
-				the_screen_b << printfmt("\033[30;33m[%s]でソートしました\033[0m", str_srt_key[sort_key]);
+				the_screen_b << printfmt(
+					MLSL("\033[30;33m[%s]でソートしました\033[0m", "\033[30;33mSorted by [%s]\033[0m"),
+					str_srt_key[sort_key][g_lang]);
 
 				// keep this message for 3sec
 				_b_hold_screen_b = true;

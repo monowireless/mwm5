@@ -10,5 +10,8 @@
 #include "menu_defs.h"
 #include "menu.hpp"
 
-extern const wchar_t* query_app_launch_message(int n_appsel);
+extern const wchar_t* query_app_launch_message(int n_appsel, bool b_title = false);
 extern uint32_t change_baud(uint32_t baud);
+
+// TIMEOUT WHEN double ESC or double R-Click is performed.
+#define STAGE_DOUBLE_ESC_EXIT_TIMEOUT 500

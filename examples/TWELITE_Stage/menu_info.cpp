@@ -42,12 +42,12 @@ void TWEINTCT_vSerUpdateScreen_stage_info(TWEINTRCT_tsContext *psIntr) {
 
 	ITerm& trm = *reinterpret_cast<ITerm*>(file->vpContext_output);
 
-	trm << L"TWELITE STAGE (C) 2020-21 MONO WIRELESS INC." << crlf;
-	trm << L"TWELITE 無線モジュールをお楽しみください！" << crlf;
+	trm << L"TWELITE STAGE © 2020-22 MONO WIRELESS INC." << crlf;
+	trm << MLSLW(L"TWELITE 無線モジュールをお楽しみください！", L"Enjoy TWELITE wireless module!") << crlf;
 	trm << crlf;
 
 #ifndef ESP32
-	trm << L"[フォルダ]" << crlf;
+	trm << MLSLW(L"[フォルダ]", L"[Folders]") << crlf;
 	int maxw = 320 / 6 - 8;
 	trm << "BIN   =";
 	s_output_within_width(trm, the_cwd.get_dir_tweapps(), maxw);
@@ -58,7 +58,7 @@ void TWEINTCT_vSerUpdateScreen_stage_info(TWEINTRCT_tsContext *psIntr) {
 	trm << crlf << "SDK   =";
 	s_output_within_width(trm, the_cwd.get_dir_sdk(), maxw);
 
-	trm << crlf << L"[その他]";
+	trm << crlf << MLSLW(L"[その他]", L"[Misc]");
 	trm << crlf << printfmt("PHYS_CPU_COUNT=%d", TWESYS::Get_Physical_CPU_COUNT()) << crlf;
 #endif
 
@@ -81,7 +81,7 @@ TWE_APIRET TWEINTCT_u32ProcessMenuEvent_stage_info(TWEINTRCT_tsContext *psIntr, 
 
 	switch (u32Op) {
 		case E_TWEINTCT_MENU_EV_LOAD:
-			TWEINTRCT_cbu32GenericHandler(psIntr, E_TWEINTCT_MENU_EV_LOAD, psIntr->u8screen, 0, NULL); // メニューへの遷移（初期化）をアプリケーションに伝える
+			TWEINTRCT_cbu32GenericHandler(psIntr, E_TWEINTCT_MENU_EV_LOAD, psIntr->u8screen, 0, NULL); // tell the app of menu transition.
 			ret = TWE_APIRET_SUCCESS;
 
 			psIntr->i16SelectedIndex = -1;

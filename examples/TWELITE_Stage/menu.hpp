@@ -34,8 +34,10 @@ class MyTweMenu : public TWE::TweStgsMenu {
 public:
 	MyTweMenu() : TWE::TweStgsMenu(32, 64, 4), _spSetList(nullptr) {
 		set_max_slotnumber((int)E_APP_ID::_UTILS_END_ - 2); // skip enum entry _APPS_END_
-		gen_SetList();
 	}
+	void init() override {
+		gen_SetList();
+	};
     void vQueryAppData() override;
 	const char *get_slot_name(uint8_t slot) override;
 

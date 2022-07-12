@@ -17,6 +17,27 @@
 namespace fs = std::filesystem;
 #endif
 
+template<>
+const wchar_t* App_FirmProg::APP_DESC<App_FirmProg>::TITLE_LONG[] = {
+	L"アプリ書き換え (BIN書き込み、ビルド)",
+	L"Write Firmware (BIN file, build)",
+};
+
+template<>
+const wchar_t* App_FirmProg::APP_DESC<App_FirmProg>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"TWELITEのアプリを別のものに書き換えます.""\r\n"
+	L"・用意されたBINファイル"                 "\r\n"
+	L"・TWELITE Apps のビルド＆書き換え"       "\r\n"
+	L"・Act(アクト) のビルド＆書き換え "       "\r\n"
+	,
+	L"Write specified firemware of TWELITE.""\r\n"
+	L"- Prebuilt BIN file"                 "\r\n"
+	L"- Build&Wrt of TweLiteApps"       "\r\n"
+	L"- Build&Wrt of Act"       "\r\n"
+
+};
+
 // updates Serial/keyboard input queue
 extern void update_serial_keyb_input(bool);
 
@@ -89,6 +110,8 @@ static const uint16_t COLTBL_MAIN[8] = {
  * @returns	        app id of switched app.
  */
 int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, int exit_code) {
+	int APP_ID = int(E_APP_ID::FIRM_PROG);
+
 	// if next_app is set, create screen.
 	//    _subscr.exit(-1, NEXT_APP_ID);
 	if (next_app == Screen_ModIdentify::SCR_ID) {
@@ -257,7 +280,7 @@ int App_FirmProg::change_app(TWE::APP_MGR& sub_app, int next_app, int prev_app, 
 
 void App_FirmProg::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 
 	// default vars
 	if (_firmfile_dir.size() == 0) {
@@ -317,7 +340,7 @@ void App_FirmProg::setup_screen() {
 	TWEFONT::createFontShinonome16(10, 4, 2); // normal font
 	TWEFONT::createFontMP12_std(11, 0, 0);
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */ 0);
 	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 
 	//M5.Lcd.fillRect(0, 0, 640, 480, default_bg_color);
@@ -412,21 +435,21 @@ int App_FirmProg::Screen_OpenMenu::_i_selected = -1; // the last selected item
 void App_FirmProg::Screen_OpenMenu::setup() {
 
 	the_screen_t.clear_screen();
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m アプリ書換";
+	the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m アプリ書換", L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Wrt App Firm");
 
 	// NOTE: MUST ADD ORDER OF ID NUMBER OF MENU_??? 
-	_listMenu.push_back(L"BINから選択", uint16_t(MENU_REGULAR_APP));
+	_listMenu.push_back(MLSLW(L"BINから選択", L"Select from BIN"), uint16_t(MENU_REGULAR_APP));
 	
-	_listMenu.push_back(L"Actビルド&書換", uint16_t(MENU_ACT));
+	_listMenu.push_back(MLSLW(L"Actビルド&書換", L"Act build&Wrt"), uint16_t(MENU_ACT));
 	
-	_listMenu.push_back(L"TWELITE APPSビルド&書換", uint16_t(MENU_TWEAPPS));
+	_listMenu.push_back(MLSLW(L"TWELITE APPSビルド&書換", L"TWELITE APPS build&Wrt"), uint16_t(MENU_TWEAPPS));
 	
-	_listMenu.push_back(L"Actエクストラ", uint16_t(MENU_ACT_EXTRA));
+	_listMenu.push_back(MLSLW(L"Actエクストラ", L"Act Extra"), uint16_t(MENU_ACT_EXTRA));
 
-	_listMenu.push_back(L"指定", uint16_t(MENU_DROP_DIR));
+	_listMenu.push_back(MLSLW(L"指定", L"Specified Folder"), uint16_t(MENU_DROP_DIR));
 	update_dropmenu();
 
-	_listMenu.push_back(L"直前", uint16_t(MENU_LAST));
+	_listMenu.push_back(MLSLW(L"直前", L"Prev"), uint16_t(MENU_LAST));
 	update_dropmenu();
 
 	// if constructor option is passed, choose the one
@@ -438,19 +461,23 @@ void App_FirmProg::Screen_OpenMenu::setup() {
 
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))
 	if (sAppData.u8_TWESTG_STAGE_OPEN_CODE) {
-		_listMenu.set_info_area(L"VSCode", L"ｳｪﾌﾞ");
+		_listMenu.set_info_area(MLSLW(L"ﾌｫﾙﾀﾞ", L"Foldr"), MLSLW(L"ﾍﾙﾌﾟ", L"HELP"));
 	}
 	else {
-		_listMenu.set_info_area(L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
+		_listMenu.set_info_area(MLSLW(L"ﾌｫﾙﾀﾞ", L"Foldr"), MLSLW(L"ﾍﾙﾌﾟ", L"HELP"));
 	}
 #endif
-	_listMenu.attach_term(the_screen);
+	the_screen.clear_screen();
+	_listMenu.attach_term(the_screen, 1, the_screen.get_rows() - 1);
 
 	_listMenu.set_view(0, _i_selected >= 0 && _i_selected < _listMenu.size() ? _i_selected : -1);
 	_listMenu.update_view(true);
 	update_navigation();
 
 	_parent->_b_drop_available = true; // force to update drop menu at loop()
+
+	// module info
+	_parent->disp_module_info();
 }
 
 void App_FirmProg::Screen_OpenMenu::update_navigation() {
@@ -466,7 +493,9 @@ void App_FirmProg::Screen_OpenMenu::update_navigation() {
 #if defined(ESP32) || defined(MWM5_BUILD_RASPI)
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 #else
-		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+		the_screen_c << 
+			MLSLW(L"     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ",
+				  L"     ↑/Long:MENU        SELECT/--                ↓/Folder");
 #endif
 		break;
 	case MENU_DROP_DIR:
@@ -475,13 +504,17 @@ void App_FirmProg::Screen_OpenMenu::update_navigation() {
 #if defined(ESP32) || defined(MWM5_BUILD_RASPI)
 		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 #else
-		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
-		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+		the_screen_c <<
+		         MLSLW(L"     ↑/長押:MENU          選択/--                ↓/",
+			           L"     ↑/Long:MENU        SELECT/--                ↓/");
+		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : MLSLW(L"ﾌｫﾙﾀﾞ", L"Folder"));
 #endif
 		break;
 	default:
 		the_screen_c.clear_screen();
-		the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
+		the_screen_c << 
+				MLSLW(L"     ↑/長押:MENU          選択/--                ↓/--",
+					  L"     ↑/Long:MENU        SELECT/--                ↓/--");
 		break;
 	}
 }
@@ -496,11 +529,12 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 #if defined(ESP32) || defined(MWM5_BUILD_RASPI)
 		l = L"---";
 #else
+		l.emptify();
 		if (dirdrop_len == 0) {
-			l = L"指定 [ﾌｫﾙﾀﾞをﾄﾞﾛｯﾌﾟ]";
+			l << MLSLW(L"指定 [ﾌｫﾙﾀﾞをﾄﾞﾛｯﾌﾟ]", L"Folder [Drop]");
 		}
 		else {
-			l = L"指定 [";
+			l << MLSLW(L"指定 [", L"Fldr [");
 
 			if (dirdrop_len > 32) {
 				l << std::pair(dirdrop.begin(), dirdrop.begin() + 10);
@@ -517,7 +551,8 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 
 	{
 		auto& l = _listMenu[MENU_LAST].first;
-		l = L"再書換";
+		l.emptify();
+		l << MLSLW(L"再書換", L"Last");
 		bool b_menu_none = false;
 
 		switch(_parent->_last_menu_number) {
@@ -552,7 +587,7 @@ void App_FirmProg::Screen_OpenMenu::update_dropmenu() {
 		}
 
 		if (b_menu_none) {
-			l << L" [無し]";
+			l << MLSLW(L" [無し]", L"[None]");
 		}
 	}
 
@@ -577,12 +612,42 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 				if (ibtn & 2) {
 					// open info
 					switch(iext) {
-					case MENU_REGULAR_APP: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/bin"); break;
-					case MENU_ACT: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/act_build"); break;
-					case MENU_ACT_EXTRA: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/act_extras_build"); break;
-					case MENU_TWEAPPS: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/tweapps_build"); break;
-					case MENU_DROP_DIR: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/zhi-ding"); break;
-					case MENU_LAST: shell_open_url("https://stage.twelite.info/usage/screens/main_menu/firm_prog/zai-shu-huan"); break;
+					case MENU_REGULAR_APP:
+						shell_open_help(
+							MLSLW(
+								L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/bin.html",
+								L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/bin.html"));
+						break;
+					case MENU_ACT: 
+						shell_open_help(
+							MLSLW(
+								L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/act_build.html",
+								L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/act_build.html"));
+						break;
+					case MENU_ACT_EXTRA:
+						shell_open_help(
+							MLSLW(
+								L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/act_extras_build.html",
+								L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/act_extras_build.html"));
+						break;
+					case MENU_TWEAPPS:
+						shell_open_help(
+							MLSLW(
+								L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/tweapps_build.html",
+								L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/tweapps_build.html"));
+						break;
+					case MENU_DROP_DIR:
+						shell_open_help(
+							MLSLW(
+								L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/specified.html",
+								L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/specified.html"));
+						break;
+					case MENU_LAST:
+						shell_open_help(
+							MLSLW(
+								L"app_loc:MANUAL/jp/content/usage/screens/main_menu/firm_prog/re-write.html",
+								L"app_loc:MANUAL/en/content/usage/screens/main_menu/firm_prog/re-write.html"));
+						break;
 					}
 				} else if (ibtn & 1) {
 					bool bErrMsg = false;
@@ -670,7 +735,7 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 						exit(EXIT_NEXT3, Screen_ActBuild::OPT_START_DIR_LIST_ACT);
 					}
 					else {
-						l = L"選択不可";
+						l.emptify() << MLSLW(L"選択不可", L"No Sel");
 						_listMenu.clear_completion(); // cancel complete state
 						_listMenu.update_view(true);
 					}
@@ -733,7 +798,7 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 						}
 						break;
 					}
-					l = L"選択不可";
+					l.emptify() << MLSLW(L"選択不可", L"No Sel");
 					_listMenu.clear_completion(); // cancel complete state
 					_listMenu.update_view(true);
 					break;
@@ -741,6 +806,58 @@ void App_FirmProg::Screen_OpenMenu::loop() {
 				default:
 					exit(EXIT_BACK_TO_MENU);
 				}
+			}
+			else {
+				// when the item is hilighted, show the small tip message.
+
+				auto& l = _listMenu.get_selected().first;
+				int isel = _listMenu.get_selected_index();
+				int iext = _listMenu.get_selected().second[0];
+
+				// clear sub screen
+				the_screen_b.clear_screen();
+				//the_screen_l << "\033[2;1H\033[K"; // no update on the_screen_l.
+
+				const wchar_t* msg = L"";
+
+				switch(isel) {
+				case MENU_REGULAR_APP: msg = MLSLW(
+						L"BINﾃﾞｨﾚｸﾄﾘにあるﾌｧｰﾑｳｪｱﾌｧｲﾙを書き込みます。ﾌｧｲﾙ名に BLUE または RED が含まれている必要があります",
+						L"Writes the firmware to be stored in the BIN directory. The file name must contain BLUE or RED."
+					);
+					break;
+				case MENU_ACT: msg = MLSLW(
+						L"Act(ｱｸﾄ)を選択、ﾋﾞﾙﾄﾞして書き込みます。(設定や状況によって書き込みは実行しません)",
+						L"Select Act, build and write. (Writing is not executed depending on settings and circumstances.)"
+					);
+					break;
+				case MENU_TWEAPPS: msg = MLSLW(
+						L"TWELITE Appsをﾋﾞﾙﾄﾞして書き込みます。(設定や状況によって書き込みは実行しません)",
+						L"Build and write TWELITE Apps. (Writing is not executed depending on settings and circumstances)"
+					);
+					break;
+				case MENU_ACT_EXTRA: msg = MLSLW(
+						L"このﾃﾞｨﾚｸﾄﾘにはより複雑なAct(ｱｸﾄ)が含まれます。",
+						L"This directory contains the more complex Act."
+					);	
+					break;
+				case MENU_DROP_DIR: msg = MLSLW(
+						L"ﾃﾞｨﾚｸﾄﾘをﾄﾞﾗｯｸﾞ･ｱﾝﾄﾞ･ﾄﾞﾛｯﾌﾟしておきます。このﾒﾆｭｰを選択するとそのﾃﾞｨﾚｸﾄﾘを一覧します。",
+						L"Drag and and drop a directory. Selecting this menu item will list the directory."
+					);
+					break;
+				case MENU_LAST: msg = MLSLW(
+						L"最後に実行したﾒﾆｭｰを再度実行します。実行内容は選択の種類によって変化します。",
+						L"Re-executes the last menu item. The contents of the execution will change depending on the type of selection."
+					);
+					break;
+				}
+
+				// module info
+				_parent->disp_module_info();
+
+				// help info
+				the_screen_b << "\033[32m" << msg << "\033[0m";
 			}
 		} 
 		else switch (c) {
@@ -818,7 +935,8 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	the_screen << "\033[2J";
 
 	// put a init message
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - ﾌｧｰﾑｳｪｱ選択";
+	the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - ﾌｧｰﾑｳｪｱ選択", 
+					      L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Wrt App Firm - Select Firm");
 
 	// button navigation
 	the_screen_c.clear_screen();
@@ -826,8 +944,10 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 #if defined(ESP32) || defined(MWM5_BUILD_RASPI)
 	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 #else
-	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ";
+	//e_screen_c <<"....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+	the_screen_c << 
+			MLSLW(L"     ↑/長押:MENU          選択/--                ↓/ﾌｫﾙﾀﾞ",
+				  L"     ↑/Long:MENU        SELECT/--                ↓/Folder");
 #endif
 
 	// test for list files
@@ -850,7 +970,7 @@ void App_FirmProg::Screen_FileBrowse::setup() {
 	}
 
 	if (_listFiles.size() == 0) {
-		the_screen << "ファームウェアファイルが見つかりません";
+		the_screen << MLSLW(L"ファームウェアファイルが見つかりません", L"Cannot find firmware file.");
 		_exit_timer.start(2000);
 		_error_status = true;
 	}
@@ -956,41 +1076,49 @@ void App_FirmProg::Screen_FileBrowse::loop() {
 
 void App_FirmProg::Screen_FatalError::setup() {
 	the_screen_t.clear();
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - エラー";
+	the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - エラー",
+						  L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Wrt App Firm - Error");
 	
 	the_screen.clear_screen();
 
 	if (Serial2.is_opened()) {
 		the_screen
 			<< crlf
-			<<  L"TWELITE 無線モジュールが認識できません。" << crlf
-			<<  L"" << crlf
+			<< MLSLW(L"TWELITE 無線モジュールが認識できません。", L"Cannot recognize TWELITE module.") << crlf
+			<< L"" << crlf
 			//  L"....+....1a...+....2....+....3.b..+....4....+....5..3"
-			<<  L"同じエラーが続く場合は、TWELITE STAGEを終了し、USBデ" L"\r\n"
+			<< MLSLW(
+				L"同じエラーが続く場合は、TWELITE STAGEを終了し、USBデ" L"\r\n"
 				L"バイス(MONOSITCK,TWELITE R)を切断し、TWELITEの配線を" L"\r\n"
 				L"再確認します。改めてUSBデバイスの接続とSTAGEアプリを" L"\r\n"
 				L"起動してください。"  L"\r\n"
+				,
+				L"If the same error persists, exit TWELITE STAGE,"
+				L"disconnect the USB device(MONOSITCK, TWELITE R) and recheck the TWELITE wiring."
+				L"Then connect the USB device again and start the STAGE application.");
 			;
 	}
 	else {
 		the_screen
 			<< crlf
-			<< L"シリアルポートが開かれていません。" << crlf
+			<< MLSLW(L"シリアルポートが開かれていません。", L"Serial port is not opened") << crlf
 			<< L"" << crlf
 			//  L"....+....1a...+....2....+....3.b..+....4....+....5..3"
-			<< L"主ﾒﾆｭｰまたはAlt(Cmd)押ﾒﾆｭｰからｼﾘｱﾙﾎﾟｰﾄを選択します。" L"\r\n"
-			   L"" L"\r\n"
+			<< MLSLW(L"主ﾒﾆｭｰまたはAlt(Cmd)押ﾒﾆｭｰからｼﾘｱﾙﾎﾟｰﾄを選択します。", L"Select Serial Port from the main menu or the Alt(Cmd) menu.")
+			<< L"\r\n" L"" L"\r\n"
 			;
 	}
 	the_screen <<
-		L"--以下のｷｰで接続せずﾒﾆｭｰに移動(ﾋﾞﾙﾄﾞのみ)--" L"\r\n"
+		MLSLW(L"--以下のｷｰで接続せずﾒﾆｭｰに移動(ﾋﾞﾙﾄﾞのみ)--", L"--Following key to Go to menu without connection (Build only)--")
+		<< L"\r\n"
 		L" B → TWELITE BLUE"  L"\r\n"
 		L" R → TWELITE RED"
 		;
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     --/長押:MENU         RETRY/--               --/--";
+	the_screen_c << MLSLW(L"     --/長押:MENU         RETRY/--               --/--",
+						  L"     --/Long:MENU         RETRY/--               --/--");
 
 	auto i = _listFiles.get_selected_index();
 	if (i != -1) {
@@ -1036,7 +1164,9 @@ void App_FirmProg::Screen_FatalError::loop() {
 		case 'B':
 			_parent->_firmfile_modtype = TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT;
 			twe_prog.module_info.type = TweProg::E_MOD_TYPE::TWELITE_BLUE_NO_CONNECT;
-			the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
+			the_screen_l
+				<< MLSLW(L"ｼﾘｱﾙ番号", L"SerialNo")
+				<< printfmt("=\033[7m%07X\033[0m TWELITE=%s"
 				, 0x0FFFFFFF
 				, "\033[44mBLUE\033[0m"
 			);
@@ -1046,7 +1176,9 @@ void App_FirmProg::Screen_FatalError::loop() {
 		case 'R':
 			_parent->_firmfile_modtype = TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT;
 			twe_prog.module_info.type = TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT;
-			the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
+			the_screen_l
+				<< MLSLW(L"ｼﾘｱﾙ番号", L"SerialNo")
+				<< printfmt("=\033[7m%07X\033[0m TWELITE=%s"
 				, 0x0FFFFFFF
 				, "\033[41mRED\033[0m"
 			);
@@ -1121,11 +1253,31 @@ void App_FirmProg::Screen_ModIdentify::cb_protocol(
 
 
 void App_FirmProg::Screen_ModIdentify::setup() {
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - ﾓｼﾞｭｰﾙ認識";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m "
+		<< MLSLW(L"ｱﾌﾟﾘ書換 - ﾓｼﾞｭｰﾙ認識", L"Wrt App Firm - Identify TWELITE");
 	the_screen.clear_screen();
 
 	twe_prog.add_cb(cb_protocol, (void*)this);
 	start_protocol();
+}
+
+void App_FirmProg::disp_module_info() {
+	const char names_modtype[][16] = {
+	"NONE",
+	"\033[44mBLUE\033[0m",
+	"\033[41mRED\033[0m",
+	"\033[44mBLUE\033[0m",
+	"\033[41mRED\033[0m"
+	};
+
+	// display info
+	the_screen_l.clear_screen();
+	the_screen_l
+		<< MLSLW(L"ｼﾘｱﾙ番号", L"SerialNo")
+		<< printfmt("=\033[7m%07X\033[0m TWELITE=%s"
+			, twe_prog.module_info.serial_number & 0x0FFFFFFF
+			, names_modtype[(int)twe_prog.module_info.type]
+		);
 }
 
 void App_FirmProg::Screen_ModIdentify::loop() {
@@ -1163,12 +1315,6 @@ void App_FirmProg::Screen_ModIdentify::loop() {
 			the_screen << printfmt("Exit Status = %02x", (int)stat);
 
 			if (stat == TweProg::E_ST_TWEBLP::FINISH) {
-				const char names_modtype[][16] = {
-					"NONE",
-					"\033[44mBLUE\033[0m",
-					"\033[41mRED\033[0m"
-				};
-
 				// if the name of the last file does not match the detected model,
 				// reset those information.
 				if (_parent->_firmfile_modtype != twe_prog.module_info.type) {
@@ -1178,10 +1324,7 @@ void App_FirmProg::Screen_ModIdentify::loop() {
 				}
 
 				// display info
-				the_screen_l << printfmt("ｼﾘｱﾙ番号=\033[7m%07X\033[0m TWELITE=%s"
-					, twe_prog.module_info.serial_number & 0x0FFFFFFF
-					, names_modtype[(int)twe_prog.module_info.type]
-				);
+				_parent->disp_module_info();
 
 				exit(EXIT_NEXT);
 			}
@@ -1257,12 +1400,15 @@ void App_FirmProg::Screen_FileProg::setup() {
 
 	// put a init message
 	the_screen_t.clear_screen();
-	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ｱﾌﾟﾘ書換 - 書換中";
+	the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m "
+		<< MLSLW(L"ｱﾌﾟﾘ書換 - ﾓｼﾞｭｰﾙ認識", L"Wrt App Firm - Writing Firm.");
 
 	// button navigation
 	the_screen_c.clear_screen();
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     ↑/長押:MENU          書換/--                ↓/--";
+	the_screen_c << 
+			MLSLW(L"     ↑/長押:MENU          書換/--                ↓/--", 
+				  L"     ↑/Long:MENU         Write/--                ↓/--");
 
 	// error
 	if (_parent->_firmfile_dir.size() == 0 || _parent->_firmfile_name.size() == 0) {
@@ -1286,7 +1432,7 @@ void App_FirmProg::Screen_FileProg::setup() {
 	if (!bErrorFileRead) {
 		APP_HNDLR::new_hndlr(&Screen_FileProg::hndlr_start);
 	} else {
-		the_screen << L"ファイルの読み込みに失敗しました";
+		the_screen << MLSLW(L"ファイルの読み込みに失敗しました", L"Failed to open the firm file.");
 		screen_refresh();
 
 		// exiting
@@ -1350,69 +1496,100 @@ void App_FirmProg::Screen_FileProg::hndlr_start(event_type ev, arg_type arg) {
 void App_FirmProg::Screen_FileProg::hndlr_success(event_type ev, arg_type arg) {
 	switch (ev) {
 	case EV_SETUP:
+WrtCon << crlf << format("hndlr_success::setup %d", millis());
 		the_screen << crlf;
-		the_screen << L"書き込みに成功しました";
+		the_screen << MLSLW(L"書き込みに成功しました", L"Successfuly witten the firm file.");
 		the_screen << printfmt("(%dms)", millis() - _u32_tickstart);
 		the_screen << crlf << crlf;
-		the_screen << L"\033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で" << crlf;
+		the_screen << MLSLW(L"\033[7m中ボタン\033[0mまたは[\033[7mEnter\033[0m]で", L"\033[7mMiddle Button\033[0m or [\033[7mEnter\033[0m] to") << crlf;
 		if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 0) {
-			the_screen << L"ﾀｰﾐﾅﾙ(ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ用)を開きます。";
+			the_screen << MLSLW(L"ﾀｰﾐﾅﾙ(ｲﾝﾀﾗｸﾃｨﾌﾞﾓｰﾄﾞ用)を開きます。", L"Open Terminal for Interactive mode.");
 		} else {
-			the_screen << L"ﾀｰﾐﾅﾙを開きます。";
+			the_screen << MLSLW(L"ﾀｰﾐﾅﾙを開きます。", L"Open Terminal");
 		}
 
 		// button navigation
 		the_screen_c.clear_screen();
 		if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 0) {
-			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-			the_screen_c << "     ↑/長押:MENU     " 
-									   "\033[42;30m成功:設定\033[0m"
-														   "/--                ↓/--";
+			//e_screen_c <<  "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+			the_screen_c << MLSLW(
+							L"     ↑/長押:MENU     " 
+							 		   L"\033[42;30m成功:設定\033[0m"
+														   L"/--                ↓/--",
+							L"     ↑/Long:MENU    " 
+							 		  L"\033[42;30mSucc:SETTING\033[0m"
+														     L"/--              ↓/--"
+				);
+
 		}
 		else if (sAppData.u8_TWESTG_STAGE_APPWRT_BUILD_NEXT_SCREEN == 1) {
 			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-			the_screen_c << "     ↑/長押:MENU    " 
-									  "\033[42;30m成功:ﾀｰﾐﾅﾙ\033[0m"
-														   "/--                ↓/--";
+			the_screen_c << MLSLW(
+						   L"     ↑/長押:MENU    " 
+									 L"\033[42;30m成功:ﾀｰﾐﾅﾙ\033[0m"
+														  L"/--                ↓/--"
+				,
+						   L"     ↑/Long:MENU    " 
+									 L"\033[42;30mSucc:TERM\033[0m"
+														  L"/--                ↓/--"
+			);
 		}
 		else {
 			//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-			the_screen_c << "     ↑/長押:MENU    " 
-									  "\033[42;30m成功:戻る\033[0m"
-														  "/--                ↓/--";
+			the_screen_c << MLSLW(
+						   L"     ↑/長押:MENU    " 
+									 L"\033[42;30m成功:戻る\033[0m"
+														 L"/--                ↓/--"
+				,
+						   L"     ↑/Long:MENU    " 
+									 L"\033[42;30mSucc:Back\033[0m"
+														 L"/--                ↓/--"
+			);
 
 		}
 		break;
 
 	case EV_LOOP:
 		// KEYBOARD
-		switch (int c = the_keyboard.read()) {
-		case KeyInput::KEY_ESC:
-		case KeyInput::KEY_ENTER:
-			exit(EXIT_NEXT);
-			break;
+		while (true) { // need a loop for quicker response
+			bool b_exit_wrt_success = false;
+			int c = the_keyboard.read();
 
-		case KeyInput::KEY_BUTTON_A:
-		case KeyInput::KEY_BUTTON_A_LONG:
-			exit(EXIT_BACK_TO_MENU);
-			break;
+			if (c == -1) return;
 
-		case KeyInput::KEY_BUTTON_B:
-			the_keyboard.push(KeyInput::KEY_ENTER);
-			break;
+			switch (c) {
+			case KeyInput::KEY_ENTER:
+				b_exit_wrt_success = true;
+				break;
 
-		case KeyInput::KEY_BUTTON_B_LONG:
-		case KeyInput::KEY_BUTTON_C:
-		case KeyInput::KEY_BUTTON_C_LONG:
-			break;
+			case KeyInput::KEY_ESC:
+			case KeyInput::KEY_BUTTON_A:
+			case KeyInput::KEY_BUTTON_A_LONG:
+				exit(EXIT_BACK_TO_MENU); return;
+				break;
 
-		default:
-			if (KeyInput::is_mouse_left_up(c)) {
+			case KeyInput::KEY_BUTTON_B:
+				b_exit_wrt_success = true;
+				break;
+
+			case KeyInput::KEY_BUTTON_B_LONG:
+			case KeyInput::KEY_BUTTON_C:
+			case KeyInput::KEY_BUTTON_C_LONG:
+				break;
+
+			default:
 				// press LEFT mouse button to proceed.
-				TWECUI::KeyInput::MOUSE_UP ev(c);
-				if (auto && coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {				
-					the_keyboard.push(KeyInput::KEY_ENTER);
+				if (KeyInput::is_mouse_left_up(c)) {
+					TWECUI::KeyInput::MOUSE_UP ev(c);
+					if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
+						b_exit_wrt_success = true;
+					}
 				}
+			}
+
+			// exit with success
+			if (b_exit_wrt_success) {
+				exit(EXIT_NEXT); return;
 			}
 		}
 		break;
@@ -1425,41 +1602,48 @@ void App_FirmProg::Screen_FileProg::hndlr_success(event_type ev, arg_type arg) {
 void App_FirmProg::Screen_FileProg::hndlr_error(event_type ev, arg_type arg) {
 	switch (ev) {
 	case EV_SETUP:
-		the_screen << crlf << "\033[31;7m" << L"書き込みに失敗しました" << "\033[0m";
+		the_screen << crlf << "\033[31;7m" << MLSLW(L"書き込みに失敗しました", L"Failed to write the firmware file.") << "\033[0m";
 
 		the_screen_c.clear_screen();
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << "     ↑/長押:MENU        再書換/--                ↓/--";
+		//   "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(
+			L"     ↑/長押:MENU        再書換/--                ↓/--",
+			L"     ↑/Long:MENU         ReWrt/--                ↓/--");
 		break;
 
 	case EV_LOOP:
 		// KEYBOARD
-		switch (int c = the_keyboard.read()) {
-		case KeyInput::KEY_ENTER:
-			//if (!_b_protocol) {	start_protocol(); } // try again (NG: may cause hung up.)
-			exit(EXIT_PREV); // back to menu w/ last app.
-			break;
+		while (true) {
+			int c = the_keyboard.read();
+			if (c == -1) return;
 
-		case KeyInput::KEY_ESC:
-		case KeyInput::KEY_BUTTON_A_LONG:
-			exit(EXIT_BACK_TO_MENU);
-			break;
+			switch (c) {
+			case KeyInput::KEY_ENTER:
+				//if (!_b_protocol) {	start_protocol(); } // try again (NG: may cause hung up.)
+				exit(EXIT_PREV); return; // back to menu w/ last app.
+				break;
 
-		case KeyInput::KEY_BUTTON_B:
-			the_keyboard.push(KeyInput::KEY_ENTER);
-			break;
+			case KeyInput::KEY_ESC:
+			case KeyInput::KEY_BUTTON_A_LONG:
+				exit(EXIT_BACK_TO_MENU); return;
+				break;
 
-		case KeyInput::KEY_BUTTON_B_LONG:
-		case KeyInput::KEY_BUTTON_C:
-		case KeyInput::KEY_BUTTON_C_LONG:
-			break;
-		
-		default:
-			if (KeyInput::is_mouse_left_up(c)) {
-				// press LEFT mouse button to proceed.
-				TWECUI::KeyInput::MOUSE_UP ev(c);
-				if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {				
-					the_keyboard.push(KeyInput::KEY_ENTER);
+			case KeyInput::KEY_BUTTON_B:
+				the_keyboard.push(KeyInput::KEY_ENTER);
+				break;
+
+			case KeyInput::KEY_BUTTON_B_LONG:
+			case KeyInput::KEY_BUTTON_C:
+			case KeyInput::KEY_BUTTON_C_LONG:
+				break;
+
+			default:
+				if (KeyInput::is_mouse_left_up(c)) {
+					// press LEFT mouse button to proceed.
+					TWECUI::KeyInput::MOUSE_UP ev(c);
+					if (auto&& coord = the_screen.get_term_coord_from_screen(ev.get_x(), ev.get_y())) {
+						the_keyboard.push(KeyInput::KEY_ENTER);
+					}
 				}
 			}
 		}
@@ -1547,11 +1731,11 @@ void App_FirmProg::Screen_FileProg::cb_protocol(
 
 		if (req_or_resp == TweProg::EVENT_NEW_STATE) {
 			if (cmd == TweProg::E_ST_TWEBLP::WRITE_FLASH_FROM_FILE) {
-				scm << crlf << crlf << L"\033[Kファームウェアを書き込んでいます..." << crlf;
+				scm << crlf << crlf << MLSLW(L"\033[Kファームウェアを書き込んでいます...", L"\033[KNow writing firmware file...") << crlf;
 				scp << crlf;
 			} else
 			if (cmd == TweProg::E_ST_TWEBLP::VERIFY_FLASH) {
-				scm << L"\033[A\033[G\033[K書き込み内容確認(ベリファイ)中..." << crlf;
+				scm << MLSLW(L"\033[A\033[G\033[K書き込み内容確認(ベリファイ)中...", L"\033[A\033[G\033[KNow verifying...") << crlf;
 				scp << crlf;
 			} else {
 				scp << crlf
@@ -1608,10 +1792,10 @@ void App_FirmProg::Screen_ActBuild::setup() {
 	// put a init message
 	the_screen_t.clear_screen();
 	if (_opt == OPT_START_BUILD_ACT || _opt == OPT_START_DIR_LIST_ACT) {
-		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m Act ビルド";
+		the_screen_t << L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m " << MLSLW(L"Act ビルド", L"Act build");
 	}
 	else {
-		the_screen_t << "\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m TWELITE APPS ビルド";
+		the_screen_t << L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m " << MLSLW(L"TWELITE APPS ビルド", L"TWELITE APPS build");
 	}
 
 	if (_opt == OPT_START_BUILD_ACT || _opt == OPT_START_BUILD_TWEAPPS) {
@@ -1622,7 +1806,7 @@ void App_FirmProg::Screen_ActBuild::setup() {
 		if (std::filesystem::is_directory(make_full_path(_parent->_build_workspace, _parent->_build_project).c_str())) {
 			APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_actdir);
 		} else {
-			the_screen << _parent->_build_workspace << '/' << _parent->_build_project << L"が見つかりません。" << crlf;
+			the_screen << _parent->_build_workspace << '/' << _parent->_build_project << MLSLW(L"が見つかりません。", L" cannot be found.") << crlf;
 			screen_refresh();
 
 			// exiting
@@ -1646,17 +1830,27 @@ void App_FirmProg::Screen_ActBuild::actdir_update_bottom() {
 	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/--";
 #else
 	if (_desc.get_url().length()) {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
- 		the_screen_c << "     ↑/長押:MENU          選択/\033[32m"
-			                                            "ｳｪﾌﾞｻｲﾄ"
-			                                             "\033[0m           ↓/";
+		//e_ "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+ 		the_screen_c << MLSLW(
+			L"     ↑/長押:MENU          選択/\033[32m"
+			                                L"ﾍﾙﾌﾟ   "
+			                                 L"\033[0m           ↓/"
+			,
+			L"     ↑/Long:MENU        SELECT/\033[32m"
+			                                L"HELP   "
+			                                 L"\033[0m           ↓/"
+			);
+
 	}
 	else {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	 	the_screen_c << "     ↑/長押:MENU          選択/--                ↓/";
+		//e_s"....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(
+			L"     ↑/長押:MENU          選択/--                ↓/",
+			L"     ↑/Long:MENU        SELECT/--                ↓/"
+		);
 	}
 
-	the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+	the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : MLSLW(L"ﾌｫﾙﾀﾞ", L"Folder"));
 #endif
 	the_screen_c.force_refresh();
 }
@@ -1711,7 +1905,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 
 		if (_listFiles.size() == 0) {
 			the_screen.clear_screen();
-			the_screen << crlf  << L" Act/ｱﾌﾟﾘｿｰｽが見つかりません。";
+			the_screen << crlf  << MLSLW(L" Act/ｱﾌﾟﾘｿｰｽが見つかりません。", L" Cannot find Act app source files.");
 			screen_refresh();
 
 			// exiting
@@ -1721,7 +1915,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 			_listFiles.sort_items(true); // sort without case
 			_listFiles.attach_term(the_screen, true);
 #if !(defined(ESP32) || defined(MWM5_BUILD_RASPI))			
-			_listFiles.set_info_area(sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : L"ﾌｫﾙﾀﾞ", L"ｳｪﾌﾞ");
+			_listFiles.set_info_area(sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : MLSLW(L"ﾌｫﾙﾀﾞ", L"Foldr"), MLSLW(L"ﾍﾙﾌﾟ",L"HELP"));
 #endif
 			_listFiles.set_view();
 
@@ -1763,7 +1957,9 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 					// try to open the desc file
 					_desc.load(make_full_path(
 						_parent->_build_workspace, _parent->_build_project,
-						_listFiles.get_selected().first, L"000desc.txt").c_str());
+						_listFiles.get_selected().first, L"000desc.txt").c_str()
+						, g_lang // same def with E_TWE_LANG.
+					);
 
 					// clear desc area
 					the_screen_b.clear_screen();
@@ -1800,17 +1996,20 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 							//_parent->_last_menu_number = Screen_OpenMenu::MENU_DROP_DIR;
 
 							exit(-1, Screen_FileBrowse::SCR_ID);
+							return;
 						}
 						else {
 							// if build dir is found, we can build,
 							_parent->_build_name = as_copying(_listFiles.get_selected().first); // copy assign (no need to add const explicitely)
-							APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_build);	
+							APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_build);
+							return;
 						}
 					}
 					else {
 						// otherwise list selected dir again. (for TweApps)
 						_parent->_build_project = as_copying(_listFiles.get_selected().first); // copy assign (no need to add const explicitely)
 						APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_actdir); // open again
+						return;
 					}
 				}
 			}
@@ -1820,11 +2019,13 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 				case KeyInput::KEY_BUTTON_A_LONG:
 					if (_parent->_build_project.empty()) {
 						exit(EXIT_BACK_TO_MENU);
+						return;
 					}
 					else {
 						_parent->_build_project_prev = as_moving(_parent->_build_project);
 						_parent->_build_project.clear();
 						APP_HNDLR::new_hndlr(&Screen_ActBuild::hndlr_actdir); // open again
+						return;
 					}
 					return;
 
@@ -1838,7 +2039,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_actdir(event_type ev, arg_type arg) {
 
 				case KeyInput::KEY_BUTTON_B_LONG:
 					if (_desc.get_url().length() > 0) {
-						shell_open_url(_desc.get_url());
+						shell_open_help(_desc.get_url());
 						SmplBuf_ByteSL<1024> url;
 					}
 					break;
@@ -1881,8 +2082,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 #if (defined(ESP32) || defined(MWM5_BUILD_RASPI))
 		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--                --/--";
 #else
-		the_screen_c << "     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/";
-		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? "VSCode" : "ﾌｫﾙﾀﾞ");
+		the_screen_c << MLSLW(
+			L"     --/長押:MENU         ﾋﾞﾙﾄﾞ/--            ｴﾗｰﾛｸﾞ/", 
+			L"     --/Long:MENU         Build/--            ErrLog/"
+			);
+		the_screen_c << (sAppData.u8_TWESTG_STAGE_OPEN_CODE ? L"VSCode" : MLSLW(L"ﾌｫﾙﾀﾞ", L"Foldr"));
 #endif
 
 		the_screen_c.force_refresh();
@@ -1938,7 +2142,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 		if(_pipe) {
 			the_screen.clear_screen();
 			the_screen_b.clear_screen();
-			the_screen << L"compiling(コンパイル中)";
+			the_screen << MLSLW(L"compiling(コンパイル中)", L"compiling...");
 
 			// generate regex to capture compile message
 			_re_target = std::regex(R"(!!!TARGET=([0-9a-zA-Z_\-]+\.[bB][iI][nN]))");
@@ -1948,8 +2152,11 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 			// _re_cfile = std::regex(R"(/([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP])[ \t\r\n\:$])");
 			_re_cfile = std::regex(R"(/([a-zA-Z0-9_\-]+)\.([cC]|[cC][pP][pP]) \.\.\.)");
 
+			_timer_exit.stop();
+
 		} else {
-			the_screen << crlf << "\033[7m" << L"ビルドが開始できません" << "\033[0m";
+			the_screen << crlf << "\033[7m" << MLSLW(L"ビルドが開始できません", L"Cannot start build...") << "\033[0m";
+
 			_timer_exit.start(3000);
 		}
 
@@ -2020,7 +2227,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 						else if (std::regex_search(p, _re_link)) {
 							the_screen
 								<< crlf
-								<< L"linking(リンク中)";
+								<< MLSLW(L"linking(リンク中)", L"linking...");
 						}
 					}
 
@@ -2088,7 +2295,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 						the_screen
 							<< crlf << ">> "
 							<< TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_YELLOW)
-							<< "ﾘﾝｶ:未定義:"
+							<< MLSLW(L"ﾘﾝｶ:未定義:", L"Linker:Undef:")
 							<< TermAttr(TERM_ATTR_OFF)
 							<< m_err[2].str().c_str();
 						b_match_err_message = true;
@@ -2097,7 +2304,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 						the_screen
 							<< crlf << ">> "
 							<< TermAttr(TERM_COLOR_BG_BLACK | TERM_COLOR_FG_YELLOW)
-							<< "ﾘﾝｶ:複数定義:"
+							<< MLSLW(L"ﾘﾝｶ:複数定義:", L"Linker:MultiDefs:")
 							<< TermAttr(TERM_ATTR_OFF)
 							<< m_err[2].str().c_str();
 						b_match_err_message = true;
@@ -2128,7 +2335,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				case TweProg::E_MOD_TYPE::TWELITE_RED_NO_CONNECT:
 					// show message and hold screen.
 					_timer_exit.start(10000);
-					the_screen << crlf << "\033[7m" << L"ビルドが成功しました。" << "\033[0m";
+					the_screen << crlf << "\033[7m" << MLSLW(L"ビルドが成功しました。", L"Build Successed.") << "\033[0m";
 					break;
 				default: 
 					// switch to the firm programming.
@@ -2138,7 +2345,7 @@ void App_FirmProg::Screen_ActBuild::hndlr_build(event_type ev, arg_type arg) {
 				
 			}
 			else {
-				the_screen << crlf << "\033[7m" << L"ビルド中にエラーを検出しました。" << "\033[0m";
+				the_screen << crlf << "\033[7m" << MLSLW(L"ビルド中にエラーを検出しました。", L"Error detected during build.") << "\033[0m";
 				_timer_exit.start(60000);
 			}
 		}

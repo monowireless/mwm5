@@ -32,13 +32,16 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 
 		//     "0....+....1....+....2....+....3....+....4....+....5..
 		the_screen(0,6)
-			<< "  -- TWELITE CUEからのﾒｯｾｰｼﾞを解釈・表示します --" << crlf
+			<< MLSLW(
+				L"  -- TWELITE CUEからのﾒｯｾｰｼﾞを解釈・表示します --",
+				L"-- Interpret and display messages from TWELITE CUE --")
+			<< crlf
 			;
 	}
 
 	void print_event(PalEvent &ev, int line) {
 		the_screen.move_cursor(0, line);
-		the_screen << printfmt("■ イベント (ID=0x%02x SRC=0x%02x) = ", ev.u8event_id, ev.u8event_source);
+		the_screen << printfmt(MLSL("■ イベント (ID=0x%02x SRC=0x%02x) = ", "■ EVENT(ID = 0x % 02x SRC = 0x % 02x) = "), ev.u8event_id, ev.u8event_source);
 
 		int l = line + 1;
 		int c = 16;
@@ -54,7 +57,7 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 			case E_EVENT_ACCEL::DICE_5:
 			case E_EVENT_ACCEL::DICE_6:
 			{
-				the_screen << printfmt("ダイス") << crlf;
+				the_screen << MLSLW(L"ダイス", L"Dice") << crlf;
 
 
 				switch (ev.u8event_id) {
@@ -95,7 +98,7 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 
 			case E_EVENT_ACCEL::SHAKE:
 			{
-				the_screen << printfmt("シェイク") << crlf;
+				the_screen << MLSLW(L"シェイク", L"SHAKE") << crlf;
 
 				the_screen(c, l + 0) << TB << "    _____    " << TC << " SHAKE!";
 				the_screen(c, l + 1) << TB << "(( ⇔___/| ))" << TC;
@@ -105,7 +108,7 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 
 			case E_EVENT_ACCEL::MOVE:
 			{
-				the_screen << printfmt("ムーブ") << crlf;
+				the_screen << MLSLW(L"ムーブ", L"MOVE") << crlf;
 
 				the_screen(c, l + 0) << TB << "    _____    " << TC << " ACCEL! ";
 				the_screen(c, l + 1) << TB << " ⊃★___/|   " << TC;
@@ -170,7 +173,7 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 						// update main screen
 						the_screen.clear_screen();
 						the_screen.move_cursor(0, 0);
-						the_screen << printfmt("■ パケット (#%04d, 種別:%02d)", _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
+						the_screen << printfmt(MLSL("■ パケット (#%04d, 種別:%02d)", "■ Packet (#%04d, Type:%02d)"), _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
 						the_screen << printfmt("  ID=%02d AD=0x%08X LQ=%03d SQ=%04d", pal.u8addr_src, pal.u32addr_src, pal.u8lqi, pal.u16seq);
 
 						// acquire event data.
@@ -182,19 +185,19 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 						// volt
 						{
 							the_screen.move_cursor(0, 8);
-							the_screen << L"■ 電圧";
+							the_screen << MLSLW(L"■ 電圧", L"■ Volt");
 							if (cue.has_vcc()) {
 								the_screen_b << ":VCC=" << int(cue.get_vcc_i16mV());
 								the_screen << printfmt(" VCC=%04dmV", cue.get_vcc_i16mV());
 							}
 							else {
-								the_screen << L" データなし";
+								the_screen << MLSLW(L" データなし", L"No data");
 							}
 						}
 
 						// mag
 						the_screen.move_cursor(0, 10);
-						the_screen << L"■ 磁石 ";
+						the_screen << MLSLW(L"■ 磁石 ", L"■ MAG");
 						if (cue.has_mag()) {
 							TermAttr TB(TERM_COLOR_BG_BLUE | TERM_COLOR_FG_WHITE);
 							TermAttr TR(TERM_COLOR_BG_RED | TERM_COLOR_FG_WHITE);
@@ -203,21 +206,21 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 							the_screen_b << ":MAG=";
 							the_screen_b << "(";
 							switch (cue.get_mag_stat_u8() & 0x7F) {
-							case 0: the_screen_b << "NO MANGET"; the_screen << L"検出無し"; break;
-							case 1: the_screen_b << "N POLE"; the_screen << TR << L"[Ｎ極]" << TC; break;
-							case 2: the_screen_b << "S POLE"; the_screen << TB << L"[Ｓ極]" << TC; break;
+							case 0: the_screen_b << "NO MANGET"; the_screen << MLSLW(L"検出無し", L"None"); break;
+							case 1: the_screen_b << "N POLE"; the_screen << TR << MLSLW(L"[Ｎ極]", L"N po") << TC; break;
+							case 2: the_screen_b << "S POLE"; the_screen << TB << MLSLW(L"[Ｓ極]", L"S po") << TC; break;
 							}
 							the_screen_b << ")";
 						}
 						else {
-							the_screen << L" データなし";
+							the_screen << MLSLW(L" データなし", L"No data");
 						}
 
 						// ACCELO
 						the_screen.move_cursor(0, 12);
-						the_screen << L"■ 加速度 ";
+						the_screen << MLSLW(L"■ 加速度 ", L"■ Accel");
 						if (cue.has_accel()) {
-							the_screen << printfmt("(ｻﾝﾌﾟﾙ=%02d, ﾚｰﾄID=%02d)", cue.get_accel_count_u8(), cue.u8sample_rate_code) << crlf;
+							the_screen << printfmt(MLSL("(ｻﾝﾌﾟﾙ=%02d, ﾚｰﾄID=%02d)", "(Smpl=%02d, RateID=%02d)"), cue.get_accel_count_u8(), cue.u8sample_rate_code) << crlf;
 							the_screen_b << "MOT";
 							the_screen_b << ":SAMPLES=" << int(cue.get_accel_count_u8());
 							the_screen_b << ":SR=" << int(cue.u8sample_rate_code);
@@ -245,7 +248,7 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 							}
 						}
 						else {
-							the_screen << L" データなし";
+							the_screen << MLSLW(L" データなし", L"No data");
 						}
 					}
 					break;
@@ -262,27 +265,27 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 						// update main screen
 						the_screen.clear_screen();
 						the_screen.move_cursor(0, 0);
-						the_screen << printfmt("■ パケット (#%04d, 種別:%02d)", _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
+						the_screen << printfmt(MLSL("■ パケット (#%04d, 種別:%02d)", "■ Packet (#%04d, Type:%02d)"), _pkt_rcv_ct, identify_packet_type(pkt)) << crlf;
 						the_screen << printfmt("  ID=%02d AD=0x%08X LQ=%03d SQ=%04d", pal.u8addr_src, pal.u32addr_src, pal.u8lqi, pal.u16seq);
 
 						// volt
 						{
 							the_screen.move_cursor(0, 8);
-							the_screen << L"■ 電圧";
+							the_screen << MLSLW(L"■ 電圧", L"■ Volt");
 							if (dsns.has_vcc()) {
 								the_screen_b << ":VCC=" << int(dsns.get_vcc_i16mV());
 								the_screen << printfmt(" VCC=%04dmV", dsns.get_vcc_i16mV());
 							}
 							else {
-								the_screen << L" データなし";
+								the_screen << MLSLW(L" データなし", L"No data");
 							}
 						}
 
 						// ACCELO
 						the_screen.move_cursor(0, 12);
-						the_screen << L"■ 加速度 ";
+						the_screen << MLSLW(L"■ 加速度 ", L"■ Accel");
 						if (dsns.has_accel()) {
-							the_screen << printfmt("(ｻﾝﾌﾟﾙ=%02d, ﾚｰﾄID=%02d)", dsns.get_accel_count_u8(), dsns.u8sample_rate_code) << crlf;
+							the_screen << printfmt(MLSL("(ｻﾝﾌﾟﾙ=%02d, ﾚｰﾄID=%02d)", "(Smpl=%02d, RateID=%02d)"), dsns.get_accel_count_u8(), dsns.u8sample_rate_code) << crlf;
 							the_screen_b << "MOT";
 							the_screen_b << ":SAMPLES=" << int(dsns.get_accel_count_u8());
 							the_screen_b << ":SR=" << int(dsns.u8sample_rate_code);
@@ -319,10 +322,16 @@ struct APP_BASE::SCR_CUE_BASIC : public APP_HANDLR_DC {
 	}
 
 	void setup() {
+		_app.screen_layout_apps();
 		the_screen.clear_screen();
 		the_screen_b.clear_screen();
 		_app.set_title_bar(int(PAGE_ID::PAGE_SCR_CUE));
-		_app.set_nav_bar();
+		
+		auto& t = _app.the_screen_c; t.clear_screen();
+		//    "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		t << MLSLW(L"    --/長押:戻る             --/--                --/ﾘｾｯﾄ",
+				   L"    --/Long:BACK             --/--                --/RST");
+
 		show_message();
 	}
 

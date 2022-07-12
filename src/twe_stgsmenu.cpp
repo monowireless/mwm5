@@ -240,6 +240,7 @@ void TweStgsMenu::vAppLoadData(uint8 u8kind, uint8 u8slot, bool_t bNoLoad) {
 
 bool TWE::TweStgsMenu::begin(uint8_t slot) {
 	if (_SetList == nullptr) {
+		init();
 		_SetList = get_setlist();
 	}
 
@@ -270,7 +271,8 @@ void TWE::TweStgsMenu::begin(
 		) {
 	
 	if (setList == nullptr) {
-		 _SetList = get_setlist();
+		init();
+		_SetList = get_setlist();
 	}
 	begin(_SetList, slot);
 	

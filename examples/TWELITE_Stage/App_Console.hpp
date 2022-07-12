@@ -9,14 +9,7 @@
 #include "common.h"
 
 
-class App_Console : public TWE::APP_DEF {
-public:
-	static const int APP_ID = int(E_APP_ID::CONSOLE);
-	static const wchar_t LAUNCH_MSG[];
-
-	const wchar_t* get_APP_INIT_MSG() { return LAUNCH_MSG; }
-	int get_APP_ID() { return APP_ID; }
-
+class App_Console : public TWE::APP_DEF, public TWE::APP_DESC<App_Console> {
 private:
 	// top bar
 	TWETerm_M5_Console the_screen_t; // init the screen.
@@ -71,14 +64,14 @@ private:
 	
 
 public:
-	App_Console()
+	App_Console() : APP_DEF(int(E_APP_ID::CONSOLE))
 #if M5_SCREEN_HIRES == 0
-		: the_screen(scr_max_cols, scr_max_rows, { scr_x, scr_y, scr_w, scr_h }, M5)
+		, the_screen(scr_max_cols, scr_max_rows, { scr_x, scr_y, scr_w, scr_h }, M5)
 		, the_screen_t(64, 1, { 0, 0, 320, 18 }, M5)
 		, the_screen_c(64, 1, { 0, 18 + 192 + 20, 320, 10 }, M5)
 #elif M5_SCREEN_HIRES == 1
-		: the_screen(scr_max_cols, scr_max_rows, { scr_x, scr_y, scr_w, scr_h }, M5)
-		, the_screen_t(64, 1, { 0, 0, 640, 24 }, M5)
+		, the_screen(scr_max_cols, scr_max_rows, { scr_x, scr_y, scr_w, scr_h }, M5)
+		, the_screen_t(80, 1, { 0, 0, 640, 24 }, M5)
 		, the_screen_c(64, 1, { 0, 480 - 24, 640, 24 }, M5)
 #endif
 		, bZoom(false), bWrap(true)

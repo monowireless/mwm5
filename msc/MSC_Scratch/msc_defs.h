@@ -29,7 +29,7 @@ extern uint8 au8CustomDefault_Base[];
 extern uint8 au8CustomDefault_Brd_Chan3[];
 extern uint8 au8CustomDefault_Brd_Def[];
 extern const TWESTG_tsSettingsListItem SetList[];
-extern const TWEINTRCT_tsFuncs asFuncs[];
+extern const TWEINTRCT_tsFuncs asFuncs[], asFuncs_en[];
 
 #ifdef __cplusplus
 }

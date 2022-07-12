@@ -3,21 +3,29 @@
 
 #include "App_Console.hpp"
 
-const wchar_t App_Console::LAUNCH_MSG[] =
-//....+....1....+....2....+....3....+....4| // 16dots 40cols
-L"              " 
-   L"\033[4m" L"ターミナル" L"\033[0m"
-		                L"                ""\r\n"
-L"\r\n"
-L"TWELITE無線モジュールのシリアル入出力を ""\r\n"
-L"行うターミナルビューアです。通信条件は、""\r\n"
-L"115200bps 8N1 に固定されています。"      "\r\n"
-L"左ボタン長押またはESCｷｰを素早く２回押し ""\r\n"
-L"でビューアを終了します。" "\r\n";
+template<>
+const wchar_t* App_Console::APP_DESC<App_Console>::TITLE_LONG[] = {
+	L"ターミナル (シリアル入出力)",
+	L"Terminal (SERIAL In/Out)"
+};
+
+template<>
+const wchar_t* App_Console::APP_DESC<App_Console>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"TWELITE無線モジュールのシリアル入出力を ""\r\n"
+	L"行うターミナルビューアです。通信条件は、""\r\n"
+	L"115200bps 8N1 に固定されています。"      "\r\n"
+	L"左ボタン長押またはESCｷｰを素早く２回押し ""\r\n"
+	L"でビューアを終了します。" "\r\n"
+	,
+	L"This is a terminal viewer for serial input/output of TWELITE radio modules."
+	L"Communication conditions are fixed to 115200 bps 8N1. "
+	L"Exit the viewer by pressing and holding the left button or quickly pressing the ESC key twice."
+};
 
  void App_Console::setup() {
 	// preference
-	the_settings_menu.begin(appid_to_slotid(APP_ID));
+	the_settings_menu.begin(appid_to_slotid(get_APP_ID()));
 
 	// set baud app specific
 	change_baud(sAppData.u32_TWESTG_STAGE_BAUD_TERM);
@@ -27,7 +35,8 @@ L"でビューアを終了します。" "\r\n";
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾀｰﾐﾅﾙ";
+	the_screen_t << MLSLW(L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m ﾀｰﾐﾅﾙ",
+						  L"\033[G\033[1mTWELITE\033[0m®\033[1mSTAGE\033[0m TERMINAL");
 
 	// button navigation
 	//              "0....+....1....+....2....+....3....+....4....+....5....+...."
@@ -77,7 +86,7 @@ void App_Console::setup_screen() {
 	TWEFONT::createFontMP12(10, 2, 0); // zoom font
 
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
-	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */ 0);
 	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 
 	the_screen_c.set_font(12);
@@ -159,12 +168,14 @@ void App_Console::set_navbtn_bar() {
 	the_screen_c.clear_screen();
 
 	if (bWrap) {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << L" 設定(+++)/長押:MENU    ズーム/折返[ON]      ﾌｧｰﾑ書換/ﾘｾｯﾄ";
+		//e_screen_c <<        "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(L" 設定(+++)/長押:MENU    ズーム/折返[ON]      ﾌｧｰﾑ書換/ﾘｾｯﾄ",
+							  L"  STG(+++)/Long:MENU      Zoom/Wrap[ON]       FirmWrt/RST");
 	}
 	else {
-		//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-		the_screen_c << L" 設定(+++)/長押:MENU    ズーム/折返        　ﾌｧｰﾑ書換/ﾘｾｯﾄ";
+		//e_screen_c <<        "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
+		the_screen_c << MLSLW(L" 設定(+++)/長押:MENU    ズーム/折返        　ﾌｧｰﾑ書換/ﾘｾｯﾄ",
+							  L"  STG(+++)/Long:MENU      Zoom/Wrap        　 FirmWrt/Rst");
 	}
 
 	the_screen_c.force_refresh();
@@ -199,8 +210,8 @@ void App_Console::process_input() {
 
 		// double ESC will leave.
 		if (c == KeyInput::KEY_ESC) {
-			if (millis() - tick_last_esc < 300) {
-				the_app.exit(APP_ID);
+			if (millis() - tick_last_esc < STAGE_DOUBLE_ESC_EXIT_TIMEOUT) {
+				the_app.exit(get_APP_ID());
 				return;
 			}
 			tick_last_esc = millis();
@@ -221,7 +232,7 @@ void App_Console::process_input() {
 
 		case KeyInput::KEY_BUTTON_A_LONG:
 			// back to menu
-			the_app.exit(APP_ID);
+			the_app.exit(get_APP_ID());
 			break;
 
 		case KeyInput::KEY_BUTTON_B:

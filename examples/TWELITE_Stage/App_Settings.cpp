@@ -6,6 +6,22 @@
 #include "menu_defs.h"
 #include "menu.hpp"
 
+template<>
+const wchar_t* App_Settings::APP_DESC<App_Settings>::TITLE_LONG[] = {
+	L"TWELITE STAGE の設定",
+	L"Settings of TWELITE STAGE"
+};
+
+template<>
+const wchar_t* App_Settings::APP_DESC<App_Settings>::LAUNCH_MSG[] = {
+	//....+....1....+....2....+....3....+....4| // 16dots 40cols
+	L"TWELITE STAGE の各種設定を行います。""\r\n"
+	L"※ マウス操作には対応しません。""\r\n"
+	,
+	L"Various settings for TWELITE STAGE are made.""\r\n"
+	L"- no mouse operation supported.""\r\n"
+};
+
 extern void update_settings();
 
 void App_Settings::setup() {
@@ -21,18 +37,20 @@ void App_Settings::setup() {
 	setup_screen(); // initialize TWE M5 support.
 
 	// put a init message
-	the_screen_t << "\033[G設定メニュー";
+	the_screen_t << MLSLW(L"\033[G設定メニュー", L"\033[Setttings menu");
 
 	// button navigation
 	//e_screen_c << "....+....1a...+....2....+....3.b..+....4....+....5..c.+....6...."; // 10dots 64cols
-	the_screen_c << "     --/長押:MENU        ズーム/--                --/--";
+	the_screen_c << MLSLW(
+		L"     --/長押:MENU        ズーム/--                --/--",
+		L"     --/Long:MENU          ZOOM/--                --/--");
 
 	// menu init
 	the_settings_menu.begin(
 		the_screen
 		, the_screen_t
 		, the_keyboard
-		, asFuncs
+		, g_lang == 0 ? asFuncs : asFuncs_en
 		, nullptr // from get_setlist() method
 		, 0 // default screen (0:select menu, 1:direct to setting)
 	);
@@ -106,7 +124,7 @@ void App_Settings::setup_screen() {
 
 	TWEFONT::createFontMP10_std(12, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 
-	TWEFONT::createFontShinonome16(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI);
+	TWEFONT::createFontShinonome16(13, 0, 0, /* TWEFONT::U32_OPT_FONT_YOKOBAI */ 0);
 	//TWEFONT::createFontMP12(13, 0, 0, TWEFONT::U32_OPT_FONT_YOKOBAI | TWEFONT::U32_OPT_FONT_TATEBAI);
 
 	the_screen_c.set_font(12);
@@ -132,7 +150,7 @@ void App_Settings::setup_screen() {
 
 // screen refresh timing (every 32ms)
 void App_Settings::screen_refresh() {
-	static uint32_t u32mills;
+	static uint32_t u32mills = 0;
 
 	uint32_t u32now = millis();
 	if (u32now - u32mills > 32) {
