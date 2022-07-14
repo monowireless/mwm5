@@ -49,5 +49,13 @@ endif
 ADDITIONAL_LIBS +=  -lpthread -lrt
 
 #####################################################################
+# Misc
+
+# to avoid identified as shared lib by Nautilus
+CFLAGS += -fno-pic -no-pie
+LDFLAGS += -fno-pic -no-pie
+
+#####################################################################
 # Build type - suffix
 TARGET_TYPE=run
+
