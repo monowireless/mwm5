@@ -583,6 +583,24 @@ namespace TWEUTILS {
 	}
 
 
+	/** 
+     * Iterator Pair
+	 */
+	template <typename ITER>
+	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, std::pair<ITER, ITER> range) {
+		auto p = range.first;
+		while (p != range.second) {
+			lhs.push_back(*p);
+			++p;
+		}
+		return lhs;
+	}
+
+	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const wchar_t c) {
+		lhs.push_back(c);
+		return lhs;
+	}
+
 	/**
 	 * @fn	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, SmplBuf_WChar& rhs)
 	 *
@@ -718,6 +736,8 @@ namespace TWEUTILS {
 		_SmplBuf_WChar_add_ops(buf, lhs, rhs);
 		return std::move(buf);
 	}
+
+
 
 	/**
 	 * @fn	static inline SmplBuf_WChar& operator << (SmplBuf_WChar& lhs, const char_t* rhs)

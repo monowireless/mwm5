@@ -415,7 +415,7 @@ public:
     }
 
     /**
-     * insert sensor data.
+     * insert new sensor node.
      *
      * \param id        SID
      * \param desc      description of sensor node.
@@ -432,6 +432,39 @@ public:
             sid_text << format("%08X", sid);
             auto stmnt = sql_statement(
                 "INSERT INTO sensor_node VALUES (?,?,?)"
+                , DB_INTEGER(sid)
+                , DB_TEXT(sid_text.c_str())
+                , desc
+            );
+
+            stmnt.exec();
+        }
+        catch (std::exception& e) {
+            on_exception(e);
+            return EXIT_FAILURE; // unexpected error : exit the example program
+        }
+
+        return EXIT_SUCCESS;
+    }
+
+    /**
+     * update desc of sensor node.
+     *
+     * \param id        SID
+     * \param desc      description of sensor node.
+     * \return EXIT_SUCCESS for success, EXIT_FAILURE for failure.
+     */
+    int sensor_node_set_desc(uint32_t sid, DB_TEXT desc) {
+        auto scrbuzy = SCREEN_BUSY();
+
+        // if desc is null, set dummy string
+        if (!desc) return EXIT_FAILURE;
+
+        try {
+            SmplBuf_ByteSL<63> sid_text;
+            sid_text << format("%08X", sid);
+            auto stmnt = sql_statement(
+                "REPLACE INTO sensor_node VALUES (?,?,?)"
                 , DB_INTEGER(sid)
                 , DB_TEXT(sid_text.c_str())
                 , desc
@@ -1435,6 +1468,8 @@ struct APP_BASE::SCR_WSNS_DB : public APP_HANDLR_DC, public TWE::APP_HNDLR<APP_B
 public:
     
 	static const int CLS_ID = APP_BASE::PAGE_ID::PAGE_WSNS_DB;
+
+    static const int LINE_DESC = 2;
 
 	APP_BASE& _app;
 	TWE_WidSet_Buttons _btns;
@@ -3375,7 +3410,7 @@ public:
             base._db->query_sid_string(sid, text_sid);
 
             scr.clear_line(l);
-            scr(0, l) << "\033[40m\033[K";
+            scr(0, l) << "\033[0m\033[40m\033[K";
             if (!text_sid.empty()) {
                 int len = strlen_vis(text_sid.c_str());
                 if (len <= scr.get_cols()) {
@@ -4609,7 +4644,7 @@ public:
                             uint32_t sid = v_node[idx_sel].data.sid.value();
                             node.set_sid(sid);
 
-                            base._view.disp_sid_text(sid, 2);
+                            base._view.disp_sid_text(sid, LINE_DESC);
 
                             over_item(idx_sel);
                         }
@@ -4748,10 +4783,10 @@ public:
                 L"    ｽﾞｰﾑ↑/長押:戻る     24時間/一覧          ｽﾞｰﾑ↓/ﾘｾｯﾄ",
                 L"    ZOOM↑/Long:BACK       24Hr/Nodes         ZOOM↓/RST"
             );
+            
+            base._view.disp_sid_text(node.sid, LINE_DESC);
 
-            int l = 1;
-            l++;
-            base._view.disp_sid_text(node.sid, l); l++;
+            int l = LINE_DESC + 1;
             scr(0, l++) << "  SID: " << format("%08X", node.sid);
             l++;
             scr(0, l++) << " DATE: ";
@@ -5340,6 +5375,46 @@ public:
             int prev;
         } btns_id;
 
+        struct _lbl_edit
+        {
+            SmplBuf_WChar wstr;
+            Unicode_UTF8Converter uc;
+            bool b_editing;
+            void start_edit()
+            {
+                wstr.clear();
+                b_editing = true;
+            }
+
+            bool input_char(int c)
+            {
+                bool ret = false;
+
+                switch(c) {
+                case 0x0d: ret = true; break;
+                case KeyInput::KEY_BS: wstr.pop_back(); break;
+                case KeyInput::KEY_ESC: ret = true; break;
+                default:
+                    if (wchar_t u = uc(uint8_t(c))) {
+                        wstr.push_back(u);
+                    }
+                }
+
+                if (ret == true) {
+                    b_editing = false;
+                }
+
+                return ret;
+            }
+
+            SmplBuf_WChar& get_str()
+            {
+                return wstr;
+            }
+
+            _lbl_edit() : wstr(64), uc(), b_editing(false) {}
+        } lbl_edit;
+
         SimpleBuffer<uint32_t> v_days;
 
         //int32_t day_plotted;
@@ -5510,7 +5585,6 @@ public:
             btns.add(1, 11, MLSLW(L"[CSV出力]", L"[CSV export]"),
                 [&](int, uint32_t) { base.export_sensor_data_day(uint32_t(node.sid), node.year, node.month, node.day); }
             );
-
             
             // the date must be set in advance, just in case if it's not.
             if (!node.has_set_day()) {
@@ -5529,9 +5603,48 @@ public:
             auto& view = base._view;
             auto& node = base._node;
 
+            // keyboard handling.
+            if (lbl_edit.b_editing) // EDIT NODE DESC.
+            {
+                do
+                {
+                    int c = the_keyboard.read();
+
+                    if (c >= 0 && c <= 0xff)
+                    {
+                        auto& wstr = lbl_edit.get_str();
+
+                        if (lbl_edit.input_char(c))
+                        {
+                            if (wstr.length() > 0)
+                            {
+                                // now change the name label of IDs
+                                SmplBuf_ByteS str(128);
+                                str << wstr;
+
+                                base._db->sensor_node_set_desc(node.sid, DB_TEXT(str.c_str()));
+                            }
+                            
+                            scr.set_cursor(0);
+                            view.disp_sid_text(node.sid, LINE_DESC);
+
+                            // exit loop
+                            while (the_keyboard.read() != -1);
+                            break;
+                        }
+                    	else {
+                            scr(1, LINE_DESC) << L"\033[K" << wstr;
+                        }
+                    }
+                }
+                while(the_keyboard.available());
+
+                return;
+            }
+
+            // normal event process
             btns.check_events();
 
-            // keyboard handling.
             do {
                 auto& node = base._node;
                 int c = the_keyboard.read();
@@ -5544,16 +5657,38 @@ public:
                     int x = ev.get_x();
                     int y = ev.get_y();
 
-                    if (ev.is_left_btn() && view.is_in_area(view.area_draw, x, y)) {
-                        if (view.pseudo_scale > 1) {
-                            view.drag.x_drag = x;
-                            view.drag.y_drag = y;
-                            view.drag.view_idx_when_dragged = view.pseudo_start_idx; // save the viewing index when dragging begins.
-                            view.drag.b_dragging = true;
-                            view.drag.b_drag_scrollbar = false;
-                            if (view.is_in_area(view.area_scroll_bar, x, y)) {
-                                // align dragging step to the scroll bar.
-                                view.drag.b_drag_scrollbar = true;
+                    if (ev.is_left_btn()) {
+                        if (view.is_in_area(view.area_draw, x, y)) {
+                            if (view.pseudo_scale > 1) {
+                                view.drag.x_drag = x;
+                                view.drag.y_drag = y;
+                                view.drag.view_idx_when_dragged = view.pseudo_start_idx; // save the viewing index when dragging begins.
+                                view.drag.b_dragging = true;
+                                view.drag.b_drag_scrollbar = false;
+                                if (view.is_in_area(view.area_scroll_bar, x, y)) {
+                                    // align dragging step to the scroll bar.
+                                    view.drag.b_drag_scrollbar = true;
+                                }
+                            }
+                        }
+                        // check if clicking position in DESC area (TO EDIT MODE)
+                        else if (view.is_in_area(scr.get_draw_area(), x, y))
+                        {
+                            auto cr = scr.get_term_coord_from_screen(x, y);
+
+                            if (cr.b_in_range)
+                            {
+                                if (cr.lin == LINE_DESC)
+                                {
+                                    if (!lbl_edit.b_editing)
+                                    {
+                                        lbl_edit.start_edit();
+
+                                        scr.set_cursor(2); // BLINK
+                                        scr.clear_line(LINE_DESC);
+                                        scr(0, LINE_DESC) << "\033[31;47m\033[K>";
+                                    }
+                                }
                             }
                         }
                     }

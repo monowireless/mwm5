@@ -24,7 +24,7 @@ namespace TWECUI {
 		}
 
 	public: // class specific method
-		bool handle_event(SDL_Event& e);
+		bool handle_event(SDL_Event& e, int nTextEditing = 0);
 	};
 
 	extern KeyInput_SDL2 the_keyboard_sdl2;

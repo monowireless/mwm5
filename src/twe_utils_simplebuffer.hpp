@@ -559,42 +559,12 @@ namespace TWEUTILS {
 				append((c));
 			}
 		}
-		
-#if 0
-		template <typename T
-			, typename = typename std::enable_if<
-				std::is_same<SOUT, _SimpleBuffer_DummyStreamOut>::value
-			>::type // enable_if
-		> // template
-		inline self_type& operator << (T&& c) { push_back(c); return *this; }
-
-		template <typename T
-			, typename = typename std::enable_if<
-			std::is_same<SOUT, _SimpleBuffer_DummyStreamOut>::value
-			>::type // enable_if
-		> // template
-		inline self_type& operator << (const T& c) { push_back(c); return *this; }
-#else
-		inline self_type& operator << (T&& c) { push_back(c); return *this; }
-		inline self_type& operator << (const T& c) { push_back(c); return *this; }
-#endif
 
 		// get & remove the last element.
 		inline void pop_back() {
 			if (_u16len > 0) {
 				_u16len--;
 			}
-		}
-
-		// range copy
-		template <typename ITER>
-		inline self_type& operator << (std::pair<ITER, ITER> range) {
-			auto p = range.first;
-			while (p != range.second) {
-				push_back(*p);
-				++p;
-			}
-			return *this;
 		}
 
 		/**
@@ -920,6 +890,12 @@ namespace TWEUTILS {
 	template <int N>
 	inline TWE::IStreamOut& operator << (TWE::IStreamOut& lhs, const SmplBuf_WCharSL<N>& s) {
 		for (const auto x : s) { lhs.write_w(x); }
+		return lhs;
+	}
+
+	// others
+	inline SmplBuf_Byte& operator << (SmplBuf_Byte& lhs, const uint8_t c) {
+		lhs.push_back(c);
 		return lhs;
 	}
 }

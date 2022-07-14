@@ -49,7 +49,7 @@ E_PKT TwePacketAppUART::parse(uint8_t* pyld, uint16_t u16len) {
 	if (pyld + DataAppUART::u16paylen != e) {
 		return E_PKT::PKT_ERROR;
 	}
-	DataAppUART::payload << std::make_pair(pyld, e);
+	while (pyld != e) DataAppUART::payload.push_back(*pyld++);
 
 	TwePacket::common.clear();
 	TwePacket::common.tick = millis();

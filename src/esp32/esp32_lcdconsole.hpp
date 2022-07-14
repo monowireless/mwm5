@@ -154,7 +154,8 @@ namespace TWEARD {
 		}
 
 		// get drawing area
-		Rect get_draw_area() { return _rect; }
+		Rect get_draw_area() const { return _rect; }
+		Rect& get_draw_area() { return _rect; }
 
 		void set_font(uint8_t u8id, uint8_t u8col_request = 0, uint8_t u8row_request = 0); // change font and resize screen
 		void set_size(uint8_t u8col_request, uint8_t u8row_request) { set_font(_font_id, u8col_request, u8row_request); }

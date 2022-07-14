@@ -35,6 +35,9 @@ CODE_*/
 wifipass.h
 
 # Executable
+**/build/*.exe
+**/build/*.run
+**/build/*.command
 **/build/*.sav
 **/build/objs/
 

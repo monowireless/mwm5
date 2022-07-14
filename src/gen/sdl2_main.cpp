@@ -1111,7 +1111,8 @@ struct app_core_sdl {
 		if (e.type == SDL_TEXTEDITING) {
 			if (e.text.text[0] == 0) {
 				nTextEditing = -31;
-			} else {
+			}
+			else {
 				nTextEditing = 1;
 			}
 			update_textebox(e.text.text, true);
@@ -1120,7 +1121,7 @@ struct app_core_sdl {
 		if (e.type == SDL_TEXTINPUT) {
 			// normal keyinput
 			// the_keyboard_sdl2.handle_event(e);
-			if (!nAltState && the_keyboard_sdl2.handle_event(e)) {
+			if (!nAltState && the_keyboard_sdl2.handle_event(e, nTextEditing)) {
 				nTextEditing = -31;
 
 				update_textebox(e.text.text);
@@ -1155,7 +1156,7 @@ struct app_core_sdl {
 		// note: Alt+ key is ignored at the_keyboard_sdl2.handle_event()
 		if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
 			// normal keyinput
-			if (the_keyboard_sdl2.handle_event(e)) {
+			if (the_keyboard_sdl2.handle_event(e, nTextEditing)) {
 				return;
 			}
 		}
@@ -2494,8 +2495,7 @@ void check_mwsdk_rootdir() {
 
 	// if found an illegal char in MWSDK DIR, open a dialogue box to warn it.
 	if (b_fail) {
-		SmplBuf_ByteS msg(1024);
-		IStreamOut& m = msg; // sofar, definition of SmplBuf_ByteS is not complete for IStreamOut interface override.
+		SmplBuf_ByteS m(1024);
 
 		m << MLSL(
 			"TWELITE STAGEの格納ディレクトリに空白、記号(_-は可)、非ASCII文字が含まれています。"
@@ -2513,7 +2513,7 @@ void check_mwsdk_rootdir() {
 			, MLSL(
 				"MWSDK_ROOTに問題があります",
 				"There is a problem with MWSDK_ROOT")
-			, msg
+			, m.c_str()
 			, gWindow
 		);
 	}

@@ -13,7 +13,7 @@ using namespace TWE;
 using namespace TWECUI;
 
 
-bool KeyInput_SDL2::handle_event(SDL_Event& e) {
+bool KeyInput_SDL2::handle_event(SDL_Event& e, int nTextEditing) {
 	bool bHandled = false;
 
 	if (e.type == SDL_KEYDOWN) {
@@ -32,9 +32,21 @@ bool KeyInput_SDL2::handle_event(SDL_Event& e) {
 			if (!key && e.key.keysym.sym == SDLK_PAGEDOWN) key = KeyInput::KEY_PAGEDN;
 
 			if (key) {
-				KeyInput::push(key);
-				if (key == 0x0d) KeyInput::push(0x0a); // generate CRLF
-				return true;
+				bool ret = true;
+
+				if (key == 0x0d)
+				{
+					if (nTextEditing != 1) {
+						KeyInput::push(0x0d);
+						KeyInput::push(0x0a);
+					} else
+					{
+						ret = false;
+					}
+				}
+				else KeyInput::push(key);
+
+				return ret;
 			}
 		}
 	}
@@ -42,7 +54,7 @@ bool KeyInput_SDL2::handle_event(SDL_Event& e) {
 	if (e.type == SDL_TEXTINPUT) {
 		char *p = e.text.text;
 		while (*p) {
-			KeyInput::push(*p);
+			KeyInput::push(uint8_t(*p));
 			++p;
 		}
 

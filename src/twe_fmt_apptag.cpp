@@ -57,7 +57,7 @@ E_PKT TwePacketAppTAG::parse(uint8_t* pb, uint16_t u16len) {
 	// rest of bytes
 	if (p < e) {
 		DataAppTAG::payload.reserve_and_set_empty(int(e - p));
-		DataAppTAG::payload << std::make_pair(p, e);
+		while (p != e) DataAppTAG::payload.push_back(*p++);
 	}
 
 	TwePacket::common.tick = millis();
