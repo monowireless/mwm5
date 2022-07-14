@@ -61,8 +61,6 @@ namespace TWE {
 			return p ? p : L"";
 		}
 	};
-	template <class T> const wchar_t* APP_DESC<T>::TITLE_LONG[TWE::LANG_CT];
-	template <class T> const wchar_t* APP_DESC<T>::LAUNCH_MSG[TWE::LANG_CT];
 
 	/**
 	 * @class	APP_MGR
